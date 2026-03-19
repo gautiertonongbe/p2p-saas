@@ -1,0 +1,346 @@
+import { z } from "zod";
+import { protectedProcedure, router } from "../_core/trpc";
+import * as db from "../db";
+import { TRPCError } from "@trpc/server";
+import { createAuditLog } from "../db";
+
+export const approvalsRouter = router({
+  // Get pending approvals for current user
+  myPendingApprovals: protectedProcedure
+    .query(async ({ ctx }) => {
+      const approvals = await db.getPendingApprovals(ctx.user.id);
+      
+      // Enrich with request details
+      const enriched = await Promise.all(approvals.map(async (approval) => {
+        const request = await db.getPurchaseRequestById(approval.requestId, ctx.user.organizationId);
+        return {
+          ...approval,
+          request,
+        };
+      }));
+      
+      return enriched;
+    }),
+
+  // Get completed approvals for current user (approved/rejected/delegated)
+  myCompletedApprovals: protectedProcedure
+    .query(async ({ ctx }) => {
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return [];
+
+      const { approvals } = await import("../../drizzle/schema");
+      const { eq, and, ne, desc } = await import("drizzle-orm");
+
+      // Org-safe: only return approvals for requests in this org
+      const { purchaseRequests: prs } = await import("../../drizzle/schema");
+      const orgRequestIds = (await dbInstance.select({ id: prs.id }).from(prs)
+        .where(eq(prs.organizationId, ctx.user.organizationId))).map(r => r.id);
+
+      const completed = orgRequestIds.length > 0
+        ? await dbInstance.select().from(approvals)
+            .where(and(
+              eq(approvals.approverId, ctx.user.id),
+              ne(approvals.decision, "pending")
+            ))
+            .orderBy(desc(approvals.decidedAt))
+            .limit(100)
+            .then(rows => rows.filter(r => orgRequestIds.includes(r.requestId)))
+        : [];
+
+      // Enrich with request details
+      const enriched = await Promise.all(completed.map(async (approval) => {
+        const request = await db.getPurchaseRequestById(approval.requestId, ctx.user.organizationId);
+        return {
+          ...approval,
+          request,
+        };
+      }));
+
+      return enriched.filter(a => a.request !== undefined);
+    }),
+
+  // Get approval history for a request
+  getByRequest: protectedProcedure
+    .input(z.object({ requestId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const request = await db.getPurchaseRequestById(input.requestId, ctx.user.organizationId);
+      if (!request) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Purchase request not found" });
+      }
+
+      const approvals = await db.getApprovalsByRequest(input.requestId);
+      
+      // Enrich with approver details
+      const enriched = await Promise.all(approvals.map(async (approval) => {
+        const approver = await db.getUserById(approval.approverId);
+        return {
+          ...approval,
+          approver: approver ? { id: approver.id, name: approver.name, email: approver.email } : null,
+        };
+      }));
+      
+      return enriched;
+    }),
+
+  // Approve a request
+  approve: protectedProcedure
+    .input(z.object({
+      approvalId: z.number(),
+      comment: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      
+      const { approvals } = await import("../../drizzle/schema");
+      const { eq, and } = await import("drizzle-orm");
+      
+      const approval = await dbInstance.select().from(approvals)
+        .where(and(
+          eq(approvals.id, input.approvalId),
+          eq(approvals.approverId, ctx.user.id)
+        ))
+        .limit(1);
+      
+      if (approval.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Approval not found or not assigned to you" });
+      }
+      
+      const currentApproval = approval[0];
+      
+      if (currentApproval.decision !== "pending") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Approval already processed" });
+      }
+
+      // Segregation of duties: read from org settings (admins always exempt)
+      const sodRequest = await db.getPurchaseRequestById(currentApproval.requestId, ctx.user.organizationId);
+      if (sodRequest && sodRequest.requesterId === ctx.user.id && ctx.user.role !== "admin") {
+        const { getOrgSettings } = await import("../utils/orgSettings");
+        const orgCfg = await getOrgSettings(ctx.user.organizationId);
+        if (orgCfg.workflowSettings.segregationOfDuties) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Vous ne pouvez pas approuver votre propre demande (séparation des fonctions)",
+          });
+        }
+      }
+
+      // Update approval
+      await db.updateApproval(input.approvalId, {
+        decision: "approved",
+        comment: input.comment,
+        decidedAt: new Date(),
+      });
+
+      // Update request status based on approval chain progress
+      const { updateRequestStatus } = await import("../utils/approvalRouter");
+      await updateRequestStatus(currentApproval.requestId);
+      
+      // Check if all approvals are complete
+      const allApprovals = await db.getApprovalsByRequest(currentApproval.requestId);
+      const allApproved = allApprovals.every(a => a.decision === "approved");
+
+      // When fully approved: commit budget + notify requester
+      if (allApproved) {
+        const request = await db.getPurchaseRequestById(currentApproval.requestId, ctx.user.organizationId);
+        if (request) {
+          const { commitBudget } = await import("../utils/budgetCommitment");
+          await commitBudget(
+            ctx.user.organizationId,
+            request.departmentId,
+            parseFloat(request.amountEstimate)
+          );
+
+          const { createNotification } = await import("../utils/notifications");
+          await createNotification({
+            organizationId: ctx.user.organizationId,
+            userId: request.requesterId,
+            type: "approved",
+            title: "Demande approuvée",
+            message: `Votre demande "${request.title}" a été entièrement approuvée.`,
+            entityType: "purchaseRequest",
+            entityId: request.id,
+          });
+        }
+      } else {
+        // Notify next approver(s)
+        const nextPending = allApprovals.filter(a => a.decision === "pending");
+        if (nextPending.length > 0) {
+          const request = await db.getPurchaseRequestById(currentApproval.requestId, ctx.user.organizationId);
+          const { createNotificationForMany } = await import("../utils/notifications");
+          await createNotificationForMany({
+            organizationId: ctx.user.organizationId,
+            userIds: nextPending.map(a => a.approverId),
+            type: "approval_required",
+            title: "Approbation requise",
+            message: `La demande "${request?.title}" attend votre approbation.`,
+            entityType: "purchaseRequest",
+            entityId: currentApproval.requestId,
+          });
+        }
+      }
+
+      // Audit log
+      await createAuditLog({
+        organizationId: ctx.user.organizationId,
+        entityType: "approval",
+        entityId: input.approvalId,
+        action: "approved",
+        actorId: ctx.user.id,
+        newValue: { decision: "approved", comment: input.comment },
+      });
+
+      return { success: true, allApproved };
+    }),
+
+  // Reject a request
+  reject: protectedProcedure
+    .input(z.object({
+      approvalId: z.number(),
+      comment: z.string().min(1, "Rejection reason is required"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      
+      const { approvals } = await import("../../drizzle/schema");
+      const { eq, and } = await import("drizzle-orm");
+      
+      const approval = await dbInstance.select().from(approvals)
+        .where(and(
+          eq(approvals.id, input.approvalId),
+          eq(approvals.approverId, ctx.user.id)
+        ))
+        .limit(1);
+      
+      if (approval.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Approval not found or not assigned to you" });
+      }
+      
+      const currentApproval = approval[0];
+      
+      if (currentApproval.decision !== "pending") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Approval already processed" });
+      }
+
+      // Update approval
+      await db.updateApproval(input.approvalId, {
+        decision: "rejected",
+        comment: input.comment,
+        decidedAt: new Date(),
+      });
+
+      // Update request status based on approval chain
+      const { updateRequestStatus } = await import("../utils/approvalRouter");
+      await updateRequestStatus(currentApproval.requestId);
+
+      // Notify requester of rejection
+      const rejectedRequest = await db.getPurchaseRequestById(currentApproval.requestId, ctx.user.organizationId);
+      if (rejectedRequest) {
+        const { createNotification } = await import("../utils/notifications");
+        await createNotification({
+          organizationId: ctx.user.organizationId,
+          userId: rejectedRequest.requesterId,
+          type: "rejected",
+          title: "Demande rejetée",
+          message: `Votre demande "${rejectedRequest.title}" a été rejetée. Raison: ${input.comment}`,
+          entityType: "purchaseRequest",
+          entityId: rejectedRequest.id,
+        });
+      }
+
+      // Audit log
+      await createAuditLog({
+        organizationId: ctx.user.organizationId,
+        entityType: "approval",
+        entityId: input.approvalId,
+        action: "rejected",
+        actorId: ctx.user.id,
+        newValue: { decision: "rejected", comment: input.comment },
+      });
+
+      return { success: true };
+    }),
+
+  // Delegate approval to another user
+  delegate: protectedProcedure
+    .input(z.object({
+      approvalId: z.number(),
+      delegateToUserId: z.number(),
+      comment: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      
+      const { approvals } = await import("../../drizzle/schema");
+      const { eq, and } = await import("drizzle-orm");
+      
+      const approval = await dbInstance.select().from(approvals)
+        .where(and(
+          eq(approvals.id, input.approvalId),
+          eq(approvals.approverId, ctx.user.id)
+        ))
+        .limit(1);
+      
+      if (approval.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Approval not found or not assigned to you" });
+      }
+      
+      const currentApproval = approval[0];
+      
+      if (currentApproval.decision !== "pending") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Approval already processed" });
+      }
+
+      // Verify delegate user exists and is in same org
+      const delegateUser = await db.getUserById(input.delegateToUserId);
+      if (!delegateUser || delegateUser.organizationId !== ctx.user.organizationId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid delegate user" });
+      }
+
+      // Update approval
+      await db.updateApproval(input.approvalId, {
+        decision: "delegated",
+        delegatedTo: input.delegateToUserId,
+        comment: input.comment,
+        decidedAt: new Date(),
+      });
+
+      // Create new approval for delegate
+      await db.createApproval({
+        requestId: currentApproval.requestId,
+        stepOrder: currentApproval.stepOrder,
+        approverId: input.delegateToUserId,
+        decision: "pending",
+      });
+
+      // Audit log
+      await createAuditLog({
+        organizationId: ctx.user.organizationId,
+        entityType: "approval",
+        entityId: input.approvalId,
+        action: "delegated",
+        actorId: ctx.user.id,
+        newValue: { delegatedTo: input.delegateToUserId, comment: input.comment },
+      });
+
+      return { success: true };
+    }),
+
+  // Get approval policies
+  getPolicies: protectedProcedure
+    .query(async ({ ctx }) => {
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return [];
+      
+      const { approvalPolicies } = await import("../../drizzle/schema");
+      const { eq, and } = await import("drizzle-orm");
+      
+      return dbInstance.select().from(approvalPolicies)
+        .where(and(
+          eq(approvalPolicies.organizationId, ctx.user.organizationId),
+          eq(approvalPolicies.isActive, true)
+        ));
+    }),
+});

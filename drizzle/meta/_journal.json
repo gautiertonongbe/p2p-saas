@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1770586763829,
+      "tag": "0000_lyrical_gladiator",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1770586960747,
+      "tag": "0001_deep_the_spike",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771312311764,
+      "tag": "0002_breezy_leader",
+      "breakpoints": true
+    }
+  ]
+}

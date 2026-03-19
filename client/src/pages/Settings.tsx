@@ -1,0 +1,1711 @@
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Building2, Users, GitBranch, DollarSign, Bell, Shield, Settings as Gear,
+  ChevronRight, Sliders, Workflow, Globe, Hash, Package, CheckCircle2,
+  Plus, Edit, Trash2, Loader2, Save, RotateCcw, AlertTriangle, Info,
+} from "lucide-react";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const SECTION_ICONS: Record<string, React.FC<any>> = {
+  organization: Building2, users: Users, departments: GitBranch,
+  lookups: Hash, approvals: Shield, budgets: DollarSign, workflow: Workflow,
+  tolerance: Sliders, paymentterms: DollarSign, taxrates: DollarSign,
+  exchangerates: Globe, customfields: Package,
+  notifications: Bell, localization: Globe, numbering: Hash, security: Gear,
+};
+
+const SECTION_DEFS = [
+  { id: "organization", group: "Organisation", desc: "Identité, adresse, branding" },
+  { id: "users",        group: "Organisation", desc: "Utilisateurs et rôles" },
+  { id: "departments",  group: "Organisation", desc: "Structure organisationnelle" },
+  { id: "lookups",      group: "Organisation", desc: "Catégories, centres de coût, comptes GL" },
+  { id: "approvals",    group: "Flux de travail", desc: "Politiques et étapes d'approbation" },
+  { id: "workflow",     group: "Flux de travail", desc: "Automatisation et seuils" },
+  { id: "budgets",      group: "Contrôle budgétaire", desc: "Politiques budgétaires" },
+  { id: "tolerance",    group: "Contrôle budgétaire", desc: "Tolérances rapprochement 3 voies" },
+  { id: "paymentterms", group: "Finance", desc: "Conditions de paiement fournisseurs" },
+  { id: "taxrates",     group: "Finance", desc: "Taux de TVA et taxes applicables" },
+  { id: "exchangerates",group: "Finance", desc: "Taux de change vs devise principale" },
+  { id: "customfields", group: "Personnalisation", desc: "Champs sur PR, BC, factures, fournisseurs" },
+  { id: "notifications",group: "Système", desc: "Alertes et événements" },
+  { id: "numbering",    group: "Système", desc: "Séquences de numérotation" },
+  { id: "localization", group: "Système", desc: "Langue et format" },
+  { id: "security",     group: "Système", desc: "Audit et sécurité" },
+];
+
+const groups = [...new Set(SECTION_DEFS.map(s => s.group))];
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+export default function Settings() {
+  const { user } = useAuth();
+  const [section, setSection] = useState("organization");
+  const isAdmin = user?.role === "admin";
+
+  return (
+    <div className="flex h-[calc(100vh-4rem)] bg-background overflow-hidden">
+      {/* Sidebar */}
+      <aside className="w-72 border-r flex flex-col shrink-0 bg-card">
+        <div className="p-5 border-b">
+          <div className="flex items-center gap-2">
+            <Gear className="h-5 w-5 text-primary" />
+            <h1 className="text-lg font-semibold">Paramètres</h1>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Configuration de votre organisation</p>
+        </div>
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4">
+          {groups.map(group => (
+            <div key={group}>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-1">{group}</p>
+              {SECTION_DEFS.filter(s => s.group === group).map(s => {
+                const Icon = SECTION_ICONS[s.id] ?? Gear;
+                const active = section === s.id;
+                return (
+                  <button key={s.id} onClick={() => setSection(s.id)}
+                    className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-sm",
+                      active ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-muted text-foreground"
+                    )}>
+                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-primary-foreground" : "text-muted-foreground")} />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium capitalize">{s.id === "organization" ? "Organisation" :
+                        s.id === "users" ? "Utilisateurs" : s.id === "departments" ? "Départements" :
+                        s.id === "lookups" ? "Valeurs de référence" :
+                        s.id === "approvals" ? "Approbations" : s.id === "workflow" ? "Flux de travail" :
+                        s.id === "budgets" ? "Politiques budgétaires" : s.id === "tolerance" ? "Tolérances" :
+                        s.id === "paymentterms" ? "Conditions de paiement" :
+                        s.id === "taxrates" ? "Taux de taxes" :
+                        s.id === "exchangerates" ? "Taux de change" :
+                        s.id === "customfields" ? "Champs personnalisés" :
+                        s.id === "notifications" ? "Notifications" : s.id === "numbering" ? "Numérotation" :
+                        s.id === "localization" ? "Localisation" : "Sécurité"}</div>
+                      <div className={cn("text-xs truncate", active ? "text-primary-foreground/70" : "text-muted-foreground")}>{s.desc}</div>
+                    </div>
+                    {active && <ChevronRight className="h-4 w-4 shrink-0 text-primary-foreground/70" />}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+        {!isAdmin && (
+          <div className="p-3 border-t">
+            <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+              <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0" />
+              <p className="text-xs text-yellow-800">Accès admin requis pour modifier</p>
+            </div>
+          </div>
+        )}
+      </aside>
+
+      {/* Content */}
+      <main className="flex-1 overflow-y-auto">
+        {section === "organization"  && <OrgSection isAdmin={isAdmin} />}
+        {section === "users"         && <UsersSection isAdmin={isAdmin} />}
+        {section === "departments"   && <DepartmentsSection isAdmin={isAdmin} />}
+        {section === "lookups"       && <LookupsSection isAdmin={isAdmin} />}
+        {section === "approvals"     && <ApprovalsSection isAdmin={isAdmin} />}
+        {section === "workflow"      && <WorkflowSection isAdmin={isAdmin} />}
+        {section === "budgets"       && <BudgetsSection isAdmin={isAdmin} />}
+        {section === "tolerance"     && <ToleranceSection isAdmin={isAdmin} />}
+        {section === "paymentterms"  && <PaymentTermsSection isAdmin={isAdmin} />}
+        {section === "taxrates"      && <TaxRatesSection isAdmin={isAdmin} />}
+        {section === "exchangerates" && <ExchangeRatesSection isAdmin={isAdmin} />}
+        {section === "customfields"  && <CustomFieldsSection isAdmin={isAdmin} />}
+        {section === "notifications" && <NotificationsSection isAdmin={isAdmin} />}
+        {section === "numbering"     && <NumberingSection isAdmin={isAdmin} />}
+        {section === "localization"  && <LocalizationSection isAdmin={isAdmin} />}
+        {section === "security"      && <SecuritySection />}
+      </main>
+    </div>
+  );
+}
+
+// ─── Section header ───────────────────────────────────────────────────────────
+function SectionHeader({ icon: Icon, title, desc }: { icon: React.FC<any>; title: string; desc: string }) {
+  return (
+    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b px-6 py-4 flex items-center gap-3">
+      <div className="p-2 bg-primary/10 rounded-lg"><Icon className="h-5 w-5 text-primary" /></div>
+      <div><h2 className="text-lg font-semibold">{title}</h2><p className="text-sm text-muted-foreground">{desc}</p></div>
+    </div>
+  );
+}
+
+function SaveBar({ onSave, pending, onReset }: { onSave: () => void; pending: boolean; onReset?: () => void }) {
+  return (
+    <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+      {onReset && <Button variant="outline" onClick={onReset} disabled={pending}><RotateCcw className="mr-2 h-4 w-4" />Réinitialiser</Button>}
+      <Button onClick={onSave} disabled={pending}>
+        {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enregistrement...</> : <><Save className="mr-2 h-4 w-4" />Enregistrer</>}
+      </Button>
+    </div>
+  );
+}
+
+function InfoBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg mt-4">
+      <Info className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+      <p className="text-sm text-blue-800">{children}</p>
+    </div>
+  );
+}
+
+// ─── Organisation ─────────────────────────────────────────────────────────────
+function OrgSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org, isLoading } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const [form, setForm] = useState({
+    legalName: "", tradeName: "", country: "Benin", baseCurrency: "XOF",
+    fiscalYearStart: "01-01", address: "", city: "", phone: "", email: "",
+    website: "", taxId: "", primaryColor: "#2563eb",
+  });
+
+  useEffect(() => {
+    if (org) setForm(f => ({
+      ...f,
+      legalName: org.legalName ?? "",
+      tradeName: (org as any).tradeName ?? "",
+      country: org.country ?? "Benin",
+      baseCurrency: org.baseCurrency ?? "XOF",
+      fiscalYearStart: org.fiscalYearStart ?? "01-01",
+      address: (org as any).address ?? "",
+      city: (org as any).city ?? "",
+      phone: (org as any).phone ?? "",
+      email: (org as any).email ?? "",
+      website: (org as any).website ?? "",
+      taxId: (org as any).taxId ?? "",
+      primaryColor: (org as any).primaryColor ?? "#2563eb",
+    }));
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Organisation mise à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const COUNTRIES = ["Bénin", "Côte d'Ivoire", "Togo", "Sénégal", "Mali", "Burkina Faso", "Niger", "Guinée", "Ghana", "Nigeria", "Cameroun"];
+  const CURRENCIES = [{ code: "XOF", label: "Franc CFA BCEAO (XOF)" }, { code: "XAF", label: "Franc CFA BEAC (XAF)" }, { code: "GHS", label: "Cedi ghanéen (GHS)" }, { code: "NGN", label: "Naira nigérian (NGN)" }, { code: "EUR", label: "Euro (EUR)" }, { code: "USD", label: "Dollar US (USD)" }];
+
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Chargement...</div>;
+
+  return (
+    <div>
+      <SectionHeader icon={Building2} title="Organisation" desc="Informations légales, contact et branding" />
+      <div className="p-6 space-y-6 max-w-3xl">
+
+        <Card>
+          <CardHeader><CardTitle>Identité légale</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Raison sociale *</Label><Input value={form.legalName} onChange={e => setForm(f => ({...f, legalName: e.target.value}))} disabled={!isAdmin} /></div>
+              <div className="space-y-2"><Label>Nom commercial</Label><Input value={form.tradeName} onChange={e => setForm(f => ({...f, tradeName: e.target.value}))} disabled={!isAdmin} /></div>
+              <div className="space-y-2"><Label>Pays</Label>
+                <Select value={form.country} onValueChange={v => setForm(f => ({...f, country: v}))} disabled={!isAdmin}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Identifiant fiscal (IFU)</Label><Input value={form.taxId} onChange={e => setForm(f => ({...f, taxId: e.target.value}))} placeholder="IFU / RCCM" disabled={!isAdmin} /></div>
+              <div className="space-y-2"><Label>Devise principale</Label>
+                <Select value={form.baseCurrency} onValueChange={v => setForm(f => ({...f, baseCurrency: v}))} disabled={!isAdmin}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CURRENCIES.map(c => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Début d'exercice fiscal (MM-JJ)</Label><Input value={form.fiscalYearStart} onChange={e => setForm(f => ({...f, fiscalYearStart: e.target.value}))} placeholder="01-01" pattern="\d{2}-\d{2}" disabled={!isAdmin} /></div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Coordonnées</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2 sm:col-span-2"><Label>Adresse</Label><Input value={form.address} onChange={e => setForm(f => ({...f, address: e.target.value}))} placeholder="Rue, Quartier..." disabled={!isAdmin} /></div>
+              <div className="space-y-2"><Label>Ville</Label><Input value={form.city} onChange={e => setForm(f => ({...f, city: e.target.value}))} placeholder="Cotonou" disabled={!isAdmin} /></div>
+              <div className="space-y-2"><Label>Téléphone</Label><Input value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} placeholder="+229 XX XX XX XX" disabled={!isAdmin} /></div>
+              <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} placeholder="contact@entreprise.com" disabled={!isAdmin} /></div>
+              <div className="space-y-2"><Label>Site web</Label><Input value={form.website} onChange={e => setForm(f => ({...f, website: e.target.value}))} placeholder="https://www.entreprise.com" disabled={!isAdmin} /></div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Branding</CardTitle><CardDescription>Couleur principale de l'interface</CardDescription></CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-lg border" style={{ backgroundColor: form.primaryColor }} />
+              <div className="space-y-1 flex-1 max-w-xs">
+                <Label>Couleur principale</Label>
+                <Input type="color" value={form.primaryColor} onChange={e => setForm(f => ({...f, primaryColor: e.target.value}))} disabled={!isAdmin} className="h-10 cursor-pointer" />
+              </div>
+              <p className="text-sm text-muted-foreground">{form.primaryColor}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {isAdmin && <SaveBar onSave={() => mut.mutate(form as any)} pending={mut.isPending} />}
+      </div>
+    </div>
+  );
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+function UsersSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: users = [], isLoading } = trpc.settings.listUsers.useQuery();
+  const { data: departments = [] } = trpc.settings.listDepartments.useQuery();
+  const utils = trpc.useUtils();
+  const [editUser, setEditUser] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ role: "", departmentId: "", approvalLimit: "", status: "active" });
+
+  const updateMut = trpc.settings.updateUser.useMutation({
+    onSuccess: () => { toast.success("Utilisateur mis à jour"); utils.settings.listUsers.invalidate(); setEditUser(null); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const ROLE_LABELS: Record<string, string> = {
+    admin: "Administrateur", procurement_manager: "Resp. achats",
+    approver: "Approbateur", requester: "Demandeur",
+  };
+  const ROLE_COLORS: Record<string, string> = {
+    admin: "bg-purple-100 text-purple-800", procurement_manager: "bg-blue-100 text-blue-800",
+    approver: "bg-green-100 text-green-800", requester: "bg-gray-100 text-gray-700",
+  };
+
+  return (
+    <div>
+      <SectionHeader icon={Users} title="Utilisateurs" desc="Gérer les accès, rôles et limites d'approbation" />
+      <div className="p-6 max-w-5xl">
+        <InfoBox>Les utilisateurs rejoignent automatiquement l'organisation lors de leur première connexion OAuth. Vous pouvez modifier leur rôle et département ici.</InfoBox>
+
+        <Card className="mt-6">
+          <CardContent className="p-0">
+            {isLoading ? <div className="p-8 text-center text-muted-foreground">Chargement...</div> : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Utilisateur</TableHead>
+                    <TableHead>Rôle</TableHead>
+                    <TableHead>Département</TableHead>
+                    <TableHead className="text-right">Limite approbation</TableHead>
+                    <TableHead>Statut</TableHead>
+                    {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((u: any) => (
+                    <TableRow key={u.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{u.name || "—"}</p>
+                          <p className="text-xs text-muted-foreground">{u.email || "—"}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[u.role] || ""}`}>
+                          {ROLE_LABELS[u.role] || u.role}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {departments.find((d: any) => d.id === u.departmentId)?.name || "—"}
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {u.approvalLimit ? `${new Intl.NumberFormat("fr-FR").format(parseFloat(u.approvalLimit))} XOF` : "Illimité"}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${u.status === "active" ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}`}>
+                          {u.status === "active" ? "Actif" : "Désactivé"}
+                        </span>
+                      </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => {
+                            setEditUser(u);
+                            setEditForm({ role: u.role, departmentId: u.departmentId?.toString() || "", approvalLimit: u.approvalLimit || "", status: u.status });
+                          }}><Edit className="h-4 w-4" /></Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Modifier l'utilisateur</DialogTitle>
+              <DialogDescription>{editUser?.name} — {editUser?.email}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2"><Label>Rôle</Label>
+                <Select value={editForm.role} onValueChange={v => setEditForm(f => ({...f, role: v}))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrateur — accès complet</SelectItem>
+                    <SelectItem value="procurement_manager">Responsable achats — gère PO, fournisseurs, factures</SelectItem>
+                    <SelectItem value="approver">Approbateur — approuve les demandes</SelectItem>
+                    <SelectItem value="requester">Demandeur — crée des demandes d'achat</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Département</Label>
+                <Select value={editForm.departmentId} onValueChange={v => setEditForm(f => ({...f, departmentId: v}))}>
+                  <SelectTrigger><SelectValue placeholder="Aucun département" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun département</SelectItem>
+                    {departments.map((d: any) => <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Limite d'approbation (XOF)</Label>
+                <Input type="number" value={editForm.approvalLimit} onChange={e => setEditForm(f => ({...f, approvalLimit: e.target.value}))} placeholder="Laisser vide = illimité" />
+                <p className="text-xs text-muted-foreground">Montant maximum que cet utilisateur peut approuver seul</p>
+              </div>
+              <div className="space-y-2"><Label>Statut</Label>
+                <Select value={editForm.status} onValueChange={v => setEditForm(f => ({...f, status: v}))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Actif</SelectItem>
+                    <SelectItem value="disabled">Désactivé</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditUser(null)}>Annuler</Button>
+              <Button disabled={updateMut.isPending} onClick={() => updateMut.mutate({
+                userId: editUser.id,
+                role: editForm.role as any,
+                departmentId: editForm.departmentId ? parseInt(editForm.departmentId) : undefined,
+                approvalLimit: editForm.approvalLimit || undefined,
+                status: editForm.status as any,
+              })}>
+                {updateMut.isPending ? "Enregistrement..." : "Enregistrer"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}
+
+// ─── Departments ──────────────────────────────────────────────────────────────
+function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: departments = [], isLoading } = trpc.settings.listDepartments.useQuery();
+  const { data: users = [] } = trpc.settings.listUsers.useQuery();
+  const utils = trpc.useUtils();
+  const [newOpen, setNewOpen] = useState(false);
+  const [editDept, setEditDept] = useState<any>(null);
+  const [code, setCode] = useState(""); const [name, setName] = useState(""); const [managerId, setManagerId] = useState("");
+
+  const createMut = trpc.settings.createDepartment.useMutation({
+    onSuccess: () => { toast.success("Département créé"); utils.settings.listDepartments.invalidate(); setNewOpen(false); setCode(""); setName(""); setManagerId(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const updateMut = trpc.settings.updateDepartment.useMutation({
+    onSuccess: () => { toast.success("Département mis à jour"); utils.settings.listDepartments.invalidate(); setEditDept(null); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <div>
+      <SectionHeader icon={GitBranch} title="Départements" desc="Structure organisationnelle et centres de coût" />
+      <div className="p-6 max-w-3xl">
+        {isAdmin && (
+          <div className="flex justify-end mb-4">
+            <Button onClick={() => setNewOpen(true)}><Plus className="mr-2 h-4 w-4" />Nouveau département</Button>
+          </div>
+        )}
+        <Card>
+          <CardContent className="p-0">
+            {isLoading ? <div className="p-8 text-center text-muted-foreground">Chargement...</div> : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Responsable</TableHead>
+                    <TableHead>Statut</TableHead>
+                    {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {departments.map((d: any) => (
+                    <TableRow key={d.id} className="hover:bg-muted/50">
+                      <TableCell className="font-mono text-sm">{d.code}</TableCell>
+                      <TableCell className="font-medium">{d.name}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {users.find((u: any) => u.id === d.managerId)?.name || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-0.5 rounded-full text-xs border ${d.isActive ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}`}>
+                          {d.isActive ? "Actif" : "Inactif"}
+                        </span>
+                      </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => { setEditDept(d); setCode(d.code); setName(d.name); setManagerId(d.managerId?.toString() || ""); }}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                  {departments.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Aucun département</TableCell></TableRow>}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* New / Edit dialog */}
+        <Dialog open={newOpen || !!editDept} onOpenChange={v => { if (!v) { setNewOpen(false); setEditDept(null); }}}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>{editDept ? "Modifier le département" : "Nouveau département"}</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2"><Label>Code *</Label><Input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="IT" /></div>
+                <div className="space-y-2"><Label>Nom *</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Informatique" /></div>
+              </div>
+              <div className="space-y-2"><Label>Responsable</Label>
+                <Select value={managerId} onValueChange={setManagerId}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner un responsable" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun</SelectItem>
+                    {users.filter((u: any) => u.status === "active").map((u: any) => (
+                      <SelectItem key={u.id} value={u.id.toString()}>{u.name || u.email}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setNewOpen(false); setEditDept(null); }}>Annuler</Button>
+              <Button disabled={!code || !name || createMut.isPending || updateMut.isPending}
+                onClick={() => editDept
+                  ? updateMut.mutate({ id: editDept.id, code, name, managerId: managerId ? parseInt(managerId) : undefined })
+                  : createMut.mutate({ code, name, managerId: managerId ? parseInt(managerId) : undefined })}>
+                {(createMut.isPending || updateMut.isPending) ? "Enregistrement..." : "Enregistrer"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}
+
+// ─── Approvals (with steps builder) ──────────────────────────────────────────
+function PolicyStepsPanel({ policyId, isAdmin, users }: { policyId: number; isAdmin: boolean; users: any[] }) {
+  const utils = trpc.useUtils();
+  const { data: allSteps = [] } = trpc.settings.getApprovalSteps.useQuery();
+  const steps = allSteps.filter((s: any) => s.policyId === policyId).sort((a: any, b: any) => a.stepOrder - b.stepOrder);
+  const [addOpen, setAddOpen] = useState(false);
+  const [stepForm, setStepForm] = useState({ stepOrder: steps.length + 1, approverType: "user", approverId: "", isParallel: false });
+
+  const addMut = trpc.settings.addApprovalStep.useMutation({
+    onSuccess: () => { toast.success("Étape ajoutée"); utils.settings.getApprovalSteps.invalidate(); setAddOpen(false); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const delMut = trpc.settings.deleteApprovalStep.useMutation({
+    onSuccess: () => { toast.success("Étape supprimée"); utils.settings.getApprovalSteps.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const ROLE_LABELS: Record<string, string> = { admin: "Administrateur", procurement_manager: "Resp. achats", approver: "Approbateur" };
+
+  return (
+    <div className="mt-3 pl-10 space-y-2">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Étapes d'approbation</p>
+      {steps.length === 0 ? (
+        <p className="text-sm text-muted-foreground italic">Aucune étape — les demandes passent directement.</p>
+      ) : (
+        <div className="space-y-1.5">
+          {steps.map((s: any, i: number) => (
+            <div key={s.id} className="flex items-center gap-3 p-2 bg-muted/40 rounded-lg">
+              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">{i + 1}</div>
+              <div className="flex-1 text-sm">
+                {s.approverType === "user" && s.approverId
+                  ? users.find(u => u.id === s.approverId)?.name || `Utilisateur #${s.approverId}`
+                  : s.approverType === "role" ? `Tous les ${ROLE_LABELS[s.approverId] || s.approverId}`
+                  : "Responsable direct"}
+                {s.isParallel && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">Parallèle</span>}
+              </div>
+              {isAdmin && (
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                  onClick={() => delMut.mutate({ stepId: s.id })}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {isAdmin && (
+        <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" onClick={() => { setStepForm(f => ({...f, stepOrder: steps.length + 1})); setAddOpen(true); }}>
+          <Plus className="mr-1 h-3 w-3" />Ajouter une étape
+        </Button>
+      )}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Ajouter une étape d'approbation</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-2"><Label>Type d'approbateur</Label>
+              <Select value={stepForm.approverType} onValueChange={v => setStepForm(f => ({...f, approverType: v, approverId: ""}))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Utilisateur spécifique</SelectItem>
+                  <SelectItem value="role">Par rôle (premier disponible)</SelectItem>
+                  <SelectItem value="manager">Responsable direct du demandeur</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {stepForm.approverType === "user" && (
+              <div className="space-y-2"><Label>Approbateur *</Label>
+                <Select value={stepForm.approverId} onValueChange={v => setStepForm(f => ({...f, approverId: v}))}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner un utilisateur" /></SelectTrigger>
+                  <SelectContent>
+                    {users.filter(u => u.status === "active").map((u: any) => (
+                      <SelectItem key={u.id} value={u.id.toString()}>{u.name || u.email} <span className="text-muted-foreground text-xs ml-1">— {ROLE_LABELS[u.role] || u.role}</span></SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {stepForm.approverType === "role" && (
+              <div className="space-y-2"><Label>Rôle *</Label>
+                <Select value={stepForm.approverId} onValueChange={v => setStepForm(f => ({...f, approverId: v}))}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner un rôle" /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ROLE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <div><Label>Approbation parallèle</Label><p className="text-xs text-muted-foreground">S'exécute en même temps que l'étape précédente</p></div>
+              <Switch checked={stepForm.isParallel} onCheckedChange={v => setStepForm(f => ({...f, isParallel: v}))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
+            <Button disabled={addMut.isPending || (stepForm.approverType !== "manager" && !stepForm.approverId)}
+              onClick={() => addMut.mutate({
+                policyId,
+                stepOrder: stepForm.stepOrder,
+                approverType: stepForm.approverType as any,
+                approverId: stepForm.approverType === "user" ? parseInt(stepForm.approverId) : undefined,
+                roleRef: stepForm.approverType === "role" ? stepForm.approverId as any : undefined,
+                isParallel: stepForm.isParallel,
+              })}>
+              {addMut.isPending ? "Ajout..." : "Ajouter"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function ApprovalsSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: policies = [], isLoading } = trpc.settings.getApprovalPolicies.useQuery();
+  const { data: users = [] } = trpc.settings.listUsers.useQuery();
+  const utils = trpc.useUtils();
+  const [newOpen, setNewOpen] = useState(false);
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const [pName, setPName] = useState(""); const [minAmt, setMinAmt] = useState(""); const [maxAmt, setMaxAmt] = useState("");
+  const [deptIds, setDeptIds] = useState("");
+
+  const createMut = trpc.settings.createApprovalPolicy.useMutation({
+    onSuccess: () => { toast.success("Politique créée"); utils.settings.getApprovalPolicies.invalidate(); setNewOpen(false); setPName(""); setMinAmt(""); setMaxAmt(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const deleteMut = trpc.settings.deleteApprovalPolicy.useMutation({
+    onSuccess: () => { toast.success("Politique supprimée"); utils.settings.getApprovalPolicies.invalidate(); if (expanded && expanded === policies.find((p: any) => p.id === expanded)?.id) setExpanded(null); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
+
+  return (
+    <div>
+      <SectionHeader icon={Shield} title="Politiques d'approbation" desc="Définir les règles de routage et les étapes d'approbation par condition" />
+      <div className="p-6 max-w-4xl">
+        <InfoBox>
+          Chaque politique définit (1) les <strong>conditions</strong> de déclenchement (montant, département, urgence) et (2) les <strong>étapes</strong> séquentielles d'approbation. Cliquez sur une politique pour gérer ses étapes.
+        </InfoBox>
+
+        {isAdmin && (
+          <div className="flex justify-end mt-4 mb-4">
+            <Button onClick={() => setNewOpen(true)}><Plus className="mr-2 h-4 w-4" />Nouvelle politique</Button>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {isLoading ? <div className="p-8 text-center text-muted-foreground">Chargement...</div> :
+            policies.length === 0 ? (
+              <Card><CardContent className="p-8 text-center">
+                <Shield className="mx-auto h-10 w-10 text-muted-foreground/30 mb-3" />
+                <p className="text-muted-foreground">Aucune politique — toutes les demandes sont auto-approuvées</p>
+                {isAdmin && <Button className="mt-4" onClick={() => setNewOpen(true)}><Plus className="mr-2 h-4 w-4" />Créer la première politique</Button>}
+              </CardContent></Card>
+            ) : policies.map((p: any, i: number) => (
+              <Card key={p.id} className={cn("transition-shadow", expanded === p.id ? "border-primary shadow-sm" : "hover:shadow-sm")}>
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-start justify-between cursor-pointer" onClick={() => setExpanded(expanded === p.id ? null : p.id)}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">{i + 1}</div>
+                      <div>
+                        <p className="font-semibold">{p.name}</p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {p.conditions?.minAmount != null && <span className="text-xs bg-muted px-2 py-0.5 rounded">≥ {fmt(p.conditions.minAmount)} XOF</span>}
+                          {p.conditions?.maxAmount != null && <span className="text-xs bg-muted px-2 py-0.5 rounded">≤ {fmt(p.conditions.maxAmount)} XOF</span>}
+                          {!p.conditions?.minAmount && !p.conditions?.maxAmount && <span className="text-xs text-muted-foreground">Tous montants</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={p.isActive ? "default" : "outline"}>{p.isActive ? "Active" : "Inactive"}</Badge>
+                      {isAdmin && (
+                        <Button size="sm" variant="ghost" className="text-destructive h-8 w-8 p-0"
+                          onClick={e => { e.stopPropagation(); if (confirm("Supprimer cette politique et toutes ses étapes ?")) deleteMut.mutate({ id: p.id }); }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-transform", expanded === p.id ? "rotate-90" : "")} />
+                    </div>
+                  </div>
+                  {expanded === p.id && (
+                    <PolicyStepsPanel policyId={p.id} isAdmin={isAdmin} users={users as any[]} />
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          }
+        </div>
+
+        <Dialog open={newOpen} onOpenChange={setNewOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Nouvelle politique d'approbation</DialogTitle><DialogDescription>Définissez les conditions de déclenchement. Vous pourrez ajouter les étapes après création.</DialogDescription></DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2"><Label>Nom de la politique *</Label><Input value={pName} onChange={e => setPName(e.target.value)} placeholder="Ex: Approbation DG — Montants > 5M XOF" /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Montant minimum (XOF)</Label><Input type="number" value={minAmt} onChange={e => setMinAmt(e.target.value)} placeholder="0 = pas de minimum" /></div>
+                <div className="space-y-2"><Label>Montant maximum (XOF)</Label><Input type="number" value={maxAmt} onChange={e => setMaxAmt(e.target.value)} placeholder="Vide = illimité" /></div>
+              </div>
+              <InfoBox>Après création, cliquez sur la politique pour ajouter des étapes d'approbation (approbateurs séquentiels ou parallèles).</InfoBox>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setNewOpen(false)}>Annuler</Button>
+              <Button disabled={!pName || createMut.isPending}
+                onClick={() => createMut.mutate({ name: pName, conditions: { minAmount: minAmt ? parseFloat(minAmt) : undefined, maxAmount: maxAmt ? parseFloat(maxAmt) : undefined }, requiresAllApprovals: true })}>
+                {createMut.isPending ? "Création..." : "Créer la politique"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}
+
+// ─── Workflow ─────────────────────────────────────────────────────────────────
+function WorkflowSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const defaults = { autoApproveAmount: 0, requireJustification: false, minRFQVendors: 3, rfqDeadlineDays: 14, poAutoIssue: false, slaHours: 48, escalationEnabled: true, segregationOfDuties: true };
+  const [cfg, setCfg] = useState(defaults);
+
+  useEffect(() => {
+    const w = (org as any)?.settings?.workflowSettings;
+    if (w) setCfg({ ...defaults, ...w });
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Configuration du flux mise à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const Row = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+    <div className="flex items-start justify-between py-4 border-b last:border-0">
+      <div className="flex-1 mr-8">
+        <p className="font-medium text-sm">{label}</p>
+        {desc && <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>}
+      </div>
+      <div className="shrink-0">{children}</div>
+    </div>
+  );
+
+  return (
+    <div>
+      <SectionHeader icon={Workflow} title="Flux de travail" desc="Automatisation, seuils et règles métier" />
+      <div className="p-6 max-w-3xl space-y-6">
+        <Card>
+          <CardHeader><CardTitle>Approbations automatiques</CardTitle></CardHeader>
+          <CardContent className="divide-y">
+            <Row label="Seuil d'auto-approbation (XOF)" desc="Les demandes inférieures à ce montant sont approuvées automatiquement (0 = désactivé)">
+              <Input type="number" value={cfg.autoApproveAmount} onChange={e => setCfg(c => ({...c, autoApproveAmount: parseFloat(e.target.value) || 0}))} disabled={!isAdmin} className="w-44" />
+            </Row>
+            <Row label="SLA d'approbation (heures)" desc="Délai avant escalade automatique">
+              <Input type="number" value={cfg.slaHours} onChange={e => setCfg(c => ({...c, slaHours: parseInt(e.target.value) || 48}))} disabled={!isAdmin} className="w-24" />
+            </Row>
+            <Row label="Escalade automatique" desc="Notifier les managers si le délai est dépassé">
+              <Switch checked={cfg.escalationEnabled} onCheckedChange={v => setCfg(c => ({...c, escalationEnabled: v}))} disabled={!isAdmin} />
+            </Row>
+            <Row label="Séparation des tâches" desc="Bloquer l'auto-approbation d'une demande par son créateur">
+              <Switch checked={cfg.segregationOfDuties} onCheckedChange={v => setCfg(c => ({...c, segregationOfDuties: v}))} disabled={!isAdmin} />
+            </Row>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Demandes d'achat</CardTitle></CardHeader>
+          <CardContent className="divide-y">
+            <Row label="Justification obligatoire" desc="Exiger un texte de justification sur toutes les demandes">
+              <Switch checked={cfg.requireJustification} onCheckedChange={v => setCfg(c => ({...c, requireJustification: v}))} disabled={!isAdmin} />
+            </Row>
+            <Row label="Émettre le BC automatiquement" desc="Créer et émettre le bon de commande dès approbation complète">
+              <Switch checked={cfg.poAutoIssue} onCheckedChange={v => setCfg(c => ({...c, poAutoIssue: v}))} disabled={!isAdmin} />
+            </Row>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Appels d'offres (RFQ)</CardTitle></CardHeader>
+          <CardContent className="divide-y">
+            <Row label="Nombre minimum de fournisseurs" desc="Nombre minimum de fournisseurs à inviter par RFQ">
+              <Input type="number" value={cfg.minRFQVendors} onChange={e => setCfg(c => ({...c, minRFQVendors: parseInt(e.target.value) || 3}))} disabled={!isAdmin} className="w-24" min={1} max={20} />
+            </Row>
+            <Row label="Délai de réponse par défaut (jours)" desc="Délai par défaut pour les réponses aux RFQ">
+              <Input type="number" value={cfg.rfqDeadlineDays} onChange={e => setCfg(c => ({...c, rfqDeadlineDays: parseInt(e.target.value) || 14}))} disabled={!isAdmin} className="w-24" min={1} max={90} />
+            </Row>
+          </CardContent>
+        </Card>
+
+        {isAdmin && <SaveBar onSave={() => mut.mutate({ settings: { workflowSettings: cfg } } as any)} pending={mut.isPending} />}
+      </div>
+    </div>
+  );
+}
+
+// ─── Budgets ──────────────────────────────────────────────────────────────────
+function BudgetsSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const defaults = { enforceBudgetCheck: true, warningThresholdPercent: 80, criticalThresholdPercent: 95, allowOverspend: false, requireBudgetCode: false, carryForwardUnspent: false };
+  const [cfg, setCfg] = useState(defaults);
+
+  useEffect(() => {
+    const b = (org as any)?.settings?.budgetPolicies;
+    if (b) setCfg({ ...defaults, ...b });
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Politiques budgétaires mises à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const Row = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+    <div className="flex items-start justify-between py-4 border-b last:border-0">
+      <div className="flex-1 mr-8"><p className="font-medium text-sm">{label}</p>{desc && <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>}</div>
+      <div className="shrink-0">{children}</div>
+    </div>
+  );
+
+  return (
+    <div>
+      <SectionHeader icon={DollarSign} title="Politiques budgétaires" desc="Contrôle des dépenses et gestion des dépassements" />
+      <div className="p-6 max-w-3xl space-y-6">
+        <Card>
+          <CardHeader><CardTitle>Contrôle budgétaire</CardTitle></CardHeader>
+          <CardContent className="divide-y">
+            <Row label="Vérification budgétaire obligatoire" desc="Bloquer les demandes qui dépassent le budget disponible">
+              <Switch checked={cfg.enforceBudgetCheck} onCheckedChange={v => setCfg(c => ({...c, enforceBudgetCheck: v}))} disabled={!isAdmin} />
+            </Row>
+            <Row label="Autoriser les dépassements avec justification" desc="Permettre les dépassements si une raison est fournie">
+              <Switch checked={cfg.allowOverspend} onCheckedChange={v => setCfg(c => ({...c, allowOverspend: v}))} disabled={!isAdmin} />
+            </Row>
+            <Row label="Code budget obligatoire" desc="Exiger un centre de coût sur chaque demande d'achat">
+              <Switch checked={cfg.requireBudgetCode} onCheckedChange={v => setCfg(c => ({...c, requireBudgetCode: v}))} disabled={!isAdmin} />
+            </Row>
+            <Row label="Reporter le solde non consommé" desc="Transférer automatiquement les budgets non utilisés à la période suivante">
+              <Switch checked={cfg.carryForwardUnspent} onCheckedChange={v => setCfg(c => ({...c, carryForwardUnspent: v}))} disabled={!isAdmin} />
+            </Row>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Seuils d'alerte</CardTitle><CardDescription>Quand déclencher les notifications de dépassement</CardDescription></CardHeader>
+          <CardContent className="space-y-6">
+            {[
+              { key: "warningThresholdPercent" as const, label: "Seuil d'avertissement (%)", desc: "Alerte orange dès que ce pourcentage du budget est consommé", color: "text-orange-600" },
+              { key: "criticalThresholdPercent" as const, label: "Seuil critique (%)", desc: "Alerte rouge critique dès que ce pourcentage du budget est consommé", color: "text-red-600" },
+            ].map(({ key, label, desc, color }) => (
+              <div key={key} className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div><p className="font-medium text-sm">{label}</p><p className="text-xs text-muted-foreground">{desc}</p></div>
+                  <span className={`text-lg font-bold ${color}`}>{cfg[key]}%</span>
+                </div>
+                <input type="range" min="50" max="100" step="5" value={cfg[key]}
+                  onChange={e => setCfg(c => ({...c, [key]: parseInt(e.target.value)}))}
+                  disabled={!isAdmin} className="w-full accent-primary" />
+                <div className="flex justify-between text-xs text-muted-foreground"><span>50%</span><span>75%</span><span>100%</span></div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {isAdmin && <SaveBar onSave={() => mut.mutate({ settings: { budgetPolicies: cfg } } as any)} pending={mut.isPending} />}
+      </div>
+    </div>
+  );
+}
+
+// ─── Tolerance ────────────────────────────────────────────────────────────────
+function ToleranceSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const [cfg, setCfg] = useState({ priceVariance: 5, quantityVariance: 2, amountVariance: 5, autoApproveBelow: 0 });
+
+  useEffect(() => {
+    const t = (org as any)?.settings?.toleranceRules;
+    if (t) setCfg(c => ({ ...c, ...t }));
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Tolérances mises à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const tolerances = [
+    { key: "priceVariance" as const, label: "Tolérance prix", desc: "Écart acceptable entre le prix unitaire du BC et de la facture" },
+    { key: "quantityVariance" as const, label: "Tolérance quantité", desc: "Écart acceptable entre la quantité commandée et reçue" },
+    { key: "amountVariance" as const, label: "Tolérance montant total", desc: "Écart acceptable entre le total BC et le total facture" },
+  ];
+
+  return (
+    <div>
+      <SectionHeader icon={Sliders} title="Tolérances de rapprochement" desc="Seuils pour le rapprochement à 3 voies (BC ↔ Réception ↔ Facture)" />
+      <div className="p-6 max-w-3xl space-y-6">
+        <InfoBox>Ces tolérances définissent les écarts acceptables lors du rapprochement 3 voies. Au-delà de ces seuils, une validation manuelle sera requise.</InfoBox>
+
+        <Card>
+          <CardHeader><CardTitle>Seuils de tolérance</CardTitle></CardHeader>
+          <CardContent className="space-y-6">
+            {tolerances.map(({ key, label, desc }) => (
+              <div key={key} className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div><p className="font-medium text-sm">{label}</p><p className="text-xs text-muted-foreground">{desc}</p></div>
+                  <div className="flex items-center gap-2">
+                    <Input type="number" value={cfg[key]} onChange={e => setCfg(c => ({...c, [key]: parseFloat(e.target.value) || 0}))} disabled={!isAdmin} className="w-20 text-center" min={0} max={100} step={0.5} />
+                    <span className="text-sm text-muted-foreground">%</span>
+                  </div>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(cfg[key], 100)}%` }} />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Auto-approbation facture</CardTitle><CardDescription>Approuver automatiquement les factures sous ce montant si le rapprochement réussit</CardDescription></CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <Input type="number" value={cfg.autoApproveBelow} onChange={e => setCfg(c => ({...c, autoApproveBelow: parseFloat(e.target.value) || 0}))} disabled={!isAdmin} className="w-48" placeholder="0 = désactivé" />
+              <span className="text-sm text-muted-foreground">XOF (0 = désactivé)</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {isAdmin && <SaveBar onSave={() => mut.mutate({ settings: { toleranceRules: cfg } } as any)} pending={mut.isPending} />}
+      </div>
+    </div>
+  );
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+function NotificationsSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const defaultEvents = { newPurchaseRequest: true, approvalRequired: true, approvalApproved: true, approvalRejected: true, approvalOverdue: true, budgetAlert: true, invoiceReceived: true, invoiceOverdue: true, poIssued: false, contractExpiring: true, lowStock: true, rfqResponse: true };
+  const [cfg, setCfg] = useState({ emailEnabled: true, inAppEnabled: true, events: defaultEvents });
+
+  useEffect(() => {
+    const n = (org as any)?.settings?.notificationSettings;
+    if (n) setCfg(c => ({ ...c, ...n, events: { ...defaultEvents, ...(n.events || {}) } }));
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Paramètres de notification mis à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const EVENT_LABELS: Record<keyof typeof defaultEvents, { label: string; category: string }> = {
+    newPurchaseRequest:  { label: "Nouvelle demande d'achat créée",           category: "Achats" },
+    approvalRequired:    { label: "Approbation requise (votre action)",        category: "Approbations" },
+    approvalApproved:    { label: "Demande approuvée",                         category: "Approbations" },
+    approvalRejected:    { label: "Demande rejetée",                           category: "Approbations" },
+    approvalOverdue:     { label: "Approbation en retard (SLA dépassé)",       category: "Approbations" },
+    budgetAlert:         { label: "Budget consommé à plus de 80%",             category: "Budgets" },
+    invoiceReceived:     { label: "Nouvelle facture reçue",                    category: "Factures" },
+    invoiceOverdue:      { label: "Facture en retard de paiement",             category: "Factures" },
+    poIssued:            { label: "Bon de commande émis",                      category: "Commandes" },
+    contractExpiring:    { label: "Contrat fournisseur expirant (30 jours)",   category: "Fournisseurs" },
+    lowStock:            { label: "Article en rupture de stock imminente",     category: "Inventaire" },
+    rfqResponse:         { label: "Nouvelle réponse à un appel d'offres",      category: "RFQ" },
+  };
+
+  const categories = [...new Set(Object.values(EVENT_LABELS).map(e => e.category))];
+
+  return (
+    <div>
+      <SectionHeader icon={Bell} title="Notifications" desc="Configurer les alertes in-app par type d'événement" />
+      <div className="p-6 max-w-3xl space-y-6">
+        <Card>
+          <CardHeader><CardTitle>Canaux de notification</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              { key: "inAppEnabled" as const, label: "Notifications in-app", desc: "Cloche en haut à droite de l'interface" },
+              { key: "emailEnabled" as const, label: "Notifications par email", desc: "Emails envoyés aux adresses utilisateurs (nécessite configuration SMTP)" },
+            ].map(({ key, label, desc }) => (
+              <div key={key} className="flex items-center justify-between">
+                <div><p className="font-medium text-sm">{label}</p><p className="text-xs text-muted-foreground">{desc}</p></div>
+                <Switch checked={cfg[key]} onCheckedChange={v => setCfg(c => ({...c, [key]: v}))} disabled={!isAdmin} />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {categories.map(cat => (
+          <Card key={cat}>
+            <CardHeader><CardTitle className="text-base">{cat}</CardTitle></CardHeader>
+            <CardContent className="divide-y">
+              {Object.entries(EVENT_LABELS).filter(([, v]) => v.category === cat).map(([key, { label }]) => (
+                <div key={key} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <p className="text-sm">{label}</p>
+                  <Switch
+                    checked={cfg.events[key as keyof typeof defaultEvents]}
+                    onCheckedChange={v => setCfg(c => ({...c, events: {...c.events, [key]: v}}))}
+                    disabled={!isAdmin}
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+
+        {isAdmin && <SaveBar onSave={() => mut.mutate({ settings: { notificationSettings: cfg } } as any)} pending={mut.isPending} />}
+      </div>
+    </div>
+  );
+}
+
+// ─── Numbering ────────────────────────────────────────────────────────────────
+function NumberingSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const [cfg, setCfg] = useState({ prPrefix: "DA", poPrefix: "BC", invoicePrefix: "FAC", rfqPrefix: "AO" });
+
+  useEffect(() => {
+    const n = (org as any)?.settings?.numberingSequences;
+    if (n) setCfg(c => ({ ...c, ...n }));
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Séquences de numérotation mises à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const fields = [
+    { key: "prPrefix" as const, label: "Demandes d'achat", example: `${cfg.prPrefix}-20260001`, desc: "Préfixe des numéros de demandes (ex: DA, PR, REQ)" },
+    { key: "poPrefix" as const, label: "Bons de commande", example: `${cfg.poPrefix}-20260001`, desc: "Préfixe des numéros de bons de commande" },
+    { key: "invoicePrefix" as const, label: "Factures", example: `${cfg.invoicePrefix}-20260001`, desc: "Préfixe des numéros de factures" },
+    { key: "rfqPrefix" as const, label: "Appels d'offres", example: `${cfg.rfqPrefix}-20260001`, desc: "Préfixe des numéros d'appels d'offres" },
+  ];
+
+  return (
+    <div>
+      <SectionHeader icon={Hash} title="Numérotation" desc="Préfixes des séquences de numéros de documents" />
+      <div className="p-6 max-w-2xl space-y-6">
+        <InfoBox>Les numéros de documents sont générés automatiquement. Modifiez les préfixes pour correspondre à vos conventions internes.</InfoBox>
+        <Card>
+          <CardContent className="pt-6 space-y-6">
+            {fields.map(({ key, label, example, desc }) => (
+              <div key={key} className="flex items-start gap-6">
+                <div className="flex-1 space-y-1">
+                  <Label>{label}</Label>
+                  <p className="text-xs text-muted-foreground">{desc}</p>
+                  <p className="text-xs font-mono bg-muted rounded px-2 py-1 mt-2 inline-block">Exemple: {example}</p>
+                </div>
+                <Input value={cfg[key]} onChange={e => setCfg(c => ({...c, [key]: e.target.value.toUpperCase()}))} disabled={!isAdmin} className="w-28 font-mono text-center" maxLength={6} />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+        {isAdmin && <SaveBar onSave={() => mut.mutate({ settings: { numberingSequences: cfg } } as any)} pending={mut.isPending} />}
+      </div>
+    </div>
+  );
+}
+
+// ─── Localization ─────────────────────────────────────────────────────────────
+function LocalizationSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const [cfg, setCfg] = useState({ language: "fr", dateFormat: "DD/MM/YYYY", numberFormat: "fr-FR", timezone: "Africa/Porto-Novo" });
+
+  useEffect(() => {
+    const l = (org as any)?.settings?.localization;
+    if (l) setCfg(c => ({ ...c, ...l }));
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Localisation mise à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const TIMEZONES = ["Africa/Porto-Novo", "Africa/Abidjan", "Africa/Dakar", "Africa/Lagos", "Africa/Accra", "Africa/Douala", "Africa/Nairobi", "Europe/Paris", "UTC"];
+
+  return (
+    <div>
+      <SectionHeader icon={Globe} title="Localisation" desc="Langue, format de dates et fuseau horaire" />
+      <div className="p-6 max-w-2xl space-y-6">
+        <Card>
+          <CardContent className="pt-6 space-y-5">
+            <div className="space-y-2"><Label>Langue de l'interface</Label>
+              <Select value={cfg.language} onValueChange={v => setCfg(c => ({...c, language: v}))} disabled={!isAdmin}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                  <SelectItem value="en">🇬🇧 English</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Format de date</Label>
+              <Select value={cfg.dateFormat} onValueChange={v => setCfg(c => ({...c, dateFormat: v}))} disabled={!isAdmin}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DD/MM/YYYY">DD/MM/YYYY (17/03/2026)</SelectItem>
+                  <SelectItem value="MM/DD/YYYY">MM/DD/YYYY (03/17/2026)</SelectItem>
+                  <SelectItem value="YYYY-MM-DD">YYYY-MM-DD (2026-03-17)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Format des nombres</Label>
+              <Select value={cfg.numberFormat} onValueChange={v => setCfg(c => ({...c, numberFormat: v}))} disabled={!isAdmin}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fr-FR">Français — 1 500 000,50 XOF</SelectItem>
+                  <SelectItem value="en-US">English — 1,500,000.50 XOF</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2"><Label>Fuseau horaire</Label>
+              <Select value={cfg.timezone} onValueChange={v => setCfg(c => ({...c, timezone: v}))} disabled={!isAdmin}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{TIMEZONES.map(tz => <SelectItem key={tz} value={tz}>{tz}</SelectItem>)}</SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Utilisé pour les notifications et l'affichage des dates</p>
+            </div>
+          </CardContent>
+        </Card>
+        {isAdmin && <SaveBar onSave={() => mut.mutate({ settings: { localization: cfg } } as any)} pending={mut.isPending} />}
+      </div>
+    </div>
+  );
+}
+
+// ─── Security / Audit ─────────────────────────────────────────────────────────
+function SecuritySection() {
+  const { data: logs, isLoading } = trpc.settings.getAuditLogs.useQuery({ limit: 50 });
+  const [search, setSearch] = useState("");
+
+  const filtered = logs?.filter((l: any) => !search || l.action?.includes(search.toLowerCase()) || l.entityType?.includes(search.toLowerCase()) || l.actorName?.toLowerCase().includes(search.toLowerCase()));
+
+  const ACTION_COLORS: Record<string, string> = { created: "bg-green-100 text-green-800", updated: "bg-blue-100 text-blue-800", deleted: "bg-red-100 text-red-800", approved: "bg-emerald-100 text-emerald-800", rejected: "bg-orange-100 text-orange-800" };
+
+  return (
+    <div>
+      <SectionHeader icon={Gear} title="Sécurité & Audit" desc="Journal de toutes les actions réalisées dans le système" />
+      <div className="p-6 max-w-5xl">
+        <div className="mb-4 max-w-sm">
+          <Input placeholder="Filtrer par action, entité, utilisateur…" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <Card>
+          <CardContent className="p-0">
+            {isLoading ? <div className="p-8 text-center text-muted-foreground">Chargement...</div> : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Utilisateur</TableHead>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Entité</TableHead>
+                    <TableHead>Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered?.map((log: any) => (
+                    <TableRow key={log.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">{log.actorName || `#${log.actorId}`}</TableCell>
+                      <TableCell><span className={`px-2 py-0.5 rounded text-xs font-medium ${ACTION_COLORS[log.action] || "bg-gray-100 text-gray-800"}`}>{log.action}</span></TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{log.entityType} #{log.entityId ?? "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{log.createdAt ? new Date(log.createdAt).toLocaleString("fr-FR") : "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                  {!filtered?.length && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucun journal trouvé</TableCell></TableRow>}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ─── Lookups (cost centers, categories, GL accounts, projects) ─────────────
+function LookupsSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: types = [], isLoading: typesLoading } = trpc.settings.getLookupTypes.useQuery();
+  const utils = trpc.useUtils();
+  const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
+  const [newValue, setNewValue] = useState({ code: "", label: "" });
+  const [addOpen, setAddOpen] = useState(false);
+
+  const { data: values = [], isLoading: valLoading } = trpc.settings.getLookupValues.useQuery(
+    { lookupTypeId: selectedTypeId! }, { enabled: !!selectedTypeId }
+  );
+
+  const createMut = trpc.settings.createLookupValue.useMutation({
+    onSuccess: () => { toast.success("Valeur ajoutée"); utils.settings.getLookupValues.invalidate(); setAddOpen(false); setNewValue({ code: "", label: "" }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const updateMut = trpc.settings.updateLookupValue.useMutation({
+    onSuccess: () => { toast.success("Valeur mise à jour"); utils.settings.getLookupValues.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const TYPE_LABELS: Record<string, string> = {
+    ExpenseCategory: "Catégories de dépenses",
+    CostCenter: "Centres de coût",
+    GLAccount: "Comptes GL",
+    BillingString: "Codes de facturation",
+    Project: "Projets",
+  };
+
+  return (
+    <div>
+      <SectionHeader icon={Hash} title="Valeurs de référence" desc="Gérer les catégories, centres de coût, comptes GL et projets utilisés dans les demandes d'achat" />
+      <div className="p-6 max-w-4xl">
+        <InfoBox>Ces valeurs alimentent les listes déroulantes dans les formulaires de demandes d'achat, bons de commande et factures. Chaque modification est immédiatement disponible aux utilisateurs.</InfoBox>
+
+        <div className="mt-6 grid gap-6 md:grid-cols-3">
+          {/* Type selector */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Types</p>
+            {typesLoading ? <div className="text-muted-foreground text-sm">Chargement...</div> :
+              types.map((t: any) => (
+                <button key={t.id} onClick={() => setSelectedTypeId(t.id)}
+                  className={cn("w-full text-left px-3 py-2.5 rounded-lg text-sm border transition-all",
+                    selectedTypeId === t.id ? "border-primary bg-primary/5 font-medium" : "border-border hover:bg-muted/50")}>
+                  <p className="font-medium">{TYPE_LABELS[t.name] || t.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t.description || ""}</p>
+                </button>
+              ))
+            }
+          </div>
+
+          {/* Values list */}
+          <div className="md:col-span-2">
+            {!selectedTypeId ? (
+              <div className="flex items-center justify-center h-48 text-muted-foreground text-sm border rounded-lg border-dashed">
+                Sélectionnez un type à gauche
+              </div>
+            ) : (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <CardTitle className="text-base">{TYPE_LABELS[types.find((t: any) => t.id === selectedTypeId)?.name] || "Valeurs"}</CardTitle>
+                  {isAdmin && (
+                    <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Ajouter</Button>
+                  )}
+                </CardHeader>
+                <CardContent className="p-0">
+                  {valLoading ? <div className="p-6 text-center text-muted-foreground">Chargement...</div> : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Code</TableHead>
+                          <TableHead>Libellé</TableHead>
+                          <TableHead>Statut</TableHead>
+                          {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {values.map((v: any) => (
+                          <TableRow key={v.id} className="hover:bg-muted/50">
+                            <TableCell className="font-mono text-sm">{v.code}</TableCell>
+                            <TableCell className="font-medium">{v.label}</TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-0.5 rounded-full text-xs border ${v.isActive ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}`}>
+                                {v.isActive ? "Actif" : "Inactif"}
+                              </span>
+                            </TableCell>
+                            {isAdmin && (
+                              <TableCell className="text-right">
+                                <Button size="sm" variant="ghost"
+                                  onClick={() => updateMut.mutate({ id: v.id, isActive: !v.isActive })}>
+                                  {v.isActive ? "Désactiver" : "Activer"}
+                                </Button>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))}
+                        {values.length === 0 && (
+                          <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Aucune valeur définie</TableCell></TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Nouvelle valeur</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Code *</Label><Input value={newValue.code} onChange={e => setNewValue(v => ({...v, code: e.target.value.toUpperCase()}))} placeholder="CC001" /></div>
+                <div className="space-y-2"><Label>Libellé *</Label><Input value={newValue.label} onChange={e => setNewValue(v => ({...v, label: e.target.value}))} placeholder="Direction Générale" /></div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
+              <Button disabled={!newValue.code || !newValue.label || createMut.isPending}
+                onClick={() => createMut.mutate({ lookupTypeId: selectedTypeId!, ...newValue })}>
+                {createMut.isPending ? "Ajout..." : "Ajouter"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}
+
+// ─── Approval steps builder ───────────────────────────────────────────────────
+// (Extends ApprovalsSection - integrated below as a sub-panel)
+// Updated ApprovalsSection with steps management is in the main component above.
+// The steps panel opens inline when a policy is selected.
+
+// ─── Payment Terms ────────────────────────────────────────────────────────────
+function PaymentTermsSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const defaultTerms = [
+    { code: "IMMEDIATE", label: "Paiement immédiat", days: 0 },
+    { code: "NET15", label: "Net 15 jours", days: 15 },
+    { code: "NET30", label: "Net 30 jours", days: 30 },
+    { code: "NET45", label: "Net 45 jours", days: 45 },
+    { code: "NET60", label: "Net 60 jours", days: 60 },
+  ];
+  const [terms, setTerms] = useState(defaultTerms);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newTerm, setNewTerm] = useState({ code: "", label: "", days: 30, discountPercent: "", discountDays: "" });
+
+  useEffect(() => {
+    const t = (org as any)?.settings?.paymentTerms;
+    if (t?.length) setTerms(t);
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Conditions de paiement mises à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const save = (newTerms: typeof terms) => {
+    mut.mutate({ settings: { paymentTerms: newTerms } } as any);
+  };
+
+  return (
+    <div>
+      <SectionHeader icon={DollarSign} title="Conditions de paiement" desc="Termes de paiement disponibles pour les bons de commande et profils fournisseurs" />
+      <div className="p-6 max-w-3xl">
+        {isAdmin && (
+          <div className="flex justify-end mb-4">
+            <Button onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Ajouter</Button>
+          </div>
+        )}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Libellé</TableHead>
+                  <TableHead className="text-right">Délai (jours)</TableHead>
+                  <TableHead>Escompte</TableHead>
+                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {terms.map((t, i) => (
+                  <TableRow key={t.code} className="hover:bg-muted/50">
+                    <TableCell className="font-mono text-sm">{t.code}</TableCell>
+                    <TableCell className="font-medium">{t.label}</TableCell>
+                    <TableCell className="text-right">{t.days}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {(t as any).discountPercent ? `${(t as any).discountPercent}% si payé dans ${(t as any).discountDays}j` : "—"}
+                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="ghost" className="text-destructive"
+                          onClick={() => { const updated = terms.filter((_, idx) => idx !== i); setTerms(updated); save(updated); }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Nouvelle condition de paiement</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Code *</Label><Input value={newTerm.code} onChange={e => setNewTerm(t => ({...t, code: e.target.value.toUpperCase()}))} placeholder="NET30" /></div>
+                <div className="space-y-2"><Label>Délai (jours) *</Label><Input type="number" value={newTerm.days} onChange={e => setNewTerm(t => ({...t, days: parseInt(e.target.value) || 0}))} /></div>
+              </div>
+              <div className="space-y-2"><Label>Libellé *</Label><Input value={newTerm.label} onChange={e => setNewTerm(t => ({...t, label: e.target.value}))} placeholder="Net 30 jours" /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Escompte (%)</Label><Input type="number" value={newTerm.discountPercent} onChange={e => setNewTerm(t => ({...t, discountPercent: e.target.value}))} placeholder="2" /></div>
+                <div className="space-y-2"><Label>Si payé dans (jours)</Label><Input type="number" value={newTerm.discountDays} onChange={e => setNewTerm(t => ({...t, discountDays: e.target.value}))} placeholder="10" /></div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
+              <Button disabled={!newTerm.code || !newTerm.label || mut.isPending}
+                onClick={() => {
+                  const updated = [...terms, { code: newTerm.code, label: newTerm.label, days: newTerm.days, ...(newTerm.discountPercent ? { discountPercent: parseFloat(newTerm.discountPercent), discountDays: parseInt(newTerm.discountDays) || 0 } : {}) }];
+                  setTerms(updated); save(updated); setAddOpen(false);
+                }}>Ajouter</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}
+
+// ─── Tax Rates ────────────────────────────────────────────────────────────────
+function TaxRatesSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const defaultRates = [
+    { code: "EXONERE", label: "Exonéré (0%)", rate: 0, isDefault: false },
+    { code: "TVA18", label: "TVA 18%", rate: 18, isDefault: true },
+    { code: "RSFD", label: "Retenue à la source 5%", rate: 5, isDefault: false },
+  ];
+  const [rates, setRates] = useState(defaultRates);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newRate, setNewRate] = useState({ code: "", label: "", rate: 18, isDefault: false });
+
+  useEffect(() => {
+    const r = (org as any)?.settings?.taxRates;
+    if (r?.length) setRates(r);
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Taux de taxes mis à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const save = (newRates: typeof rates) => mut.mutate({ settings: { taxRates: newRates } } as any);
+
+  return (
+    <div>
+      <SectionHeader icon={DollarSign} title="Taux de taxes" desc="TVA, retenues à la source et autres taxes applicables sur les achats" />
+      <div className="p-6 max-w-3xl">
+        <InfoBox>Bénin: TVA 18% (standard). Côte d'Ivoire: TVA 18%. Ces taux sont appliqués automatiquement lors de la création de factures selon la configuration du fournisseur.</InfoBox>
+        {isAdmin && <div className="flex justify-end mt-4 mb-4"><Button onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Ajouter un taux</Button></div>}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Code</TableHead><TableHead>Libellé</TableHead>
+                <TableHead className="text-right">Taux (%)</TableHead><TableHead>Par défaut</TableHead>
+                {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+              </TableRow></TableHeader>
+              <TableBody>
+                {rates.map((r, i) => (
+                  <TableRow key={r.code} className="hover:bg-muted/50">
+                    <TableCell className="font-mono text-sm">{r.code}</TableCell>
+                    <TableCell className="font-medium">{r.label}</TableCell>
+                    <TableCell className="text-right font-semibold">{r.rate}%</TableCell>
+                    <TableCell>{r.isDefault && <Badge className="bg-blue-100 text-blue-800">Défaut</Badge>}</TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-right gap-2 flex justify-end">
+                        {!r.isDefault && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs"
+                            onClick={() => { const u = rates.map((x, j) => ({...x, isDefault: j === i})); setRates(u); save(u); }}>
+                            Définir par défaut
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" className="text-destructive"
+                          onClick={() => { const u = rates.filter((_, j) => j !== i); setRates(u); save(u); }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Nouveau taux de taxe</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Code *</Label><Input value={newRate.code} onChange={e => setNewRate(r => ({...r, code: e.target.value.toUpperCase()}))} placeholder="TVA18" /></div>
+                <div className="space-y-2"><Label>Taux (%) *</Label><Input type="number" value={newRate.rate} onChange={e => setNewRate(r => ({...r, rate: parseFloat(e.target.value) || 0}))} min={0} max={100} step={0.5} /></div>
+              </div>
+              <div className="space-y-2"><Label>Libellé *</Label><Input value={newRate.label} onChange={e => setNewRate(r => ({...r, label: e.target.value}))} placeholder="TVA 18%" /></div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
+              <Button disabled={!newRate.code || !newRate.label || mut.isPending}
+                onClick={() => { const u = [...rates, {...newRate}]; setRates(u); save(u); setAddOpen(false); }}>Ajouter</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}
+
+// ─── Exchange Rates ───────────────────────────────────────────────────────────
+function ExchangeRatesSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const CURRENCIES = ["EUR", "USD", "GBP", "GHS", "NGN", "MAD", "TND", "ZAR", "CNY"];
+  const [rates, setRates] = useState<Record<string, string>>({ EUR: "655.957", USD: "605.00" });
+
+  useEffect(() => {
+    const r = (org as any)?.settings?.exchangeRates;
+    if (r) setRates(Object.fromEntries(Object.entries(r).map(([k, v]) => [k, String(v)])));
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Taux de change mis à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const baseCurrency = org?.baseCurrency ?? "XOF";
+
+  return (
+    <div>
+      <SectionHeader icon={Globe} title="Taux de change" desc={`Taux de change vs devise principale (${baseCurrency})`} />
+      <div className="p-6 max-w-2xl">
+        <InfoBox>Ces taux sont utilisés pour la conversion des montants dans les rapports et analyses. Mettez-les à jour régulièrement pour des données précises. 1 EUR = {rates["EUR"] || "655.957"} {baseCurrency}.</InfoBox>
+        <Card className="mt-6">
+          <CardContent className="pt-6 space-y-4">
+            {CURRENCIES.filter(c => c !== baseCurrency).map(currency => (
+              <div key={currency} className="flex items-center gap-4">
+                <div className="w-16 font-semibold text-sm">{currency}</div>
+                <div className="flex-1 flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">1 {currency} =</span>
+                  <Input type="number" value={rates[currency] || ""} onChange={e => setRates(r => ({...r, [currency]: e.target.value}))}
+                    disabled={!isAdmin} className="w-36" step="0.001" min={0} placeholder="0.000" />
+                  <span className="text-sm text-muted-foreground">{baseCurrency}</span>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+        {isAdmin && (
+          <div className="mt-6 flex justify-end">
+            <Button disabled={mut.isPending} onClick={() => mut.mutate({ settings: { exchangeRates: Object.fromEntries(Object.entries(rates).map(([k, v]) => [k, parseFloat(v) || 0])) } } as any)}>
+              {mut.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enregistrement...</> : <><Save className="mr-2 h-4 w-4" />Enregistrer</>}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Custom Fields ────────────────────────────────────────────────────────────
+function CustomFieldsSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: org } = trpc.settings.getOrganization.useQuery();
+  const utils = trpc.useUtils();
+  const [fields, setFields] = useState<any[]>([]);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newField, setNewField] = useState({ label: "", entity: "purchaseRequest", type: "text", required: false, options: "" });
+  const [filterEntity, setFilterEntity] = useState("all");
+
+  useEffect(() => {
+    const cf = (org as any)?.settings?.customFields;
+    if (cf) setFields(cf);
+  }, [org]);
+
+  const mut = trpc.settings.updateOrganization.useMutation({
+    onSuccess: () => { toast.success("Champs personnalisés mis à jour"); utils.settings.getOrganization.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const save = (newFields: any[]) => mut.mutate({ settings: { customFields: newFields } } as any);
+
+  const ENTITY_LABELS: Record<string, string> = { purchaseRequest: "Demande d'achat", purchaseOrder: "Bon de commande", invoice: "Facture", vendor: "Fournisseur" };
+  const TYPE_LABELS: Record<string, string> = { text: "Texte", number: "Nombre", date: "Date", select: "Liste déroulante", boolean: "Case à cocher" };
+
+  const displayed = filterEntity === "all" ? fields : fields.filter(f => f.entity === filterEntity);
+
+  return (
+    <div>
+      <SectionHeader icon={Package} title="Champs personnalisés" desc="Ajouter des champs métier sur les demandes, commandes, factures et fournisseurs" />
+      <div className="p-6 max-w-4xl">
+        <InfoBox>Les champs personnalisés apparaissent dans les formulaires et rapports. Les champs obligatoires doivent être remplis avant soumission.</InfoBox>
+
+        <div className="flex items-center justify-between mt-6 mb-4">
+          <div className="flex gap-2">
+            {["all", "purchaseRequest", "purchaseOrder", "invoice", "vendor"].map(e => (
+              <button key={e} onClick={() => setFilterEntity(e)}
+                className={cn("px-3 py-1.5 rounded-lg text-sm border transition-all",
+                  filterEntity === e ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted/50")}>
+                {e === "all" ? "Tous" : ENTITY_LABELS[e]}
+              </button>
+            ))}
+          </div>
+          {isAdmin && <Button onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Nouveau champ</Button>}
+        </div>
+
+        <Card>
+          <CardContent className="p-0">
+            {displayed.length === 0 ? (
+              <div className="p-10 text-center text-muted-foreground">
+                <Package className="mx-auto h-10 w-10 mb-3 opacity-30" />
+                <p>Aucun champ personnalisé</p>
+                {isAdmin && <Button className="mt-4" variant="outline" onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Créer le premier champ</Button>}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Libellé</TableHead><TableHead>Entité</TableHead><TableHead>Type</TableHead>
+                  <TableHead>Obligatoire</TableHead><TableHead>Statut</TableHead>
+                  {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+                </TableRow></TableHeader>
+                <TableBody>
+                  {displayed.map((f: any) => (
+                    <TableRow key={f.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">{f.label}</TableCell>
+                      <TableCell><span className="text-xs bg-muted px-2 py-0.5 rounded">{ENTITY_LABELS[f.entity] || f.entity}</span></TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{TYPE_LABELS[f.type] || f.type}{f.type === "select" && f.options?.length ? ` (${f.options.length} options)` : ""}</TableCell>
+                      <TableCell>{f.required ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <span className="text-muted-foreground text-sm">—</span>}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-0.5 rounded-full text-xs border ${f.isActive ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}`}>
+                          {f.isActive ? "Actif" : "Inactif"}
+                        </span>
+                      </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right flex justify-end gap-1">
+                          <Button size="sm" variant="outline" className="h-7 text-xs"
+                            onClick={() => { const u = fields.map(x => x.id === f.id ? {...x, isActive: !x.isActive} : x); setFields(u); save(u); }}>
+                            {f.isActive ? "Désactiver" : "Activer"}
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-destructive h-7 w-7 p-0"
+                            onClick={() => { const u = fields.filter(x => x.id !== f.id); setFields(u); save(u); }}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>Nouveau champ personnalisé</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2"><Label>Libellé *</Label><Input value={newField.label} onChange={e => setNewField(f => ({...f, label: e.target.value}))} placeholder="Ex: Numéro de projet interne" /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Entité</Label>
+                  <Select value={newField.entity} onValueChange={v => setNewField(f => ({...f, entity: v}))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(ENTITY_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2"><Label>Type</Label>
+                  <Select value={newField.type} onValueChange={v => setNewField(f => ({...f, type: v}))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(TYPE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {newField.type === "select" && (
+                <div className="space-y-2"><Label>Options (une par ligne)</Label><textarea value={newField.options} onChange={e => setNewField(f => ({...f, options: e.target.value}))} className="w-full border rounded-md p-2 text-sm h-24 resize-none" placeholder="Option 1&#10;Option 2&#10;Option 3" /></div>
+              )}
+              <div className="flex items-center justify-between">
+                <Label>Champ obligatoire</Label>
+                <Switch checked={newField.required} onCheckedChange={v => setNewField(f => ({...f, required: v}))} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
+              <Button disabled={!newField.label || mut.isPending}
+                onClick={() => {
+                  const id = `cf_${Date.now()}`;
+                  const options = newField.type === "select" ? newField.options.split('\n').map(s => s.trim()).filter(Boolean) : undefined;
+                  const u = [...fields, { id, label: newField.label, entity: newField.entity, type: newField.type, required: newField.required, options, isActive: true }];
+                  setFields(u); save(u); setAddOpen(false);
+                  setNewField({ label: "", entity: "purchaseRequest", type: "text", required: false, options: "" });
+                }}>Créer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}
