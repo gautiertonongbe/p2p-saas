@@ -290,6 +290,7 @@ export default function InvoicesList() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
