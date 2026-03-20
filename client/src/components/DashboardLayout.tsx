@@ -195,25 +195,18 @@ function DashboardLayoutContent({
                     <img
                       src={(org as any).logoUrl}
                       alt={(org as any).legalName || "Logo"}
-                      className="h-7 max-w-[120px] object-contain"
-                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      className="h-8 max-w-[140px] object-contain"
+                      onError={e => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                        (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style");
+                      }}
                     />
-                  ) : (
-                    <span className="font-semibold tracking-tight truncate text-sm">
-                      {(org as any)?.legalName || (org as any)?.tradeName || t('navigation.dashboard')}
-                    </span>
-                  )}
+                  ) : null}
+                  <span className={`font-semibold tracking-tight truncate text-sm ${(org as any)?.logoUrl ? "hidden" : ""}`}>
+                    {(org as any)?.legalName || (org as any)?.tradeName || t('navigation.dashboard')}
+                  </span>
                 </div>
-              ) : (
-                (org as any)?.logoUrl ? (
-                  <img
-                    src={(org as any).logoUrl}
-                    alt="Logo"
-                    className="h-6 w-6 object-contain rounded"
-                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                ) : null
-              )}
+              ) : null}
             </div>
           </SidebarHeader>
 

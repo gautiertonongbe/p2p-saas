@@ -287,13 +287,13 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
             <div className="space-y-3">
               <Label className="text-sm font-medium">Logo de l'organisation</Label>
               <div className="flex items-center gap-4">
-                <div className="h-16 w-40 border-2 border-dashed rounded-xl flex items-center justify-center bg-muted/30 overflow-hidden">
+                <div className="h-20 w-52 border-2 border-dashed rounded-xl flex items-center justify-center bg-white overflow-hidden shadow-sm">
                   {form.logoUrl ? (
-                    <img src={form.logoUrl} alt="Logo" className="max-h-14 max-w-36 object-contain" />
+                    <img src={form.logoUrl} alt="Logo" className="max-h-16 max-w-48 object-contain p-2" />
                   ) : (
                     <div className="text-center">
-                      <Building2 className="h-6 w-6 text-muted-foreground/40 mx-auto" />
-                      <p className="text-xs text-muted-foreground mt-1">Aucun logo</p>
+                      <Building2 className="h-8 w-8 text-muted-foreground/30 mx-auto" />
+                      <p className="text-xs text-muted-foreground mt-1.5">Aucun logo chargé</p>
                     </div>
                   )}
                 </div>
