@@ -4,6 +4,9 @@ import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getSessionCookieOptions } from "../_core/cookies";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { sdk } from "../_core/sdk";
 
 const ADMIN_COOKIE = "p2p_admin_openid";
 
@@ -20,20 +23,13 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
   return result;
 }
 
-async function createSession(res: any, openId: string, name: string) {
-  // Use the same cookie name as the main auth system
-  const { COOKIE_NAME, ONE_YEAR_MS } = await import("@shared/const");
-  const { sdk } = await import("../_core/sdk");
+async function setSession(req: any, res: any, openId: string, name: string) {
+  const cookieOptions = getSessionCookieOptions(req);
   const token = await sdk.createSessionToken(openId, {
     name,
     expiresInMs: ONE_YEAR_MS,
   });
-  res.cookie(COOKIE_NAME, token, {
-    httpOnly: true,
-    path: "/",
-    maxAge: ONE_YEAR_MS / 1000,
-    sameSite: "lax",
-  });
+  res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 }
 
 export const impersonateRouter = router({
@@ -50,16 +46,15 @@ export const impersonateRouter = router({
       if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "Utilisateur introuvable" });
       if (target.id === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Impossible de s'imiter soi-même" });
 
-      // Save admin openId in a separate cookie
-      const { ONE_YEAR_MS } = await import("@shared/const");
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+
+      // Save admin openId so we can restore later
       ctx.res.cookie(ADMIN_COOKIE, ctx.user.openId, {
-        httpOnly: true,
-        path: "/",
-        maxAge: ONE_YEAR_MS / 1000,
-        sameSite: "lax",
+        ...cookieOptions,
+        maxAge: ONE_YEAR_MS,
       });
 
-      await createSession(ctx.res, target.openId, target.name || target.email || "");
+      await setSession(ctx.req, ctx.res, target.openId, target.name || target.email || "");
       return { success: true };
     }),
 
@@ -75,8 +70,9 @@ export const impersonateRouter = router({
       const [admin] = await db.select().from(users).where(eq(users.openId, adminOpenId)).limit(1);
       if (!admin) throw new TRPCError({ code: "NOT_FOUND", message: "Compte admin introuvable" });
 
-      ctx.res.clearCookie(ADMIN_COOKIE, { path: "/" });
-      await createSession(ctx.res, admin.openId, admin.name || admin.email || "");
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(ADMIN_COOKIE, { ...cookieOptions });
+      await setSession(ctx.req, ctx.res, admin.openId, admin.name || admin.email || "");
       return { success: true };
     }),
 
