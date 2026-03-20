@@ -21,7 +21,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, ShoppingCart, FileCheck, DollarSign, TrendingUp, Settings, CheckCircle, Languages, ClipboardList, Package, CreditCard, BarChart2 } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, ShoppingCart, FileCheck, DollarSign, TrendingUp, Settings, CheckCircle, Languages, ClipboardList, Package, CreditCard, BarChart2, Receipt } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -44,6 +44,7 @@ const getMenuItems = (t: (key: string) => string) => [
   { icon: CreditCard, label: "Paiements", path: "/payments" },
   { icon: TrendingUp, label: t('navigation.analytics'), path: "/analytics" },
   { icon: BarChart2, label: "Rapports", path: "/reports" },
+  { icon: Receipt, label: "Notes de frais", path: "/expenses" },
   { icon: Users, label: "Portail Fournisseur", path: "/supplier-portal" },
   { icon: Settings, label: t('navigation.settings'), path: "/settings" },
 ];
