@@ -119,9 +119,12 @@ export function registerOAuthRoutes(app: Express) {
       if (!name?.trim()) return res.status(400).json({ error: "Nom requis" });
       const dbInstance = await db.getDb();
       if (!dbInstance) return res.status(500).json({ error: "DB error" });
-      await dbInstance.update(users).set({ name: name.trim() }).where(eq(users.openId, session.openId));
+      const safeName = name.trim().replace(/'/g, "''");
+      const safeOpenId = session.openId.replace(/'/g, "''");
+      await dbInstance.execute(`UPDATE users SET name = '${safeName}' WHERE openId = '${safeOpenId}'`);
       res.json({ success: true });
     } catch (e: any) {
+      console.error("[update-profile] Error:", e);
       res.status(500).json({ error: e.message });
     }
   });
