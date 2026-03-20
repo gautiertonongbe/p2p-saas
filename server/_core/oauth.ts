@@ -3,7 +3,7 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
-import * as bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 
