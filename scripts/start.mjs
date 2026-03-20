@@ -4,16 +4,7 @@ import { execSync } from 'child_process';
 console.log('🚀 Starting P2P SaaS...');
 
 // Run migrations via drizzle push
-try {
-  console.log('📦 Running database migrations...');
-  execSync('npx drizzle-kit push --force', { 
-    stdio: 'inherit',
-    env: { ...process.env }
-  });
-  console.log('✅ Migrations complete');
-} catch (e) {
-  console.warn('⚠️  Migration warning:', e.message);
-}
+console.log("⏭️  Skipping migrations - already applied");
 
 // Run seed
 try {
