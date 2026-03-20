@@ -4,7 +4,17 @@ import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { createAuditLog } from "../db";
 
-function safe(s: string) { return s.replace(/'/g, "''"); }
+function safe(s: string | null | undefined): string {
+  if (s === null || s === undefined) return "NULL";
+  return String(s).replace(/[\0\x08\x09\x1a\n\r"'\\\%]/g, (ch: string) => {
+    const map: Record<string, string> = {"\0":"\\0","\x08":"\\b","\x09":"\\t","\x1a":"\\z","\n":"\\n","\r":"\\r",'"':'\\"',"'":"\\'",'\\':"\\\\",'%':"\\%"};
+    return map[ch] || ch;
+  });
+}
+function esc(s: string | null | undefined): string {
+  if (s === null || s === undefined) return "NULL";
+  return `'${safe(s)}'`;
+}
 
 export const expensesRouter = router({
   // List expense reports
@@ -188,7 +198,7 @@ export const expensesRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       await db.execute(`DELETE FROM expenseLines WHERE reportId = ${input.id}`);
-      await db.execute(`DELETE FROM expenseReports WHERE id = ${input.id} AND submitterId = ${ctx.user.id} AND status = 'draft'`);
+      await db.execute(`DELETE FROM expenseReports WHERE id = ${input.id} AND submitterId = ${ctx.user.id} AND organizationId = ${ctx.user.organizationId} AND status = 'draft'`);
       return { success: true };
     }),
 
