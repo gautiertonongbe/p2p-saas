@@ -1,7 +1,8 @@
 import { drizzle } from "drizzle-orm/mysql2";
+import bcrypt from "bcryptjs";
 import {
   organizations, lookupTypes, lookupValues, departments,
-  approvalPolicies, approvalSteps
+  approvalPolicies, approvalSteps, users
 } from "../drizzle/schema.js";
 import { eq } from "drizzle-orm";
 
@@ -51,6 +52,21 @@ async function seed() {
     });
     const orgId = orgResult[0].insertId;
     console.log(`✅ Created organization (ID: ${orgId})`);
+
+    // ── Users ──────────────────────────────────────────────────────────────
+    const existingUsers = await db.select().from(users).where(eq(users.organizationId, orgId)).limit(1);
+    if (existingUsers.length === 0) {
+      const adminHash = await bcrypt.hash("Admin1234!", 12);
+      const managerHash = await bcrypt.hash("Manager1234!", 12);
+
+      await db.insert(users).values([
+        { openId: "admin-001", organizationId: orgId, name: "Administrateur", email: "admin@demo.com", role: "admin", status: "active", loginMethod: "email", password: adminHash, lastSignedIn: new Date() },
+        { openId: "manager-001", organizationId: orgId, name: "Responsable Achats", email: "manager@demo.com", role: "procurement_manager", status: "active", loginMethod: "email", password: managerHash, lastSignedIn: new Date() },
+        { openId: "approver-001", organizationId: orgId, name: "Approbateur", email: "approver@demo.com", role: "approver", status: "active", loginMethod: "email", password: managerHash, lastSignedIn: new Date() },
+        { openId: "requester-001", organizationId: orgId, name: "Demandeur", email: "requester@demo.com", role: "requester", status: "active", loginMethod: "email", password: managerHash, lastSignedIn: new Date() },
+      ]);
+      console.log("✅ Created 4 demo users");
+    }
 
     // ── Departments ───────────────────────────────────────────────────────
     await db.insert(departments).values([
