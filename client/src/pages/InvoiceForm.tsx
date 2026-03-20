@@ -284,10 +284,8 @@ export default function InvoiceForm() {
           <ArrowLeft className="h-4 w-4" />Annuler
         </button>
         <button type="button" onClick={handleSave} disabled={createMutation.isPending}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
-          className="btn-primary">
-          <Save className="h-4 w-4" />
-          {createMutation.isPending ? "Enregistrement..." : "Enregistrer la facture"}
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 btn-primary">
+          {createMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Enregistrement...</> : <><Save className="h-4 w-4" />Enregistrer la facture</>}
         </button>
       </div>
     </div>
