@@ -15,6 +15,7 @@ import { notificationsRouter } from "./routers/notificationsRouter";
 import { inventoryRouter } from "./routers/inventory";
 import { reportsRouter } from "./routers/reports";
 import { viewsRouter } from "./routers/views";
+import { impersonateRouter } from "./routers/impersonate";
 
 export const appRouter = router({
   system: systemRouter,
@@ -44,6 +45,7 @@ export const appRouter = router({
   inventory: inventoryRouter,
   reports: reportsRouter,
   views: viewsRouter,
+  impersonate: impersonateRouter,
 });
 
 export type AppRouter = typeof appRouter;

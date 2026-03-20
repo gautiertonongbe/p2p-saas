@@ -394,15 +394,24 @@ export default function VendorDetail() {
                 {vendor.bankAccounts && vendor.bankAccounts.length > 0 ? (
                   <div className="space-y-3">
                     {vendor.bankAccounts.map((account, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                        <div>
-                          <p className="font-medium">{account.bankName}</p>
-                          <p className="text-sm text-muted-foreground font-mono">{account.accountNumber}</p>
-                          {account.iban && (
-                            <p className="text-xs text-muted-foreground font-mono">IBAN: {account.iban}</p>
-                          )}
+                      <div key={idx} className="p-3 border rounded-lg bg-muted/30 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{account.bankName}</p>
+                            <p className="text-sm text-muted-foreground font-mono">{account.accountNumber}</p>
+                            {account.iban && (
+                              <p className="text-xs text-muted-foreground font-mono">IBAN: {account.iban}</p>
+                            )}
+                          </div>
+                          <Badge variant="outline">Bancaire</Badge>
                         </div>
-                        <Badge variant="outline">Bancaire</Badge>
+                        {(account as any).ribFileName && (
+                          <div className="flex items-center gap-2 p-2 rounded bg-emerald-50 border border-emerald-200">
+                            <FileCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                            <span className="text-xs text-emerald-700 truncate">{(account as any).ribFileName}</span>
+                            <Badge variant="outline" className="ml-auto text-xs border-emerald-300 text-emerald-700">RIB joint</Badge>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -424,12 +433,21 @@ export default function VendorDetail() {
                 {vendor.mobileMoneyAccounts && vendor.mobileMoneyAccounts.length > 0 ? (
                   <div className="space-y-3">
                     {vendor.mobileMoneyAccounts.map((account, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                        <div>
-                          <p className="font-medium">{account.provider}</p>
-                          <p className="text-sm text-muted-foreground font-mono">{account.number}</p>
+                      <div key={idx} className="p-3 border rounded-lg bg-muted/30 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{account.provider}</p>
+                            <p className="text-sm text-muted-foreground font-mono">{account.number}</p>
+                          </div>
+                          <Badge variant="outline">Mobile Money</Badge>
                         </div>
-                        <Badge variant="outline">Mobile Money</Badge>
+                        {(account as any).screenshotFileName && (
+                          <div className="flex items-center gap-2 p-2 rounded bg-blue-50 border border-blue-200">
+                            <FileCheck className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                            <span className="text-xs text-blue-700 truncate">{(account as any).screenshotFileName}</span>
+                            <Badge variant="outline" className="ml-auto text-xs border-blue-300 text-blue-700">Justificatif joint</Badge>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

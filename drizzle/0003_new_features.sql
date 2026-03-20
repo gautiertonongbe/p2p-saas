@@ -124,3 +124,6 @@ ALTER TABLE `savedViews` ADD `displayType` enum('table','cards','compact') NOT N
 ALTER TABLE `savedViews` ADD `isShared` boolean NOT NULL DEFAULT false;
 ALTER TABLE `savedViews` ADD `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
 CREATE INDEX `entity_idx` ON `savedViews` (`entity`, `organizationId`);
+
+-- 8. Password field for standalone auth
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `password` varchar(255);

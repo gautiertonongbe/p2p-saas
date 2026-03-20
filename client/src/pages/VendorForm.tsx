@@ -9,12 +9,12 @@ import {
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
-import { Save, Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Save, Plus, Trash2, ArrowLeft, Upload, FileCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 
-interface BankAccount { bankName: string; accountNumber: string; iban?: string }
-interface MobileMoneyAccount { provider: string; number: string }
+interface BankAccount { bankName: string; accountNumber: string; iban?: string; ribFile?: File | null; ribFileName?: string }
+interface MobileMoneyAccount { provider: string; number: string; screenshotFile?: File | null; screenshotFileName?: string }
 
 export default function VendorForm() {
   const { t } = useTranslation();
@@ -209,6 +209,30 @@ export default function VendorForm() {
                     <Input value={account.iban || ""} onChange={e => updateBankAccount(i, "iban", e.target.value)}
                       placeholder="IBAN" />
                   </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label className="text-xs">RIB / Relevé bancaire (optionnel)</Label>
+                    {account.ribFileName ? (
+                      <div className="flex items-center gap-2 p-2 border rounded-lg bg-emerald-50 border-emerald-200">
+                        <FileCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span className="text-sm text-emerald-700 flex-1 truncate">{account.ribFileName}</span>
+                        <Button type="button" size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => updateBankAccount(i, "ribFile", null, "")}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                        <Upload className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Cliquer pour joindre un RIB ou relevé bancaire</span>
+                        <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) updateBankAccount(i, "ribFile", file, file.name);
+                          }} />
+                      </label>
+                    )}
+                    <p className="text-xs text-muted-foreground">Formats acceptés: PDF, JPG, PNG (max 5 Mo)</p>
+                  </div>
                 </div>
               </div>
             ))
@@ -261,6 +285,30 @@ export default function VendorForm() {
                     <Label className="text-xs">Numéro *</Label>
                     <Input value={account.number} onChange={e => updateMobileMoney(i, "number", e.target.value)}
                       placeholder="+229 XX XX XX XX" />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label className="text-xs">Capture d'écran / Justificatif (optionnel)</Label>
+                    {account.screenshotFileName ? (
+                      <div className="flex items-center gap-2 p-2 border rounded-lg bg-emerald-50 border-emerald-200">
+                        <FileCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span className="text-sm text-emerald-700 flex-1 truncate">{account.screenshotFileName}</span>
+                        <Button type="button" size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => updateMobileMoney(i, "screenshotFile", null, "")}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="flex items-center gap-2 p-3 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                        <Upload className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Joindre une capture d'écran ou justificatif</span>
+                        <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) updateMobileMoney(i, "screenshotFile", file, file.name);
+                          }} />
+                      </label>
+                    )}
+                    <p className="text-xs text-muted-foreground">Formats acceptés: PDF, JPG, PNG (max 5 Mo)</p>
                   </div>
                 </div>
               </div>

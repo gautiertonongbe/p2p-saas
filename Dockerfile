@@ -2,13 +2,11 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install pnpm via corepack (built into Node 20)
+# Install pnpm via corepack
 RUN corepack enable && corepack prepare pnpm@10.4.1 --activate
 
-# Copy package files
+# Install dependencies
 COPY package.json pnpm-lock.yaml ./
-
-# Install dependencies (no patches needed)
 RUN pnpm install --no-frozen-lockfile
 
 # Copy all source files
@@ -19,4 +17,5 @@ RUN pnpm run build
 
 EXPOSE 3000
 
-CMD ["node", "dist/index.js"]
+# Use startup script that seeds DB then starts server
+CMD ["node", "scripts/start.mjs"]

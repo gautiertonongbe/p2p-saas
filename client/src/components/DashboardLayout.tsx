@@ -1,4 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import ImpersonateBanner from "@/components/ImpersonateBanner";
+import ThemeCustomizer from "@/components/ThemeCustomizer";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -169,6 +171,7 @@ function DashboardLayoutContent({
 
   return (
     <>
+      <ImpersonateBanner />
       <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
@@ -272,6 +275,7 @@ function DashboardLayoutContent({
               </div>
             </div>
             <div className="flex items-center gap-1">
+              <ThemeCustomizer />
               <NotificationBell />
               <LanguageSwitcher />
             </div>
@@ -279,6 +283,7 @@ function DashboardLayoutContent({
         )}
         {!isMobile && (
           <div className="flex border-b h-14 items-center justify-end gap-1 bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+            <ThemeCustomizer />
             <NotificationBell />
             <LanguageSwitcher />
           </div>
