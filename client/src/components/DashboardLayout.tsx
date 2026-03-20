@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -21,7 +22,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, ShoppingCart, FileCheck, DollarSign, TrendingUp, Settings, CheckCircle, Languages, ClipboardList, Package, CreditCard, BarChart2, Receipt } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, ShoppingCart, FileCheck, DollarSign, TrendingUp, Settings, CheckCircle, Languages, ClipboardList, Package, CreditCard, BarChart2, Receipt, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -46,6 +47,7 @@ const getMenuItems = (t: (key: string) => string) => [
   { icon: BarChart2, label: "Rapports", path: "/reports" },
   { icon: Receipt, label: "Notes de frais", path: "/expenses" },
   { icon: Users, label: "Communauté", path: "/community" },
+  { icon: Lock, label: "Groupes & Accès", path: "/groups" },
   { icon: Users, label: "Portail Fournisseur", path: "/supplier-portal" },
   { icon: Settings, label: t('navigation.settings'), path: "/settings" },
 ];
@@ -132,7 +134,14 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const menuItems = getMenuItems(t);
+  const allMenuItems = getMenuItems(t);
+  const menuItems = allMenuItems.filter(item => {
+    if (item.path === "/expenses" && !isAdmin && !canAccessExpenses) return false;
+    if (item.path === "/community" && !isAdmin && !canAccessCommunity) return false;
+    if (item.path === "/analytics" && !isAdmin && !canAccessAnalytics) return false;
+    if (item.path === "/reports" && !isAdmin && !canAccessReports) return false;
+    return true;
+  });
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   const { data: impStatus } = trpc.impersonate.status.useQuery(undefined, { refetchOnWindowFocus: false });

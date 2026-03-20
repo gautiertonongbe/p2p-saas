@@ -21,6 +21,7 @@ import { supplierPortalRouter } from "./routers/supplierPortal";
 import { ocrRouter } from "./routers/ocr";
 import { expensesRouter } from "./routers/expenses";
 import { communityRouter } from "./routers/community";
+import { groupsRouter } from "./routers/groups";
 
 export const appRouter = router({
   system: systemRouter,
@@ -56,6 +57,7 @@ export const appRouter = router({
   ocr: ocrRouter,
   expenses: expensesRouter,
   community: communityRouter,
+  groups: groupsRouter,
 });
 
 export type AppRouter = typeof appRouter;
