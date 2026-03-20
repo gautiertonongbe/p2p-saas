@@ -29,7 +29,7 @@ import {
 import {
   Building2, Users, GitBranch, DollarSign, Bell, Shield, Settings as Gear,
   ChevronRight, Sliders, Workflow, Globe, Hash, Package, CheckCircle2,
-  Plus, Edit, Trash2, Loader2, Save, RotateCcw, AlertTriangle, Info,
+  Plus, Edit, Trash2, Loader2, Save, RotateCcw, AlertTriangle, Info, TrendingUp,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
