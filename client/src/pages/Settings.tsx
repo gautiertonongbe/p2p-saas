@@ -91,9 +91,9 @@ export default function Settings() {
                 return (
                   <button key={s.id} onClick={() => setSection(s.id)}
                     className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-sm",
-                      active ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-muted text-foreground"
+                      active ? "bg-blue-600 text-white shadow-sm" : "hover:bg-muted text-foreground"
                     )}>
-                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-primary-foreground" : "text-muted-foreground")} />
+                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-white" : "text-muted-foreground")} />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium capitalize">{s.id === "organization" ? "Organisation" :
                         s.id === "users" ? "Utilisateurs" : s.id === "departments" ? "Départements" :
@@ -106,9 +106,9 @@ export default function Settings() {
                         s.id === "customfields" ? "Champs personnalisés" :
                         s.id === "notifications" ? "Notifications" : s.id === "numbering" ? "Numérotation" :
                         s.id === "localization" ? "Localisation" : s.id === "profile" ? "Mon Profil" : "Sécurité"}</div>
-                      <div className={cn("text-xs truncate", active ? "text-primary-foreground/70" : "text-muted-foreground")}>{s.desc}</div>
+                      <div className={cn("text-xs truncate", active ? "text-white/70" : "text-muted-foreground")}>{s.desc}</div>
                     </div>
-                    {active && <ChevronRight className="h-4 w-4 shrink-0 text-primary-foreground/70" />}
+                    {active && <ChevronRight className="h-4 w-4 shrink-0 text-white/70" />}
                   </button>
                 );
               })}
@@ -215,7 +215,7 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
   const COUNTRIES = ["Bénin", "Côte d'Ivoire", "Togo", "Sénégal", "Mali", "Burkina Faso", "Niger", "Guinée", "Ghana", "Nigeria", "Cameroun"];
   const CURRENCIES = [{ code: "XOF", label: "Franc CFA BCEAO (XOF)" }, { code: "XAF", label: "Franc CFA BEAC (XAF)" }, { code: "GHS", label: "Cedi ghanéen (GHS)" }, { code: "NGN", label: "Naira nigérian (NGN)" }, { code: "EUR", label: "Euro (EUR)" }, { code: "USD", label: "Dollar US (USD)" }];
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Chargement...</div>;
+  if (isLoading) return <div className="p-6 max-w-3xl space-y-4">{[1,2,3,4].map(i => <div key={i} className="h-14 bg-muted animate-pulse rounded-lg" />)}</div>;
 
   return (
     <div>
@@ -318,15 +318,18 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div>
-      <SectionHeader icon={Users} title="Utilisateurs" desc="Gérer les accès, rôles et limites d'approbation" />
-      <div className="p-6 max-w-5xl">
+      <div className="flex items-center justify-between px-6 pt-6 pb-2">
+        <div>
+          <h2 className="text-xl font-semibold flex items-center gap-2"><Users className="h-5 w-5" />Utilisateurs</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Gérer les accès, rôles et limites d'approbation</p>
+        </div>
         {isAdmin && (
-          <div className="flex justify-end mb-4">
-            <Button onClick={() => setInviteOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />Inviter un utilisateur
-            </Button>
-          </div>
+          <Button onClick={() => setInviteOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />Inviter un utilisateur
+          </Button>
         )}
+      </div>
+      <div className="p-6 pt-2 max-w-5xl">
         <Card>
           <CardContent className="p-0">
             {isLoading ? <div className="p-8 text-center text-muted-foreground">Chargement...</div> : (
@@ -427,10 +430,10 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
                 </Select>
               </div>
               <div className="space-y-2"><Label>Département</Label>
-                <Select value={inviteForm.departmentId} onValueChange={v => setInviteForm(f=>({...f,departmentId:v}))}>
+                <Select value={inviteForm.departmentId || "none"} onValueChange={v => setInviteForm(f=>({...f,departmentId:v === "none" ? "" : v}))}>
                   <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun</SelectItem>
+                    <SelectItem value="none">Aucun</SelectItem>
                     {departments.map((d:any) => <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -492,10 +495,10 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
                 </Select>
               </div>
               <div className="space-y-2"><Label>Département</Label>
-                <Select value={editForm.departmentId} onValueChange={v => setEditForm(f=>({...f,departmentId:v}))}>
+                <Select value={editForm.departmentId || "none"} onValueChange={v => setEditForm(f=>({...f,departmentId:v === "none" ? "" : v}))}>
                   <SelectTrigger><SelectValue placeholder="Aucun département" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun</SelectItem>
+                    <SelectItem value="none">Aucun</SelectItem>
                     {departments.map((d:any) => <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -605,10 +608,10 @@ function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
                 <div className="space-y-2"><Label>Nom *</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Informatique" /></div>
               </div>
               <div className="space-y-2"><Label>Responsable</Label>
-                <Select value={managerId} onValueChange={setManagerId}>
+                <Select value={managerId || "none"} onValueChange={v => setManagerId(v === "none" ? "" : v)}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner un responsable" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun</SelectItem>
+                    <SelectItem value="none">Aucun</SelectItem>
                     {users.filter((u: any) => u.status === "active").map((u: any) => (
                       <SelectItem key={u.id} value={u.id.toString()}>{u.name || u.email}</SelectItem>
                     ))}
@@ -887,10 +890,18 @@ function WorkflowSection({ isAdmin }: { isAdmin: boolean }) {
               <Input type="number" value={cfg.slaHours} onChange={e => setCfg(c => ({...c, slaHours: parseInt(e.target.value) || 48}))} disabled={!isAdmin} className="w-24" />
             </Row>
             <Row label="Escalade automatique" desc="Notifier les managers si le délai est dépassé">
-              <Switch checked={cfg.escalationEnabled} onCheckedChange={v => setCfg(c => ({...c, escalationEnabled: v}))} disabled={!isAdmin} />
+              <button type="button" disabled={!isAdmin}
+                onClick={() => v => setCfg(c => ({...c, escalationEnabled: v}))(!cfg.escalationEnabled)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.escalationEnabled ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.escalationEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </Row>
             <Row label="Séparation des tâches" desc="Bloquer l'auto-approbation d'une demande par son créateur">
-              <Switch checked={cfg.segregationOfDuties} onCheckedChange={v => setCfg(c => ({...c, segregationOfDuties: v}))} disabled={!isAdmin} />
+              <button type="button" disabled={!isAdmin}
+                onClick={() => v => setCfg(c => ({...c, segregationOfDuties: v}))(!cfg.segregationOfDuties)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.segregationOfDuties ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.segregationOfDuties ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </Row>
           </CardContent>
         </Card>
@@ -899,10 +910,18 @@ function WorkflowSection({ isAdmin }: { isAdmin: boolean }) {
           <CardHeader><CardTitle>Demandes d'achat</CardTitle></CardHeader>
           <CardContent className="divide-y">
             <Row label="Justification obligatoire" desc="Exiger un texte de justification sur toutes les demandes">
-              <Switch checked={cfg.requireJustification} onCheckedChange={v => setCfg(c => ({...c, requireJustification: v}))} disabled={!isAdmin} />
+              <button type="button" disabled={!isAdmin}
+                onClick={() => v => setCfg(c => ({...c, requireJustification: v}))(!cfg.requireJustification)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.requireJustification ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.requireJustification ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </Row>
             <Row label="Émettre le BC automatiquement" desc="Créer et émettre le bon de commande dès approbation complète">
-              <Switch checked={cfg.poAutoIssue} onCheckedChange={v => setCfg(c => ({...c, poAutoIssue: v}))} disabled={!isAdmin} />
+              <button type="button" disabled={!isAdmin}
+                onClick={() => v => setCfg(c => ({...c, poAutoIssue: v}))(!cfg.poAutoIssue)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.poAutoIssue ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.poAutoIssue ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </Row>
           </CardContent>
         </Card>
@@ -957,16 +976,32 @@ function BudgetsSection({ isAdmin }: { isAdmin: boolean }) {
           <CardHeader><CardTitle>Contrôle budgétaire</CardTitle></CardHeader>
           <CardContent className="divide-y">
             <Row label="Vérification budgétaire obligatoire" desc="Bloquer les demandes qui dépassent le budget disponible">
-              <Switch checked={cfg.enforceBudgetCheck} onCheckedChange={v => setCfg(c => ({...c, enforceBudgetCheck: v}))} disabled={!isAdmin} />
+              <button type="button" disabled={!isAdmin}
+                onClick={() => v => setCfg(c => ({...c, enforceBudgetCheck: v}))(!cfg.enforceBudgetCheck)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.enforceBudgetCheck ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.enforceBudgetCheck ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </Row>
             <Row label="Autoriser les dépassements avec justification" desc="Permettre les dépassements si une raison est fournie">
-              <Switch checked={cfg.allowOverspend} onCheckedChange={v => setCfg(c => ({...c, allowOverspend: v}))} disabled={!isAdmin} />
+              <button type="button" disabled={!isAdmin}
+                onClick={() => v => setCfg(c => ({...c, allowOverspend: v}))(!cfg.allowOverspend)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.allowOverspend ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.allowOverspend ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </Row>
             <Row label="Code budget obligatoire" desc="Exiger un centre de coût sur chaque demande d'achat">
-              <Switch checked={cfg.requireBudgetCode} onCheckedChange={v => setCfg(c => ({...c, requireBudgetCode: v}))} disabled={!isAdmin} />
+              <button type="button" disabled={!isAdmin}
+                onClick={() => v => setCfg(c => ({...c, requireBudgetCode: v}))(!cfg.requireBudgetCode)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.requireBudgetCode ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.requireBudgetCode ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </Row>
             <Row label="Reporter le solde non consommé" desc="Transférer automatiquement les budgets non utilisés à la période suivante">
-              <Switch checked={cfg.carryForwardUnspent} onCheckedChange={v => setCfg(c => ({...c, carryForwardUnspent: v}))} disabled={!isAdmin} />
+              <button type="button" disabled={!isAdmin}
+                onClick={() => v => setCfg(c => ({...c, carryForwardUnspent: v}))(!cfg.carryForwardUnspent)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.carryForwardUnspent ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.carryForwardUnspent ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </Row>
           </CardContent>
         </Card>

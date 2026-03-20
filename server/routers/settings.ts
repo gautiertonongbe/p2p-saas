@@ -831,14 +831,14 @@ export const settingsRouter = router({
 
   // Upload avatar (base64)
   uploadAvatar: protectedProcedure
-    .input(z.object({ base64: z.string().max(500000) })) // ~375KB max
+    .input(z.object({ base64: z.string().max(1500000) })) // ~1MB max
     .mutation(async ({ ctx, input }) => {
       const dbInstance = await getDb();
       if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { users } = await import("../../drizzle/schema");
       const { eq } = await import("drizzle-orm");
       await dbInstance.update(users)
-        .set({ avatarUrl: input.base64 } as any)
+        .set({ avatarUrl: input.base64 } as any) // avatarUrl column added via ALTER TABLE
         .where(eq(users.id, ctx.user.id));
       return { success: true };
     }),
