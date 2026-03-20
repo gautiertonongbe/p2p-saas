@@ -10,6 +10,15 @@ export const ocrRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const apiKey = process.env.ANTHROPIC_API_KEY;
+      // Normalize mimeType to Anthropic-supported values
+      const mimeMap: Record<string, string> = {
+        "image/jpg": "image/jpeg",
+        "image/jpeg": "image/jpeg",
+        "image/png": "image/png",
+        "image/gif": "image/gif",
+        "image/webp": "image/webp",
+      };
+      const normalizedMime = mimeMap[input.mimeType] || "image/jpeg";
       if (!apiKey) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Clé API Anthropic non configurée. Ajoutez ANTHROPIC_API_KEY dans Railway Variables." });
       }
@@ -29,7 +38,7 @@ export const ocrRouter = router({
             content: [
               {
                 type: "image",
-                source: { type: "base64", media_type: input.mimeType as any, data: input.imageBase64 },
+                source: { type: "base64", media_type: normalizedMime as any, data: input.imageBase64 },
               },
               {
                 type: "text",
