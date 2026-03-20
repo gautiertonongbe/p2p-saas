@@ -142,6 +142,7 @@ export const users = mysqlTable("users", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   password: varchar("password", { length: 255 }), // bcrypt hash
+  avatarUrl: text("avatarUrl"), // base64 or URL
 }, (table) => ({
   orgIdx: index("org_idx").on(table.organizationId),
   deptIdx: index("dept_idx").on(table.departmentId),

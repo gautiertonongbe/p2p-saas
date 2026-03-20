@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { AvatarUpload } from "@/components/AvatarUpload";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ const SECTION_DEFS = [
   { id: "taxrates",     group: "Finance", desc: "Taux de TVA et taxes applicables" },
   { id: "exchangerates",group: "Finance", desc: "Taux de change vs devise principale" },
   { id: "customfields", group: "Personnalisation", desc: "Champs sur PR, BC, factures, fournisseurs" },
+  { id: "profile",       group: "Mon Compte", desc: "Photo et informations personnelles" },
   { id: "notifications",group: "Système", desc: "Alertes et événements" },
   { id: "numbering",    group: "Système", desc: "Séquences de numérotation" },
   { id: "localization", group: "Système", desc: "Langue et format" },
@@ -101,7 +103,7 @@ export default function Settings() {
                         s.id === "exchangerates" ? "Taux de change" :
                         s.id === "customfields" ? "Champs personnalisés" :
                         s.id === "notifications" ? "Notifications" : s.id === "numbering" ? "Numérotation" :
-                        s.id === "localization" ? "Localisation" : "Sécurité"}</div>
+                        s.id === "localization" ? "Localisation" : s.id === "profile" ? "Mon Profil" : "Sécurité"}</div>
                       <div className={cn("text-xs truncate", active ? "text-primary-foreground/70" : "text-muted-foreground")}>{s.desc}</div>
                     </div>
                     {active && <ChevronRight className="h-4 w-4 shrink-0 text-primary-foreground/70" />}
@@ -135,6 +137,7 @@ export default function Settings() {
         {section === "taxrates"      && <TaxRatesSection isAdmin={isAdmin} />}
         {section === "exchangerates" && <ExchangeRatesSection isAdmin={isAdmin} />}
         {section === "customfields"  && <CustomFieldsSection isAdmin={isAdmin} />}
+        {section === "profile"       && <ProfileSection />}
         {section === "notifications" && <NotificationsSection isAdmin={isAdmin} />}
         {section === "numbering"     && <NumberingSection isAdmin={isAdmin} />}
         {section === "localization"  && <LocalizationSection isAdmin={isAdmin} />}
@@ -955,6 +958,89 @@ function ToleranceSection({ isAdmin }: { isAdmin: boolean }) {
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────
+
+function ProfileSection() {
+  const { user } = useAuth();
+  const { data: profile, refetch } = trpc.settings.getMyProfile.useQuery();
+  const changePasswordMutation = trpc.settings.uploadAvatar.useMutation();
+  const [currentPwd, setCurrentPwd] = useState("");
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [pwdLoading, setPwdLoading] = useState(false);
+
+  const handlePasswordChange = async () => {
+    if (newPwd !== confirmPwd) { toast.error("Les mots de passe ne correspondent pas"); return; }
+    if (newPwd.length < 8) { toast.error("Minimum 8 caractères"); return; }
+    setPwdLoading(true);
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ currentPassword: currentPwd, newPassword: newPwd }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Mot de passe modifié avec succès");
+        setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
+      } else {
+        toast.error(data.error || "Erreur");
+      }
+    } catch { toast.error("Erreur réseau"); }
+    finally { setPwdLoading(false); }
+  };
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <SectionHeader icon={Users} title="Mon Profil" desc="Gérez votre photo de profil et vos informations personnelles" />
+      <div className="p-6">
+        {/* Avatar section */}
+        <Card className="mb-6">
+          <CardHeader><CardTitle className="text-base">Photo de profil</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              <AvatarUpload
+                currentUrl={(profile as any)?.avatarUrl}
+                name={profile?.name || user?.name}
+                size="lg"
+                onUploaded={() => refetch()}
+              />
+              <div>
+                <p className="font-semibold text-lg">{profile?.name || user?.name}</p>
+                <p className="text-muted-foreground text-sm">{profile?.email || user?.email}</p>
+                <Badge className="mt-2" variant="outline">{profile?.role === "admin" ? "Administrateur" : profile?.role === "procurement_manager" ? "Resp. Achats" : profile?.role === "approver" ? "Approbateur" : "Demandeur"}</Badge>
+                <p className="text-xs text-muted-foreground mt-3">Survolez la photo et cliquez pour la modifier.<br/>Formats acceptés: JPG, PNG, WebP (max 2 Mo)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Change password */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Changer le mot de passe</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Mot de passe actuel</Label>
+              <Input type="password" value={currentPwd} onChange={e => setCurrentPwd(e.target.value)} placeholder="••••••••" />
+            </div>
+            <div className="space-y-2">
+              <Label>Nouveau mot de passe</Label>
+              <Input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} placeholder="••••••••" />
+            </div>
+            <div className="space-y-2">
+              <Label>Confirmer le nouveau mot de passe</Label>
+              <Input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} placeholder="••••••••" />
+            </div>
+            <Button onClick={handlePasswordChange} disabled={pwdLoading || !currentPwd || !newPwd || !confirmPwd}>
+              {pwdLoading ? "Modification..." : "Changer le mot de passe"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 function NotificationsSection({ isAdmin }: { isAdmin: boolean }) {
   const { data: org } = trpc.settings.getOrganization.useQuery();
   const utils = trpc.useUtils();

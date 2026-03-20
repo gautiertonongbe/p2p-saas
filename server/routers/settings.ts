@@ -748,4 +748,29 @@ export const settingsRouter = router({
       await dbInstance.update(lookupValues).set(data).where(eq(lookupValues.id, id));
       return { success: true };
     }),
+
+  // Upload avatar (base64)
+  uploadAvatar: protectedProcedure
+    .input(z.object({ base64: z.string().max(500000) })) // ~375KB max
+    .mutation(async ({ ctx, input }) => {
+      const dbInstance = await getDb();
+      if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { users } = await import("../../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      await dbInstance.update(users)
+        .set({ avatarUrl: input.base64 } as any)
+        .where(eq(users.id, ctx.user.id));
+      return { success: true };
+    }),
+
+  // Get current user profile
+  getMyProfile: protectedProcedure.query(async ({ ctx }) => {
+    const dbInstance = await getDb();
+    if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const { users } = await import("../../drizzle/schema");
+    const { eq } = await import("drizzle-orm");
+    const [u] = await dbInstance.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+    return u || null;
+  }),
+
 });
