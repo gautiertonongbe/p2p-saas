@@ -1926,7 +1926,7 @@ function ExchangeRatesSection({ isAdmin }: { isAdmin: boolean }) {
             <p className="text-xs text-blue-600 mt-0.5">
               {lastUpdated
                 ? <>Dernière mise à jour: <strong>{new Date(lastUpdated).toLocaleString("fr-FR")}</strong> · Source: <strong>{source || "Manuel"}</strong></>
-                : "Cliquez sur "Actualiser" pour récupérer les taux actuels"}
+                : "Cliquez sur \"Actualiser\" pour récupérer les taux actuels"}
             </p>
           </div>
           {isAdmin && (
