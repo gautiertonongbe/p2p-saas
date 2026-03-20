@@ -134,6 +134,7 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   const { data: impStatus } = trpc.impersonate.status.useQuery(undefined, { refetchOnWindowFocus: false });
+  const { data: org } = trpc.settings.getOrganization.useQuery();
 
   useEffect(() => {
     if (isCollapsed) {
@@ -189,12 +190,30 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed ? (
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold tracking-tight truncate">
-                    {t('navigation.dashboard')}
-                  </span>
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  {(org as any)?.logoUrl ? (
+                    <img
+                      src={(org as any).logoUrl}
+                      alt={(org as any).legalName || "Logo"}
+                      className="h-7 max-w-[120px] object-contain"
+                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <span className="font-semibold tracking-tight truncate text-sm">
+                      {(org as any)?.legalName || (org as any)?.tradeName || t('navigation.dashboard')}
+                    </span>
+                  )}
                 </div>
-              ) : null}
+              ) : (
+                (org as any)?.logoUrl ? (
+                  <img
+                    src={(org as any).logoUrl}
+                    alt="Logo"
+                    className="h-6 w-6 object-contain rounded"
+                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                ) : null
+              )}
             </div>
           </SidebarHeader>
 

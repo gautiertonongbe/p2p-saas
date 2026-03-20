@@ -206,7 +206,7 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
   const [form, setForm] = useState({
     legalName: "", tradeName: "", country: "Benin", baseCurrency: "XOF",
     fiscalYearStart: "01-01", address: "", city: "", phone: "", email: "",
-    website: "", taxId: "", primaryColor: "#2563eb",
+    website: "", taxId: "", primaryColor: "#2563eb", logoUrl: "",
   });
 
   useEffect(() => {
@@ -224,6 +224,7 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
       website: (org as any).website ?? "",
       taxId: (org as any).taxId ?? "",
       primaryColor: (org as any).primaryColor ?? "#2563eb",
+      logoUrl: (org as any).logoUrl ?? "",
     }));
   }, [org]);
 
@@ -280,15 +281,59 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Branding</CardTitle><CardDescription>Couleur principale de l'interface</CardDescription></CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-lg border" style={{ backgroundColor: form.primaryColor }} />
-              <div className="space-y-1 flex-1 max-w-xs">
-                <Label>Couleur principale</Label>
-                <Input type="color" value={form.primaryColor} onChange={e => setForm(f => ({...f, primaryColor: e.target.value}))} disabled={!isAdmin} className="h-10 cursor-pointer" />
+          <CardHeader><CardTitle>Branding</CardTitle><CardDescription>Logo et couleur principale de l'interface</CardDescription></CardHeader>
+          <CardContent className="space-y-6">
+            {/* Logo upload */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Logo de l'organisation</Label>
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-40 border-2 border-dashed rounded-xl flex items-center justify-center bg-muted/30 overflow-hidden">
+                  {form.logoUrl ? (
+                    <img src={form.logoUrl} alt="Logo" className="max-h-14 max-w-36 object-contain" />
+                  ) : (
+                    <div className="text-center">
+                      <Building2 className="h-6 w-6 text-muted-foreground/40 mx-auto" />
+                      <p className="text-xs text-muted-foreground mt-1">Aucun logo</p>
+                    </div>
+                  )}
+                </div>
+                {isAdmin && (
+                  <div className="space-y-2">
+                    <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                      className="hidden" id="logo-upload"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) { toast.error("Logo trop grand. Max 2 Mo."); return; }
+                        const reader = new FileReader();
+                        reader.onload = (ev) => setForm(f => ({...f, logoUrl: ev.target?.result as string}));
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                    <label htmlFor="logo-upload"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+                      <Plus className="h-4 w-4" />Choisir un logo
+                    </label>
+                    {form.logoUrl && (
+                      <button onClick={() => setForm(f => ({...f, logoUrl: ""}))}
+                        className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
+                        <Trash2 className="h-3 w-3" />Supprimer
+                      </button>
+                    )}
+                    <p className="text-xs text-muted-foreground">PNG, SVG, WebP · max 2 Mo<br/>Recommandé: fond transparent, min 200×60px</p>
+                  </div>
+                )}
               </div>
-              <p className="text-sm text-muted-foreground">{form.primaryColor}</p>
+            </div>
+            <div className="border-t pt-4">
+              <Label className="text-sm font-medium">Couleur principale</Label>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="h-10 w-10 rounded-lg border" style={{ backgroundColor: form.primaryColor }} />
+                <div className="space-y-1 flex-1 max-w-xs">
+                  <Input type="color" value={form.primaryColor} onChange={e => setForm(f => ({...f, primaryColor: e.target.value}))} disabled={!isAdmin} className="h-10 cursor-pointer" />
+                </div>
+                <p className="text-sm text-muted-foreground">{form.primaryColor}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
