@@ -87,7 +87,9 @@
       "approved": "approved",
       "activeOrders": "active orders",
       "pendingApproval": "pending approval",
-      "approvedSuppliers": "Approved suppliers"
+      "approvedSuppliers": "Approved suppliers",
+      "vendors": "Vendors",
+      "active": "active"
     },
     "alerts": {
       "pendingApprovals": "Pending Approvals",

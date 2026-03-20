@@ -87,7 +87,9 @@
       "approved": "approuvé(es)",
       "activeOrders": "commandes actives",
       "pendingApproval": "en attente d'approbation",
-      "approvedSuppliers": "fournisseurs approuvés"
+      "approvedSuppliers": "fournisseurs approuvés",
+      "vendors": "Fournisseurs",
+      "active": "actif(s)"
     },
     "alerts": {
       "pendingApprovals": "Approbations en attente",
