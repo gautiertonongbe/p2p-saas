@@ -113,8 +113,8 @@ export function registerOAuthRoutes(app: Express) {
     try {
       const sessionToken = req.cookies?.[COOKIE_NAME];
       if (!sessionToken) return res.status(401).json({ error: "Non authentifié" });
-      const session = await sdk.getSession(sessionToken);
-      if (!session?.userId) return res.status(401).json({ error: "Session invalide" });
+      const session = await sdk.verifySession(sessionToken);
+      if (!session?.openId) return res.status(401).json({ error: "Session invalide" });
       const { name } = req.body;
       if (!name?.trim()) return res.status(400).json({ error: "Nom requis" });
       const { getDb } = await import("../db");
@@ -122,7 +122,7 @@ export function registerOAuthRoutes(app: Express) {
       if (!db) return res.status(500).json({ error: "DB error" });
       const { users } = await import("../../drizzle/schema");
       const { eq } = await import("drizzle-orm");
-      await db.update(users).set({ name: name.trim() }).where(eq(users.openId, session.userId));
+      await db.update(users).set({ name: name.trim() }).where(eq(users.openId, session.openId));
       res.json({ success: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
