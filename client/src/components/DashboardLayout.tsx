@@ -168,6 +168,7 @@ function DashboardLayoutContent({
   }, [isResizing, setSidebarWidth]);
 
   return (
+    <>
     <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
@@ -256,9 +257,10 @@ function DashboardLayoutContent({
           style={{ zIndex: 50 }}
         />
       </div>
+    </div>
 
-      <SidebarInset>
-        {isMobile && (
+    <SidebarInset>
+      {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
@@ -284,6 +286,6 @@ function DashboardLayoutContent({
         )}
         <main className="flex-1 p-4 sm:p-6 max-w-full overflow-x-hidden">{children}</main>
       </SidebarInset>
-    </div>
+    </>
   );
 }

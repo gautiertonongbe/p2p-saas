@@ -749,6 +749,86 @@ export const settingsRouter = router({
       return { success: true };
     }),
 
+
+  // Invite user by email (creates account with temp password)
+  inviteUser: protectedProcedure
+    .input(z.object({
+      email: z.string().email(),
+      name: z.string().min(1),
+      role: z.enum(["admin", "procurement_manager", "approver", "requester"]),
+      departmentId: z.number().optional(),
+      approvalLimit: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les admins peuvent inviter des utilisateurs" });
+      }
+      const dbInstance = await getDb();
+      if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { users } = await import("../../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const { createRequire } = await import("module");
+      const require = createRequire(import.meta.url);
+      const bcrypt = require("bcryptjs");
+
+      // Check if user already exists
+      const existing = await dbInstance.select().from(users)
+        .where(eq(users.email, input.email.toLowerCase())).limit(1);
+      if (existing.length > 0) {
+        throw new TRPCError({ code: "CONFLICT", message: "Un utilisateur avec cet email existe déjà" });
+      }
+
+      // Generate a temporary password
+      const tempPassword = Math.random().toString(36).slice(-8) + "A1!";
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      const openId = `user-${Date.now()}-${Math.random().toString(36).slice(-6)}`;
+
+      await dbInstance.insert(users).values({
+        openId,
+        organizationId: ctx.user.organizationId,
+        name: input.name,
+        email: input.email.toLowerCase(),
+        role: input.role,
+        departmentId: input.departmentId,
+        approvalLimit: input.approvalLimit,
+        status: "active",
+        loginMethod: "email",
+        password: hashedPassword,
+        lastSignedIn: new Date(),
+      } as any);
+
+      return { 
+        success: true, 
+        tempPassword,
+        message: `Utilisateur créé. Mot de passe temporaire: ${tempPassword}` 
+      };
+    }),
+
+  // Reset user password (admin sets a new temp password)
+  resetUserPassword: protectedProcedure
+    .input(z.object({ userId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const dbInstance = await getDb();
+      if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { users } = await import("../../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      const { createRequire } = await import("module");
+      const require = createRequire(import.meta.url);
+      const bcrypt = require("bcryptjs");
+
+      const tempPassword = Math.random().toString(36).slice(-8) + "A1!";
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+      await dbInstance.update(users)
+        .set({ password: hashedPassword } as any)
+        .where(eq(users.id, input.userId));
+
+      return { success: true, tempPassword };
+    }),
+
   // Upload avatar (base64)
   uploadAvatar: protectedProcedure
     .input(z.object({ base64: z.string().max(500000) })) // ~375KB max
