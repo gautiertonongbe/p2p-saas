@@ -278,14 +278,16 @@ export default function InvoiceForm() {
       </Card>
 
       {/* Actions */}
-      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3 pb-6">
         <button type="button" onClick={() => setLocation("/invoices")}
           className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
           <ArrowLeft className="h-4 w-4" />Annuler
         </button>
         <button type="button" onClick={handleSave} disabled={createMutation.isPending}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 btn-primary">
-          {createMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Enregistrement...</> : <><Save className="h-4 w-4" />Enregistrer la facture</>}
+          className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 btn-primary">
+          {createMutation.isPending
+            ? <><Loader2 className="h-4 w-4 animate-spin" />Enregistrement...</>
+            : <><Save className="h-4 w-4" />Enregistrer la facture</>}
         </button>
       </div>
     </div>
