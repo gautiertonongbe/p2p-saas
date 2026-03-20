@@ -39,6 +39,7 @@ const SECTION_ICONS: Record<string, React.FC<any>> = {
   tolerance: Sliders, paymentterms: DollarSign, taxrates: DollarSign,
   exchangerates: Globe, customfields: Package,
   notifications: Bell, localization: Globe, numbering: Hash, security: Gear,
+  profile: Users,
 };
 
 const SECTION_DEFS = [
@@ -280,33 +281,53 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 function UsersSection({ isAdmin }: { isAdmin: boolean }) {
+  const { user: currentUser } = useAuth();
   const { data: users = [], isLoading } = trpc.settings.listUsers.useQuery();
   const { data: departments = [] } = trpc.settings.listDepartments.useQuery();
   const utils = trpc.useUtils();
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [editUser, setEditUser] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ role: "", departmentId: "", approvalLimit: "", status: "active" });
+  const [tempPwd, setTempPwd] = useState<{open:boolean;password:string;email:string}>({open:false,password:"",email:""});
+  const [inviteForm, setInviteForm] = useState({ name:"", email:"", role:"requester", departmentId:"", approvalLimit:"" });
+  const [editForm, setEditForm] = useState({ role:"", departmentId:"", approvalLimit:"", status:"active" });
 
+  const inviteMut = trpc.settings.inviteUser.useMutation({
+    onSuccess: (data) => { setInviteOpen(false); setTempPwd({open:true,password:data.tempPassword,email:inviteForm.email}); setInviteForm({name:"",email:"",role:"requester",departmentId:"",approvalLimit:""}); utils.settings.listUsers.invalidate(); },
+    onError: (e:any) => toast.error(e.message),
+  });
   const updateMut = trpc.settings.updateUser.useMutation({
     onSuccess: () => { toast.success("Utilisateur mis à jour"); utils.settings.listUsers.invalidate(); setEditUser(null); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e:any) => toast.error(e.message),
   });
+  const resetPwdMut = trpc.settings.resetUserPassword.useMutation({
+    onSuccess: (data) => setTempPwd({open:true,password:data.tempPassword,email:editUser?.email||""}),
+    onError: (e:any) => toast.error(e.message),
+  });
+  const startImpersonate = trpc.impersonate.start.useMutation({
+    onSuccess: () => { window.location.href = "/"; },
+    onError: (e:any) => toast.error(e.message),
+  });
+  const stopImpersonate = trpc.impersonate.stop.useMutation({
+    onSuccess: () => { window.location.href = "/"; },
+    onError: (e:any) => toast.error(e.message),
+  });
+  const { data: impStatus } = trpc.impersonate.status.useQuery(undefined, { refetchOnWindowFocus: false });
 
-  const ROLE_LABELS: Record<string, string> = {
-    admin: "Administrateur", procurement_manager: "Resp. achats",
-    approver: "Approbateur", requester: "Demandeur",
-  };
-  const ROLE_COLORS: Record<string, string> = {
-    admin: "bg-purple-100 text-purple-800", procurement_manager: "bg-blue-100 text-blue-800",
-    approver: "bg-green-100 text-green-800", requester: "bg-gray-100 text-gray-700",
-  };
+  const ROLE_LABELS: Record<string,string> = { admin:"Administrateur", procurement_manager:"Resp. achats", approver:"Approbateur", requester:"Demandeur" };
+  const ROLE_COLORS: Record<string,string> = { admin:"bg-purple-100 text-purple-800", procurement_manager:"bg-blue-100 text-blue-800", approver:"bg-green-100 text-green-800", requester:"bg-gray-100 text-gray-700" };
 
   return (
     <div>
       <SectionHeader icon={Users} title="Utilisateurs" desc="Gérer les accès, rôles et limites d'approbation" />
       <div className="p-6 max-w-5xl">
-        <InfoBox>Les utilisateurs rejoignent automatiquement l'organisation lors de leur première connexion OAuth. Vous pouvez modifier leur rôle et département ici.</InfoBox>
-
-        <Card className="mt-6">
+        {isAdmin && (
+          <div className="flex justify-end mb-4">
+            <Button onClick={() => setInviteOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />Inviter un utilisateur
+            </Button>
+          </div>
+        )}
+        <Card>
           <CardContent className="p-0">
             {isLoading ? <div className="p-8 text-center text-muted-foreground">Chargement...</div> : (
               <Table>
@@ -321,7 +342,7 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((u: any) => (
+                  {users.map((u:any) => (
                     <TableRow key={u.id} className="hover:bg-muted/50">
                       <TableCell>
                         <div>
@@ -335,7 +356,7 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
                         </span>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {departments.find((d: any) => d.id === u.departmentId)?.name || "—"}
+                        {departments.find((d:any) => d.id === u.departmentId)?.name || "—"}
                       </TableCell>
                       <TableCell className="text-right text-sm">
                         {u.approvalLimit ? `${new Intl.NumberFormat("fr-FR").format(parseFloat(u.approvalLimit))} XOF` : "Illimité"}
@@ -347,10 +368,29 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
                       </TableCell>
                       {isAdmin && (
                         <TableCell className="text-right">
-                          <Button size="sm" variant="ghost" onClick={() => {
-                            setEditUser(u);
-                            setEditForm({ role: u.role, departmentId: u.departmentId?.toString() || "", approvalLimit: u.approvalLimit || "", status: u.status });
-                          }}><Edit className="h-4 w-4" /></Button>
+                          <div className="flex items-center justify-end gap-1">
+                            {currentUser?.id !== u.id && (
+                              impStatus?.isImpersonating ? (
+                                <Button variant="outline" size="sm" className="h-7 text-xs text-amber-600 border-amber-300 hover:bg-amber-50"
+                                  onClick={() => stopImpersonate.mutate()} disabled={stopImpersonate.isPending}>
+                                  Quitter
+                                </Button>
+                              ) : (
+                                <Button variant="outline" size="sm" className="h-7 text-xs text-blue-600 border-blue-300 hover:bg-blue-50"
+                                  onClick={() => startImpersonate.mutate({ targetUserId: u.id })} disabled={startImpersonate.isPending}>
+                                  Agir en tant que
+                                </Button>
+                              )
+                            )}
+                            <Button size="sm" variant="ghost" title="Réinitialiser le mot de passe"
+                              onClick={() => { setEditUser(u); resetPwdMut.mutate({ userId: u.id }); }}>
+                              🔑
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => {
+                              setEditUser(u);
+                              setEditForm({ role: u.role, departmentId: u.departmentId?.toString()||"", approvalLimit: u.approvalLimit||"", status: u.status });
+                            }}><Edit className="h-4 w-4" /></Button>
+                          </div>
                         </TableCell>
                       )}
                     </TableRow>
@@ -361,7 +401,79 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
           </CardContent>
         </Card>
 
-        <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
+        {/* Invite Dialog */}
+        <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Inviter un utilisateur</DialogTitle>
+              <DialogDescription>Créez un compte avec un mot de passe temporaire.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2"><Label>Nom complet *</Label>
+                <Input value={inviteForm.name} onChange={e => setInviteForm(f=>({...f,name:e.target.value}))} placeholder="Jean Dupont" />
+              </div>
+              <div className="space-y-2"><Label>Email *</Label>
+                <Input type="email" value={inviteForm.email} onChange={e => setInviteForm(f=>({...f,email:e.target.value}))} placeholder="jean@exemple.com" />
+              </div>
+              <div className="space-y-2"><Label>Rôle *</Label>
+                <Select value={inviteForm.role} onValueChange={v => setInviteForm(f=>({...f,role:v}))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrateur</SelectItem>
+                    <SelectItem value="procurement_manager">Responsable achats</SelectItem>
+                    <SelectItem value="approver">Approbateur</SelectItem>
+                    <SelectItem value="requester">Demandeur</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Département</Label>
+                <Select value={inviteForm.departmentId} onValueChange={v => setInviteForm(f=>({...f,departmentId:v}))}>
+                  <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Aucun</SelectItem>
+                    {departments.map((d:any) => <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Limite d'approbation (XOF)</Label>
+                <Input type="number" value={inviteForm.approvalLimit} onChange={e => setInviteForm(f=>({...f,approvalLimit:e.target.value}))} placeholder="Laisser vide = illimité" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setInviteOpen(false)}>Annuler</Button>
+              <Button onClick={() => inviteMut.mutate({ name:inviteForm.name, email:inviteForm.email, role:inviteForm.role as any, departmentId:inviteForm.departmentId?Number(inviteForm.departmentId):undefined, approvalLimit:inviteForm.approvalLimit||undefined })}
+                disabled={inviteMut.isPending||!inviteForm.name||!inviteForm.email}>
+                {inviteMut.isPending ? "Création..." : "Créer et inviter"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Temp Password Dialog */}
+        <Dialog open={tempPwd.open} onOpenChange={o => setTempPwd(d=>({...d,open:o}))}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Mot de passe temporaire</DialogTitle>
+              <DialogDescription>Communiquez ces identifiants à {tempPwd.email} de façon sécurisée.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-xs font-medium text-amber-800 mb-1">Email: {tempPwd.email}</p>
+                <p className="text-xs font-medium text-amber-800 mb-1">Mot de passe temporaire:</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-mono text-xl font-bold text-amber-900 tracking-widest">{tempPwd.password}</p>
+                  <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(tempPwd.password); toast.success("Copié!"); }}>📋</Button>
+                </div>
+              </div>
+              <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded p-3">L'utilisateur devra changer son mot de passe via Paramètres → Mon Profil.</p>
+              <p className="text-xs text-muted-foreground">Lien: <strong>{window.location.origin}/login</strong></p>
+            </div>
+            <DialogFooter><Button onClick={() => setTempPwd(d=>({...d,open:false}))}>Fermer</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={!!editUser && !resetPwdMut.isPending && !tempPwd.open} onOpenChange={() => setEditUser(null)}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Modifier l'utilisateur</DialogTitle>
@@ -369,32 +481,31 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="space-y-2"><Label>Rôle</Label>
-                <Select value={editForm.role} onValueChange={v => setEditForm(f => ({...f, role: v}))}>
+                <Select value={editForm.role} onValueChange={v => setEditForm(f=>({...f,role:v}))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Administrateur — accès complet</SelectItem>
-                    <SelectItem value="procurement_manager">Responsable achats — gère PO, fournisseurs, factures</SelectItem>
-                    <SelectItem value="approver">Approbateur — approuve les demandes</SelectItem>
-                    <SelectItem value="requester">Demandeur — crée des demandes d'achat</SelectItem>
+                    <SelectItem value="admin">Administrateur</SelectItem>
+                    <SelectItem value="procurement_manager">Responsable achats</SelectItem>
+                    <SelectItem value="approver">Approbateur</SelectItem>
+                    <SelectItem value="requester">Demandeur</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2"><Label>Département</Label>
-                <Select value={editForm.departmentId} onValueChange={v => setEditForm(f => ({...f, departmentId: v}))}>
+                <Select value={editForm.departmentId} onValueChange={v => setEditForm(f=>({...f,departmentId:v}))}>
                   <SelectTrigger><SelectValue placeholder="Aucun département" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun département</SelectItem>
-                    {departments.map((d: any) => <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>)}
+                    <SelectItem value="">Aucun</SelectItem>
+                    {departments.map((d:any) => <SelectItem key={d.id} value={d.id.toString()}>{d.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Limite d'approbation (XOF)</Label>
-                <Input type="number" value={editForm.approvalLimit} onChange={e => setEditForm(f => ({...f, approvalLimit: e.target.value}))} placeholder="Laisser vide = illimité" />
-                <p className="text-xs text-muted-foreground">Montant maximum que cet utilisateur peut approuver seul</p>
+                <Input type="number" value={editForm.approvalLimit} onChange={e => setEditForm(f=>({...f,approvalLimit:e.target.value}))} placeholder="Laisser vide = illimité" />
               </div>
               <div className="space-y-2"><Label>Statut</Label>
-                <Select value={editForm.status} onValueChange={v => setEditForm(f => ({...f, status: v}))}>
+                <Select value={editForm.status} onValueChange={v => setEditForm(f=>({...f,status:v}))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Actif</SelectItem>
@@ -405,13 +516,7 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditUser(null)}>Annuler</Button>
-              <Button disabled={updateMut.isPending} onClick={() => updateMut.mutate({
-                userId: editUser.id,
-                role: editForm.role as any,
-                departmentId: editForm.departmentId ? parseInt(editForm.departmentId) : undefined,
-                approvalLimit: editForm.approvalLimit || undefined,
-                status: editForm.status as any,
-              })}>
+              <Button disabled={updateMut.isPending} onClick={() => updateMut.mutate({ userId:editUser.id, role:editForm.role as any, departmentId:editForm.departmentId?parseInt(editForm.departmentId):undefined, approvalLimit:editForm.approvalLimit||undefined, status:editForm.status as any })}>
                 {updateMut.isPending ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </DialogFooter>
@@ -421,7 +526,6 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
     </div>
   );
 }
-
 // ─── Departments ──────────────────────────────────────────────────────────────
 function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
   const { data: departments = [], isLoading } = trpc.settings.listDepartments.useQuery();
@@ -1334,6 +1438,10 @@ function LookupsSection({ isAdmin }: { isAdmin: boolean }) {
     GLAccount: "Comptes GL",
     BillingString: "Codes de facturation",
     Project: "Projets",
+    category: "Catégories d'achat",
+    cost_center: "Centres de coût",
+    gl_account: "Comptes GL",
+    project: "Projets",
   };
 
   return (

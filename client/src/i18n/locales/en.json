@@ -49,7 +49,10 @@
     "select": "Select",
     "close": "Close",
     "reset": "Reset",
-    "print": "Print"
+    "print": "Print",
+    "creating": "Creating...",
+    "viewAll": "View all",
+    "review": "Review"
   },
   "auth": {
     "signIn": "Sign in",
@@ -398,9 +401,20 @@
     "timezone": "Timezone",
     "fiscalYear": "Fiscal Year",
     "approvals": {
+      "title": "Approval Policies",
+      "description": "Define approval rules and steps for purchase requests",
+      "createPolicy": "Create Policy",
+      "createPolicyDesc": "Define a new approval policy with its steps",
+      "policyName": "Policy Name",
+      "policyNamePlaceholder": "e.g. Standard Approval",
       "policyCreated": "Policy created successfully",
       "policyDeleted": "Policy deleted",
-      "confirmDelete": "Confirm deletion?"
+      "confirmDelete": "Delete this policy?",
+      "approverTypes": {
+        "role": "By role",
+        "user": "Specific user",
+        "manager": "Line manager"
+      }
     }
   },
   "notifications": {

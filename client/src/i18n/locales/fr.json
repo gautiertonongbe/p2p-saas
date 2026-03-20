@@ -49,7 +49,10 @@
     "select": "Sélectionner",
     "close": "Fermer",
     "reset": "Réinitialiser",
-    "print": "Imprimer"
+    "print": "Imprimer",
+    "creating": "Création...",
+    "viewAll": "Voir tout",
+    "review": "Examiner"
   },
   "auth": {
     "signIn": "Se connecter",
@@ -407,9 +410,20 @@
     "timezone": "Fuseau horaire",
     "fiscalYear": "Année fiscale",
     "approvals": {
+      "title": "Politiques d'approbation",
+      "description": "Définissez les règles et étapes d'approbation pour les demandes d'achat",
+      "createPolicy": "Créer une politique",
+      "createPolicyDesc": "Définissez une nouvelle politique d'approbation avec ses étapes",
+      "policyName": "Nom de la politique",
+      "policyNamePlaceholder": "Ex: Approbation standard",
       "policyCreated": "Politique créée avec succès",
       "policyDeleted": "Politique supprimée",
-      "confirmDelete": "Confirmer la suppression ?"
+      "confirmDelete": "Supprimer cette politique ?",
+      "approverTypes": {
+        "role": "Par rôle",
+        "user": "Utilisateur spécifique",
+        "manager": "Responsable hiérarchique"
+      }
     }
   },
   "notifications": {
