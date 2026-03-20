@@ -1967,4 +1967,4 @@ function CustomFieldsSection({ isAdmin }: { isAdmin: boolean }) {
       </div>
     </div>
   );
-}eact, { useState, useEffect } from "react";
+}
