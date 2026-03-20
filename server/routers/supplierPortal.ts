@@ -77,7 +77,7 @@ export const supplierPortalRouter = router({
       // Set vendor session cookie
       const cookieOptions = getSessionCookieOptions(ctx.req);
       const sessionData = JSON.stringify({ vendorUserId: vendorUser.id, vendorId: vendorUser.vendorId, organizationId: vendorUser.organizationId });
-      const encoded = Buffer.from(sessionData).toString("base64");
+      const encoded = Buffer.from(sessionData).toString("base64url");
       ctx.res.cookie(VENDOR_SESSION_COOKIE, encoded, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
       return { success: true, vendorUser: { id: vendorUser.id, name: vendorUser.name, email: vendorUser.email, vendorId: vendorUser.vendorId } };
@@ -86,10 +86,11 @@ export const supplierPortalRouter = router({
   // Get current vendor session
   vendorMe: publicProcedure.query(async ({ ctx }) => {
     const cookies = ctx.req.headers.cookie || "";
-    const match = cookies.match(new RegExp(`${VENDOR_SESSION_COOKIE}=([^;]+)`));
+    const rawMatch = cookies.match(new RegExp(`${VENDOR_SESSION_COOKIE}=([^;]+)`));
+    const match = rawMatch ? [rawMatch[0], decodeURIComponent(rawMatch[1])] : null;
     if (!match) return null;
     try {
-      const data = JSON.parse(Buffer.from(match[1], "base64").toString());
+      const data = JSON.parse(Buffer.from(match[1], "base64url").toString());
       const db = await getDb();
       if (!db) return null;
       const result = await db.execute(`
@@ -114,9 +115,10 @@ export const supplierPortalRouter = router({
   // Get POs for vendor
   getVendorPOs: publicProcedure.query(async ({ ctx }) => {
     const cookies = ctx.req.headers.cookie || "";
-    const match = cookies.match(new RegExp(`${VENDOR_SESSION_COOKIE}=([^;]+)`));
+    const rawMatch = cookies.match(new RegExp(`${VENDOR_SESSION_COOKIE}=([^;]+)`));
+    const match = rawMatch ? [rawMatch[0], decodeURIComponent(rawMatch[1])] : null;
     if (!match) throw new TRPCError({ code: "UNAUTHORIZED" });
-    const data = JSON.parse(Buffer.from(match[1], "base64").toString());
+    const data = JSON.parse(Buffer.from(match[1], "base64url").toString());
 
     const db = await getDb();
     if (!db) return [];
@@ -135,9 +137,10 @@ export const supplierPortalRouter = router({
   // Get submissions by vendor
   getVendorSubmissions: publicProcedure.query(async ({ ctx }) => {
     const cookies = ctx.req.headers.cookie || "";
-    const match = cookies.match(new RegExp(`${VENDOR_SESSION_COOKIE}=([^;]+)`));
+    const rawMatch = cookies.match(new RegExp(`${VENDOR_SESSION_COOKIE}=([^;]+)`));
+    const match = rawMatch ? [rawMatch[0], decodeURIComponent(rawMatch[1])] : null;
     if (!match) throw new TRPCError({ code: "UNAUTHORIZED" });
-    const data = JSON.parse(Buffer.from(match[1], "base64").toString());
+    const data = JSON.parse(Buffer.from(match[1], "base64url").toString());
 
     const db = await getDb();
     if (!db) return [];
@@ -162,9 +165,10 @@ export const supplierPortalRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const cookies = ctx.req.headers.cookie || "";
-      const match = cookies.match(new RegExp(`${VENDOR_SESSION_COOKIE}=([^;]+)`));
+      const rawMatch = cookies.match(new RegExp(`${VENDOR_SESSION_COOKIE}=([^;]+)`));
+    const match = rawMatch ? [rawMatch[0], decodeURIComponent(rawMatch[1])] : null;
       if (!match) throw new TRPCError({ code: "UNAUTHORIZED" });
-      const data = JSON.parse(Buffer.from(match[1], "base64").toString());
+      const data = JSON.parse(Buffer.from(match[1], "base64url").toString());
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

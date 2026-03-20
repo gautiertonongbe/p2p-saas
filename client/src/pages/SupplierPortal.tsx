@@ -14,7 +14,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const loginMut = trpc.supplierPortal.vendorLogin.useMutation({
-    onSuccess: () => { toast.success("Connexion réussie"); window.location.reload(); },
+    onSuccess: () => { toast.success("Connexion réussie !"); setTimeout(() => window.location.reload(), 500); },
     onError: (e) => toast.error(e.message),
   });
 
