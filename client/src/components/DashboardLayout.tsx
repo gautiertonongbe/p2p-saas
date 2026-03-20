@@ -256,7 +256,6 @@ function DashboardLayoutContent({
           }}
           style={{ zIndex: 50 }}
         />
-      </div>
     </div>
 
     <SidebarInset>
