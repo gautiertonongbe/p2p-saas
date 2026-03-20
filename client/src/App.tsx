@@ -15,6 +15,7 @@ import VendorForm from "./pages/VendorForm";
 import VendorDetail from "./pages/VendorDetail";
 import ApprovalsList from "./pages/ApprovalsList";
 import InvoicesList from "./pages/InvoicesList";
+import InvoiceForm from "./pages/InvoiceForm";
 import Analytics from "./pages/Analytics";
 import PurchaseOrdersList from "./pages/PurchaseOrdersList";
 import PurchaseOrderForm from "./pages/PurchaseOrderForm";
