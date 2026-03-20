@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import CodingWidget, { type CodingValues } from "@/components/CodingWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +39,8 @@ export default function PurchaseRequestForm() {
   const [projectId, setProjectId] = useState("");
   const [billingStringId, setBillingStringId] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [coding, setCoding] = useState<CodingValues>({});
+
   const [items, setItems] = useState<Item[]>([
     { itemName: "", description: "", quantity: 1, unit: "pcs", unitPrice: "" }
   ]);
@@ -84,6 +87,9 @@ export default function PurchaseRequestForm() {
     costCenterId: costCenterId ? parseInt(costCenterId) : undefined,
     projectId: projectId ? parseInt(projectId) : undefined,
     billingStringId: billingStringId ? parseInt(billingStringId) : undefined,
+    glAccountId: coding.glAccountId ? parseInt(coding.glAccountId) : undefined,
+    costCenterId: coding.costCenterId ? parseInt(coding.costCenterId) : undefined,
+    projectId: coding.projectId ? parseInt(coding.projectId) : undefined,
     amountEstimate: total,
     items: items.filter(it => it.itemName.trim()).map(it => ({
       itemName: it.itemName.trim(),
@@ -222,6 +228,13 @@ export default function PurchaseRequestForm() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Coding */}
+      <Card>
+        <CardContent className="pt-5">
+          <CodingWidget value={coding} onChange={setCoding} />
         </CardContent>
       </Card>
 

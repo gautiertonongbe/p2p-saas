@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import CodingWidget, { type CodingValues } from "@/components/CodingWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,7 @@ export default function InvoiceForm() {
   const [dueDate, setDueDate] = useState("");
   const [taxAmount, setTaxAmount] = useState("");
   const [notes, setNotes] = useState("");
+  const [coding, setCoding] = useState<CodingValues>({});
   const [scanning, setScanning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [lines, setLines] = useState<LineItem[]>([
@@ -103,7 +105,10 @@ export default function InvoiceForm() {
       dueDate: dueDate || undefined,
       amount: subtotal,
       taxAmount: tax || undefined,
-    });
+      glAccountId: coding.glAccountId ? parseInt(coding.glAccountId) : undefined,
+      costCenterId: coding.costCenterId ? parseInt(coding.costCenterId) : undefined,
+      projectId: coding.projectId ? parseInt(coding.projectId) : undefined,
+    } as any);
   };
 
   // Filter POs by selected vendor
@@ -266,6 +271,11 @@ export default function InvoiceForm() {
               <span className="text-sm font-semibold">Total TTC</span>
               <span className="text-xl font-bold text-blue-700 w-36 text-right">{fmt(total)} XOF</span>
             </div>
+          </div>
+
+          {/* Coding */}
+          <div className="pt-3 border-t">
+            <CodingWidget value={coding} onChange={setCoding} />
           </div>
 
           {/* Notes */}

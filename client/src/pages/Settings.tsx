@@ -35,7 +35,7 @@ import {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const SECTION_ICONS: Record<string, React.FC<any>> = {
   organization: Building2, users: Users, departments: GitBranch,
-  lookups: Hash, approvals: Shield, budgets: DollarSign, workflow: Workflow,
+  lookups: Hash, coding: Hash, approvals: Shield, budgets: DollarSign, workflow: Workflow,
   tolerance: Sliders, paymentterms: DollarSign, taxrates: DollarSign,
   exchangerates: Globe, customfields: Package,
   notifications: Bell, localization: Globe, numbering: Hash, security: Gear,
@@ -47,6 +47,7 @@ const SECTION_DEFS = [
   { id: "users",        group: "Organisation", desc: "Utilisateurs et rôles" },
   { id: "departments",  group: "Organisation", desc: "Structure organisationnelle" },
   { id: "lookups",      group: "Organisation", desc: "Catégories, centres de coût, comptes GL" },
+  { id: "coding",       group: "Organisation", desc: "Plan comptable, centres de coût, projets" },
   { id: "approvals",    group: "Flux de travail", desc: "Politiques et étapes d'approbation" },
   { id: "workflow",     group: "Flux de travail", desc: "Automatisation et seuils" },
   { id: "budgets",      group: "Contrôle budgétaire", desc: "Politiques budgétaires" },
@@ -67,7 +68,8 @@ const groups = [...new Set(SECTION_DEFS.map(s => s.group))];
 // ─── Labels ───────────────────────────────────────────────────────────────────
 const SECTION_LABELS: Record<string, string> = {
   organization: "Organisation", users: "Utilisateurs", departments: "Départements",
-  lookups: "Valeurs de référence", approvals: "Approbations", workflow: "Flux de travail",
+  lookups: "Valeurs de référence",
+  coding: "Codification comptable", approvals: "Approbations", workflow: "Flux de travail",
   budgets: "Politiques budgétaires", tolerance: "Tolérances 3 voies",
   paymentterms: "Conditions de paiement", taxrates: "Taux de taxes",
   exchangerates: "Taux de change", customfields: "Champs personnalisés",
@@ -152,6 +154,7 @@ export default function Settings() {
         {section === "users"         && <UsersSection isAdmin={isAdmin} />}
         {section === "departments"   && <DepartmentsSection isAdmin={isAdmin} />}
         {section === "lookups"       && <LookupsSection isAdmin={isAdmin} />}
+        {section === "coding"        && <CodingSection isAdmin={isAdmin} />}
         {section === "approvals"     && <ApprovalsSection isAdmin={isAdmin} />}
         {section === "workflow"      && <WorkflowSection isAdmin={isAdmin} />}
         {section === "budgets"       && <BudgetsSection isAdmin={isAdmin} />}
@@ -2023,6 +2026,178 @@ function ExchangeRatesSection({ isAdmin }: { isAdmin: boolean }) {
               {mut.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Enregistrement...</> : <><Save className="h-4 w-4" />Enregistrer manuellement</>}
             </button>
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// ─── Coding Section ───────────────────────────────────────────────────────────
+function CodingSection({ isAdmin }: { isAdmin: boolean }) {
+  const { data: lookupTypes = [] } = trpc.settings.getLookupTypes.useQuery();
+  const utils = trpc.useUtils();
+  const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newValue, setNewValue] = useState({ code: "", label: "", isActive: true });
+
+  const CODING_SEGMENTS = [
+    { name: "gl_account",  label: "Comptes GL", desc: "Plan comptable général", icon: "💰" },
+    { name: "cost_center", label: "Centres de coût", desc: "Unités organisationnelles de coût", icon: "🏢" },
+    { name: "project",     label: "Projets", desc: "Projets et programmes", icon: "📁" },
+    { name: "activity",    label: "Activités", desc: "Nature de dépense", icon: "🏷️" },
+  ];
+
+  const codingTypes = (lookupTypes as any[]).filter((t: any) =>
+    CODING_SEGMENTS.map(s => s.name).includes(t.name)
+  );
+
+  const activeType = codingTypes.find((t: any) => t.id === selectedTypeId);
+  const activeSegment = CODING_SEGMENTS.find(s => s.name === activeType?.name);
+
+  const { data: values = [], refetch: refetchValues } = trpc.settings.getLookupValues.useQuery(
+    { lookupTypeId: selectedTypeId! },
+    { enabled: !!selectedTypeId }
+  );
+
+  const createMut = trpc.settings.createLookupValue.useMutation({
+    onSuccess: () => { toast.success("Valeur ajoutée"); refetchValues(); setAddOpen(false); setNewValue({ code: "", label: "", isActive: true }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const toggleMut = trpc.settings.updateLookupValue.useMutation({
+    onSuccess: () => refetchValues(),
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <div>
+      <SectionHeader icon={Hash} title="Codification comptable" desc="Définissez les codes utilisés sur les demandes, bons de commande et factures" />
+      <div className="p-6 max-w-4xl space-y-4">
+        <InfoBox>
+          Ces codes permettent aux utilisateurs de rattacher leurs dépenses aux bons comptes GL, centres de coût et projets.
+          Finance configure les listes ici, les utilisateurs les sélectionnent sur chaque document.
+        </InfoBox>
+
+        {/* Segment tabs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {CODING_SEGMENTS.map(seg => {
+            const type = codingTypes.find((t: any) => t.name === seg.name);
+            const count = type ? "..." : "0";
+            const isActive = type?.id === selectedTypeId;
+            return (
+              <button key={seg.name} onClick={() => type && setSelectedTypeId(type.id)}
+                disabled={!type}
+                className={`p-3 rounded-xl border-2 text-left transition-all ${
+                  isActive ? "border-blue-500 bg-blue-50" :
+                  type ? "border-gray-200 hover:border-gray-300 hover:bg-gray-50" :
+                  "border-gray-100 opacity-50 cursor-not-allowed"
+                }`}>
+                <div className="text-xl mb-1">{seg.icon}</div>
+                <div className="text-sm font-semibold">{seg.label}</div>
+                <div className="text-xs text-muted-foreground">{seg.desc}</div>
+                {!type && <div className="text-xs text-amber-600 mt-1">Non configuré</div>}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Segment not initialized message */}
+        {CODING_SEGMENTS.some(s => !codingTypes.find((t: any) => t.name === s.name)) && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+            ⚠️ Certains segments ne sont pas encore initialisés. Exécutez le script SQL d'initialisation dans TiDB.
+          </div>
+        )}
+
+        {/* Values list */}
+        {selectedTypeId && activeSegment && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base">{activeSegment.icon} {activeSegment.label}</CardTitle>
+                  <CardDescription>{activeSegment.desc}</CardDescription>
+                </div>
+                {isAdmin && (
+                  <button onClick={() => setAddOpen(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium btn-primary">
+                    <Plus className="h-4 w-4" />Ajouter
+                  </button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {(values as any[]).length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <Hash className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Aucune valeur configurée</p>
+                  {isAdmin && <button onClick={() => setAddOpen(true)} className="mt-3 text-sm text-blue-600 hover:underline">Ajouter la première valeur →</button>}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-32">Code</TableHead>
+                      <TableHead>Libellé</TableHead>
+                      <TableHead className="w-24 text-center">Statut</TableHead>
+                      {isAdmin && <TableHead className="w-16"></TableHead>}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(values as any[]).map((v: any) => (
+                      <TableRow key={v.id}>
+                        <TableCell><code className="text-sm bg-muted px-2 py-0.5 rounded font-mono">{v.code}</code></TableCell>
+                        <TableCell className="font-medium">{v.label}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={v.isActive ? "default" : "secondary"} className="text-xs">
+                            {v.isActive ? "Actif" : "Inactif"}
+                          </Badge>
+                        </TableCell>
+                        {isAdmin && (
+                          <TableCell>
+                            <Switch checked={v.isActive}
+                              onCheckedChange={checked => toggleMut.mutate({ id: v.id, isActive: checked })} />
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Add value dialog */}
+        {addOpen && (
+          <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ajouter une valeur — {activeSegment?.label}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-1.5">
+                  <Label>Code *</Label>
+                  <Input value={newValue.code} onChange={e => setNewValue(v => ({...v, code: e.target.value.toUpperCase()}))}
+                    placeholder="Ex: 601100, CC-TECH, PROJ-001" className="font-mono" />
+                  <p className="text-xs text-muted-foreground">Code court utilisé pour la codification</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Libellé *</Label>
+                  <Input value={newValue.label} onChange={e => setNewValue(v => ({...v, label: e.target.value}))}
+                    placeholder="Ex: Achats de fournitures, Centre IT, Projet Alpha" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
+                <button disabled={!newValue.code || !newValue.label || createMut.isPending}
+                  onClick={() => createMut.mutate({ lookupTypeId: selectedTypeId!, ...newValue })}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 btn-primary">
+                  {createMut.isPending ? "Ajout..." : "Ajouter"}
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </div>
