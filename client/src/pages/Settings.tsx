@@ -451,7 +451,7 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
               <button onClick={() => setInviteOpen(false)} className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
               <button onClick={() => inviteMut.mutate({ name:inviteForm.name, email:inviteForm.email, role:inviteForm.role as any, departmentId:inviteForm.departmentId?Number(inviteForm.departmentId):undefined, approvalLimit:inviteForm.approvalLimit||undefined })}
                 disabled={inviteMut.isPending||!inviteForm.name||!inviteForm.email}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50" className="btn-primary">
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 btn-primary">
                 {inviteMut.isPending ? "Création..." : "Créer et inviter"}
               </button>
             </DialogFooter>

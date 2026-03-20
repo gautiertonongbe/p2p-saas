@@ -199,7 +199,7 @@ export default function InvoicesList() {
             defaultColumns={INVOICE_COLUMNS.map(c => c.key)}
           />
           <Link href="/invoices/new">
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white" className="btn-primary">
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium btn-primary">
                 <Plus className="h-4 w-4" />Nouvelle facture
               </button>
             </Link>

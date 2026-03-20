@@ -18,9 +18,16 @@ export const COLOR_PRESETS = [
 ];
 
 function applyColorPreset(presetId: string) {
-  const id = COLOR_PRESETS.find(p => p.id === presetId) ? presetId : "blue";
-  // Use data attribute - CSS rules handle the variables with correct specificity
-  document.documentElement.setAttribute("data-color", id);
+  const preset = COLOR_PRESETS.find(p => p.id === presetId) || COLOR_PRESETS[0];
+  const id = preset.id;
+  const root = document.documentElement;
+  // Set data attribute for CSS rules
+  root.setAttribute("data-color", id);
+  // Also directly set sidebar-accent so active items use the right color
+  root.style.setProperty("--sidebar-accent", `hsl(${preset.primary})`);
+  root.style.setProperty("--sidebar-accent-foreground", "0 0% 100%");
+  root.style.setProperty("--primary", preset.primary);
+  root.style.setProperty("--ring", preset.primary);
 }
 
 // Apply immediately before React renders to avoid color flash
