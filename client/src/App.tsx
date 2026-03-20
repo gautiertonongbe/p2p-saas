@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
+import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import PurchaseRequestsList from "./pages/PurchaseRequestsList";
 import PurchaseRequestForm from "./pages/PurchaseRequestForm";
@@ -33,6 +34,7 @@ import ReportBuilder from "./pages/ReportBuilder";
 function Router() {
   return (
     <Switch>
+      <Route path="/login"><Home /></Route>
       <Route path="/"><DashboardLayout><Dashboard /></DashboardLayout></Route>
       <Route path="/purchase-requests"><DashboardLayout><PurchaseRequestsList /></DashboardLayout></Route>
       <Route path="/purchase-requests/new"><DashboardLayout><PurchaseRequestForm /></DashboardLayout></Route>
