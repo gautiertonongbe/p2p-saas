@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, FileText, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, FileText, Plus, Trash2, Scan, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 function fmt(n: number) {
@@ -29,6 +29,8 @@ export default function InvoiceForm() {
   const [dueDate, setDueDate] = useState("");
   const [taxAmount, setTaxAmount] = useState("");
   const [notes, setNotes] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [lines, setLines] = useState<LineItem[]>([
     { description: "", quantity: "1", unitPrice: "" }
   ]);
@@ -37,6 +39,38 @@ export default function InvoiceForm() {
   const { data: orders = [] } = trpc.purchaseOrders.list.useQuery();
 
   const utils = trpc.useUtils();
+  const ocrMutation = trpc.ocr.extractInvoice.useMutation({
+    onSuccess: (result) => {
+      const d = result.data;
+      if (d.invoiceNumber) setInvoiceNumber(d.invoiceNumber);
+      if (d.invoiceDate) setInvoiceDate(d.invoiceDate);
+      if (d.dueDate) setDueDate(d.dueDate);
+      if (d.taxAmount) setTaxAmount(String(d.taxAmount));
+      if (d.lineItems?.length > 0) {
+        setLines(d.lineItems.map((li: any) => ({
+          description: li.description || "",
+          quantity: String(li.quantity || 1),
+          unitPrice: String(li.unitPrice || 0),
+        })));
+      } else if (d.subtotal) {
+        setLines([{ description: "Prestation", quantity: "1", unitPrice: String(d.subtotal) }]);
+      }
+      toast.success("Facture scannée avec succès ! Vérifiez les informations.");
+      setScanning(false);
+    },
+    onError: (e) => { toast.error("Échec du scan: " + e.message); setScanning(false); },
+  });
+
+  const handleScanInvoice = async (file: File) => {
+    setScanning(true);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = (e.target?.result as string).split(",")[1];
+      const mimeType = file.type || "image/jpeg";
+      ocrMutation.mutate({ imageBase64: base64, mimeType });
+    };
+    reader.readAsDataURL(file);
+  };
   const createMutation = trpc.invoices.create.useMutation({
     onSuccess: () => {
       toast.success("Facture créée avec succès");
@@ -87,6 +121,15 @@ export default function InvoiceForm() {
         <div>
           <h1 className="text-2xl font-bold">Nouvelle facture</h1>
           <p className="text-sm text-muted-foreground">Saisir une facture fournisseur</p>
+        </div>
+        <div className="ml-auto">
+          <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden"
+            onChange={e => e.target.files?.[0] && handleScanInvoice(e.target.files[0])} />
+          <button onClick={() => fileInputRef.current?.click()} disabled={scanning}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed border-blue-300 text-blue-700 hover:bg-blue-50 text-sm font-medium disabled:opacity-50 transition-colors">
+            {scanning ? <><Loader2 className="h-4 w-4 animate-spin" />Analyse en cours...</> : <><Scan className="h-4 w-4" />Scanner une facture (OCR)</>}
+          </button>
+          {scanning && <p className="text-xs text-muted-foreground text-center mt-1">Claude analyse votre facture...</p>}
         </div>
       </div>
 

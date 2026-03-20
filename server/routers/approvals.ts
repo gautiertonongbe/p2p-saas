@@ -161,6 +161,19 @@ export const approvalsRouter = router({
             entityType: "purchaseRequest",
             entityId: request.id,
           });
+          // Email requester
+          const requester = await db.getUserById(request.requesterId);
+          if (requester?.email) {
+            await sendApprovalDecisionEmail({
+              to: requester.email,
+              requesterName: requester.name || requester.email,
+              requestTitle: request.title,
+              requestNumber: request.requestNumber,
+              decision: "approved",
+              approverName: ctx.user.name || ctx.user.email || "Un approbateur",
+              requestId: request.id,
+            }).catch(e => console.error("[Email] Failed:", e));
+          }
         }
       } else {
         // Notify next approver(s)
@@ -177,6 +190,21 @@ export const approvalsRouter = router({
             entityType: "purchaseRequest",
             entityId: currentApproval.requestId,
           });
+          // Send email to next approvers
+          for (const pending of nextPending) {
+            const approver = await db.getUserById(pending.approverId);
+            if (approver?.email && request) {
+              await sendApprovalRequestEmail({
+                to: approver.email,
+                approverName: approver.name || approver.email,
+                requesterName: ctx.user.name || ctx.user.email || "Un utilisateur",
+                requestTitle: request.title,
+                requestNumber: request.requestNumber,
+                amount: parseFloat(request.amountEstimate) || 0,
+                approvalId: pending.id,
+              }).catch(e => console.error("[Email] Failed:", e));
+            }
+          }
         }
       }
 

@@ -18,6 +18,7 @@ import { viewsRouter } from "./routers/views";
 import { impersonateRouter } from "./routers/impersonate";
 import { esignatureRouter } from "./routers/esignature";
 import { supplierPortalRouter } from "./routers/supplierPortal";
+import { ocrRouter } from "./routers/ocr";
 
 export const appRouter = router({
   system: systemRouter,
@@ -50,6 +51,7 @@ export const appRouter = router({
   impersonate: impersonateRouter,
   esignature: esignatureRouter,
   supplierPortal: supplierPortalRouter,
+  ocr: ocrRouter,
 });
 
 export type AppRouter = typeof appRouter;

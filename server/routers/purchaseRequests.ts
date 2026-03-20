@@ -222,6 +222,25 @@ export const purchaseRequestsRouter = router({
       const newStatus = approvalResult.approvalCount > 0 ? "pending_approval" : "approved";
       await db.updatePurchaseRequest(input.id, ctx.user.organizationId, { status: newStatus });
 
+      // Email first approvers
+      if (newStatus === "pending_approval" && approvalResult.firstApprovers?.length > 0) {
+        for (const approverId of approvalResult.firstApprovers) {
+          const approver = await db.getUserById(approverId);
+          const approvalRecord = (await db.getApprovalsByRequest(input.id)).find(a => a.approverId === approverId);
+          if (approver?.email && approvalRecord) {
+            await sendApprovalRequestEmail({
+              to: approver.email,
+              approverName: approver.name || approver.email,
+              requesterName: ctx.user.name || ctx.user.email || "Un utilisateur",
+              requestTitle: request.title,
+              requestNumber: request.requestNumber,
+              amount: parseFloat(request.amountEstimate) || 0,
+              approvalId: approvalRecord.id,
+            }).catch(e => console.error("[Email] Failed:", e));
+          }
+        }
+      }
+
       await createAuditLog({ organizationId: ctx.user.organizationId, entityType: "purchaseRequest", entityId: input.id, action: "submitted", actorId: ctx.user.id, oldValue: { status: request.status }, newValue: { status: newStatus } });
       return { success: true, status: newStatus };
     }),
