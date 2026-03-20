@@ -1851,10 +1851,17 @@ function ExchangeRatesSection({ isAdmin }: { isAdmin: boolean }) {
   const utils = trpc.useUtils();
   const CURRENCIES = ["EUR", "USD", "GBP", "GHS", "NGN", "MAD", "TND", "ZAR", "CNY"];
   const [rates, setRates] = useState<Record<string, string>>({ EUR: "655.957", USD: "605.00" });
+  const [fetching, setFetching] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [source, setSource] = useState<string | null>(null);
 
   useEffect(() => {
     const r = (org as any)?.settings?.exchangeRates;
     if (r) setRates(Object.fromEntries(Object.entries(r).map(([k, v]) => [k, String(v)])));
+    const lu = (org as any)?.settings?.exchangeRatesUpdatedAt;
+    if (lu) setLastUpdated(lu);
+    const src = (org as any)?.settings?.exchangeRatesSource;
+    if (src) setSource(src);
   }, [org]);
 
   const mut = trpc.settings.updateOrganization.useMutation({
@@ -1864,30 +1871,94 @@ function ExchangeRatesSection({ isAdmin }: { isAdmin: boolean }) {
 
   const baseCurrency = org?.baseCurrency ?? "XOF";
 
+  const fetchLiveRates = async () => {
+    setFetching(true);
+    try {
+      // Using exchangerate-api.com free tier (no key needed for basic)
+      const res = await fetch(`https://open.er-api.com/v6/latest/EUR`);
+      const data = await res.json();
+      if (data.result !== "success") throw new Error("API error");
+      // XOF is pegged to EUR at 655.957
+      const eurToXof = 655.957;
+      const newRates: Record<string, string> = {};
+      for (const cur of CURRENCIES) {
+        if (cur === "EUR") { newRates["EUR"] = "655.957"; continue; }
+        const eurToCur = data.rates[cur];
+        if (eurToCur) {
+          // Convert: 1 CUR = ? XOF => (1/eurToCur) EUR * 655.957
+          newRates[cur] = ((1 / eurToCur) * eurToXof).toFixed(3);
+        }
+      }
+      setRates(newRates);
+      const now = new Date().toISOString();
+      setLastUpdated(now);
+      setSource("open.er-api.com");
+      // Auto-save
+      mut.mutate({ settings: { 
+        exchangeRates: Object.fromEntries(Object.entries(newRates).map(([k, v]) => [k, parseFloat(v) || 0])),
+        exchangeRatesUpdatedAt: now,
+        exchangeRatesSource: "open.er-api.com"
+      } } as any);
+      toast.success("Taux mis à jour en temps réel !");
+    } catch (e: any) {
+      toast.error("Impossible de récupérer les taux. Vérifiez votre connexion.");
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  const saveManual = () => {
+    mut.mutate({ settings: { 
+      exchangeRates: Object.fromEntries(Object.entries(rates).map(([k, v]) => [k, parseFloat(v) || 0])),
+      exchangeRatesUpdatedAt: lastUpdated,
+      exchangeRatesSource: source,
+    } } as any);
+  };
+
   return (
     <div>
       <SectionHeader icon={Globe} title="Taux de change" desc={`Taux de change vs devise principale (${baseCurrency})`} />
       <div className="p-6 max-w-2xl">
-        <InfoBox>Ces taux sont utilisés pour la conversion des montants dans les rapports et analyses. Mettez-les à jour régulièrement pour des données précises. 1 EUR = {rates["EUR"] || "655.957"} {baseCurrency}.</InfoBox>
-        <Card className="mt-6">
-          <CardContent className="pt-6 space-y-4">
-            {CURRENCIES.filter(c => c !== baseCurrency).map(currency => (
-              <div key={currency} className="flex items-center gap-4">
-                <div className="w-16 font-semibold text-sm">{currency}</div>
-                <div className="flex-1 flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">1 {currency} =</span>
-                  <Input type="number" value={rates[currency] || ""} onChange={e => setRates(r => ({...r, [currency]: e.target.value}))}
-                    disabled={!isAdmin} className="w-36" step="0.001" min={0} placeholder="0.000" />
-                  <span className="text-sm text-muted-foreground">{baseCurrency}</span>
-                </div>
+        {/* Source info */}
+        <div className="flex items-center justify-between mb-4 p-3 rounded-xl bg-blue-50 border border-blue-200">
+          <div>
+            <p className="text-sm font-medium text-blue-800">Taux de change en temps réel</p>
+            <p className="text-xs text-blue-600 mt-0.5">
+              {lastUpdated
+                ? <>Dernière mise à jour: <strong>{new Date(lastUpdated).toLocaleString("fr-FR")}</strong> · Source: <strong>{source || "Manuel"}</strong></>
+                : "Cliquez sur "Actualiser" pour récupérer les taux actuels"}
+            </p>
+          </div>
+          {isAdmin && (
+            <button onClick={fetchLiveRates} disabled={fetching}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-white text-sm font-medium disabled:opacity-50 btn-primary shrink-0 ml-4">
+              {fetching
+                ? <><Loader2 className="h-4 w-4 animate-spin" />Actualisation...</>
+                : <><TrendingUp className="h-4 w-4" />Actualiser</>}
+            </button>
+          )}
+        </div>
+
+        <Card>
+          <CardContent className="pt-4 pb-4 space-y-2">
+            {CURRENCIES.filter(cur => cur !== baseCurrency).map(currency => (
+              <div key={currency} className="flex items-center gap-3 py-1.5 border-b last:border-0">
+                <div className="w-12 font-semibold text-sm">{currency}</div>
+                <span className="text-sm text-muted-foreground w-24">1 {currency} =</span>
+                <Input type="number" value={rates[currency] || ""} onChange={e => setRates(r => ({...r, [currency]: e.target.value}))}
+                  disabled={!isAdmin} className="w-32 text-right" step="0.001" min={0} placeholder="0.000" />
+                <span className="text-sm font-medium text-muted-foreground">{baseCurrency}</span>
               </div>
             ))}
           </CardContent>
         </Card>
+
         {isAdmin && (
-          <div className="mt-6 flex justify-end">
-            <button disabled={mut.isPending} onClick={() => mut.mutate({ settings: { exchangeRates: Object.fromEntries(Object.entries(rates).map(([k, v]) => [k, parseFloat(v) || 0])) } } as any)}>
-              {mut.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enregistrement...</> : <><Save className="mr-2 h-4 w-4" />Enregistrer</>}
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Vous pouvez aussi modifier les taux manuellement puis enregistrer.</p>
+            <button onClick={saveManual} disabled={mut.isPending}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+              {mut.isPending ? <><Loader2 className="h-4 w-4 animate-spin" />Enregistrement...</> : <><Save className="h-4 w-4" />Enregistrer manuellement</>}
             </button>
           </div>
         )}
