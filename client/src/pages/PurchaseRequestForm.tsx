@@ -1,29 +1,26 @@
 import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
-import { Plus, Trash2, Save, Send } from "lucide-react";
+import { Plus, Trash2, Save, Send, ArrowLeft, Package, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
-type PurchaseRequestItem = {
-  itemName: string;
-  description: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-};
+type Item = { itemName: string; description: string; quantity: number; unit: string; unitPrice: string };
+
+function fmt(n: number) {
+  return new Intl.NumberFormat("fr-FR").format(n);
+}
+
+function parseNum(s: string) {
+  return parseFloat(s.replace(/\s/g, "").replace(",", ".")) || 0;
+}
+
+const UNITS = ["pcs", "kg", "g", "L", "mL", "m", "cm", "m²", "m³", "boîte", "carton", "palette", "lot", "heure", "jour", "mois"];
 
 export default function PurchaseRequestForm() {
   const { t } = useTranslation();
@@ -32,452 +29,316 @@ export default function PurchaseRequestForm() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [urgencyLevel, setUrgencyLevel] = useState<"low" | "medium" | "high" | "critical">("medium");
+  const [urgencyLevel, setUrgencyLevel] = useState<"low"|"medium"|"high"|"critical">("medium");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [justification, setJustification] = useState("");
-  const [departmentId, setDepartmentId] = useState<string>("");
-  const [categoryId, setCategoryId] = useState<string>("");
-  const [costCenterId, setCostCenterId] = useState<string>("");
-  const [projectId, setProjectId] = useState<string>("");
-  const [billingStringId, setBillingStringId] = useState<string>("");
-  const [items, setItems] = useState<PurchaseRequestItem[]>([
-    { itemName: "", description: "", quantity: 1, unit: "pcs", unitPrice: 0 }
+  const [departmentId, setDepartmentId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [costCenterId, setCostCenterId] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const [billingStringId, setBillingStringId] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [items, setItems] = useState<Item[]>([
+    { itemName: "", description: "", quantity: 1, unit: "pcs", unitPrice: "" }
   ]);
 
-  const createMutation = trpc.purchaseRequests.create.useMutation({
-    onSuccess: () => {
-      toast.success(t('success.created'));
-      utils.purchaseRequests.list.invalidate();
-      setLocation("/purchase-requests");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    }
-  });
-
-  const updateMutation = trpc.purchaseRequests.update.useMutation({
-    onSuccess: () => {
-      toast.success(t('success.submitted'));
-      utils.purchaseRequests.list.invalidate();
-      setLocation("/purchase-requests");
-    },
-    onError: (error: any) => {
-      toast.error(error.message);
-    }
-  });
-
-  const submitMutation = trpc.purchaseRequests.submit.useMutation({
-    onSuccess: () => {
-      toast.success("Demande soumise pour approbation");
-      utils.purchaseRequests.list.invalidate();
-      utils.purchaseRequests.getMyRequests.invalidate();
-      setLocation("/purchase-requests");
-    },
-    onError: (error: any) => {
-      toast.error(error.message);
-    }
-  });
-
-  // Load reference data from org settings
   const { data: departments = [] } = trpc.settings.listDepartments.useQuery();
   const { data: lookupTypes = [] } = trpc.settings.getLookupTypes.useQuery();
+  const categories = trpc.settings.getLookupValues.useQuery(
+    { lookupTypeId: (lookupTypes as any[]).find((t: any) => t.name === "category")?.id ?? 0 },
+    { enabled: (lookupTypes as any[]).some((t: any) => t.name === "category") }
+  ).data ?? [];
+  const costCenters = trpc.settings.getLookupValues.useQuery(
+    { lookupTypeId: (lookupTypes as any[]).find((t: any) => t.name === "cost_center")?.id ?? 0 },
+    { enabled: (lookupTypes as any[]).some((t: any) => t.name === "cost_center") }
+  ).data ?? [];
+  const projects = trpc.settings.getLookupValues.useQuery(
+    { lookupTypeId: (lookupTypes as any[]).find((t: any) => t.name === "project")?.id ?? 0 },
+    { enabled: (lookupTypes as any[]).some((t: any) => t.name === "project") }
+  ).data ?? [];
 
-  const categoryTypeId = (lookupTypes as any[]).find((t: any) => t.name === "ExpenseCategory")?.id;
-  const costCenterTypeId = (lookupTypes as any[]).find((t: any) => t.name === "CostCenter")?.id;
-  const projectTypeId = (lookupTypes as any[]).find((t: any) => t.name === "Project")?.id;
-  const billingTypeId = (lookupTypes as any[]).find((t: any) => t.name === "BillingString")?.id;
+  const createMutation = trpc.purchaseRequests.create.useMutation({
+    onSuccess: (data) => { utils.purchaseRequests.list.invalidate(); setLocation("/purchase-requests"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const submitMutation = trpc.purchaseRequests.submit.useMutation({
+    onSuccess: () => { toast.success("Demande soumise pour approbation !"); utils.purchaseRequests.list.invalidate(); setLocation("/purchase-requests"); },
+    onError: (e) => toast.error(e.message),
+  });
 
-  const { data: categories = [] } = trpc.settings.getLookupValues.useQuery(
-    { lookupTypeId: categoryTypeId! }, { enabled: !!categoryTypeId }
-  );
-  const { data: costCenters = [] } = trpc.settings.getLookupValues.useQuery(
-    { lookupTypeId: costCenterTypeId! }, { enabled: !!costCenterTypeId }
-  );
-  const { data: projects = [] } = trpc.settings.getLookupValues.useQuery(
-    { lookupTypeId: projectTypeId! }, { enabled: !!projectTypeId }
-  );
-  const { data: billingStrings = [] } = trpc.settings.getLookupValues.useQuery(
-    { lookupTypeId: billingTypeId! }, { enabled: !!billingTypeId }
-  );
+  const addItem = () => setItems(prev => [...prev, { itemName: "", description: "", quantity: 1, unit: "pcs", unitPrice: "" }]);
+  const removeItem = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i));
+  const updateItem = (i: number, field: keyof Item, val: any) =>
+    setItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: val } : item));
 
-  const addItem = () => {
-    setItems([...items, { itemName: "", description: "", quantity: 1, unit: "pcs", unitPrice: 0 }]);
-  };
+  const total = items.reduce((sum, it) => sum + (it.quantity * parseNum(it.unitPrice)), 0);
 
-  const removeItem = (index: number) => {
-    if (items.length === 1) return;
-    setItems(items.filter((_, i) => i !== index));
-  };
-
-  const updateItem = (index: number, field: keyof PurchaseRequestItem, value: string | number) => {
-    const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setItems(newItems);
-  };
-
-  const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-  };
-
-  const validateForm = () => {
-    if (!title.trim()) {
-      toast.error(t('errors.requiredField') + ": titre");
-      return false;
-    }
-    const validItems = items.filter(item => item.itemName.trim() !== "");
-    if (validItems.length === 0) {
-      toast.error("Veuillez ajouter au moins un article");
-      return false;
-    }
-    for (const item of validItems) {
-      if (item.unitPrice <= 0) {
-        toast.error(`Article "${item.itemName}": le prix unitaire doit être supérieur à 0`);
-        return false;
-      }
-      if (item.quantity <= 0) {
-        toast.error(`Article "${item.itemName}": la quantité doit être supérieure à 0`);
-        return false;
-      }
-    }
-    return true;
-  };
+  const buildPayload = () => ({
+    title: title.trim(),
+    description: description.trim() || undefined,
+    urgencyLevel,
+    deliveryDate: deliveryDate || undefined,
+    justification: justification.trim() || undefined,
+    departmentId: departmentId ? parseInt(departmentId) : undefined,
+    categoryId: categoryId ? parseInt(categoryId) : undefined,
+    costCenterId: costCenterId ? parseInt(costCenterId) : undefined,
+    projectId: projectId ? parseInt(projectId) : undefined,
+    billingStringId: billingStringId ? parseInt(billingStringId) : undefined,
+    amountEstimate: total,
+    items: items.filter(it => it.itemName.trim()).map(it => ({
+      itemName: it.itemName.trim(),
+      description: it.description.trim() || undefined,
+      quantity: it.quantity,
+      unit: it.unit || undefined,
+      unitPrice: parseNum(it.unitPrice),
+      totalPrice: it.quantity * parseNum(it.unitPrice),
+    })),
+  });
 
   const handleSaveDraft = async () => {
-    if (!title.trim()) {
-      toast.error(t('errors.requiredField'));
-      return;
-    }
-    await createMutation.mutateAsync({
-      title: title.trim(),
-      description: description.trim() || undefined,
-      urgencyLevel,
-      amountEstimate: calculateTotal() || 1,
-      departmentId: departmentId ? parseInt(departmentId) : undefined,
-      categoryId: categoryId ? parseInt(categoryId) : undefined,
-      costCenterId: costCenterId ? parseInt(costCenterId) : undefined,
-      projectId: projectId ? parseInt(projectId) : undefined,
-      billingStringId: billingStringId ? parseInt(billingStringId) : undefined,
-      items: items.filter(item => item.itemName.trim() !== ""),
-    });
+    if (!title.trim()) { toast.error("Veuillez saisir un titre"); return; }
+    createMutation.mutate(buildPayload());
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
-
-    // Create draft first, then submit through the proper approval-chain endpoint
-    const result = await createMutation.mutateAsync({
-      title: title.trim(),
-      description: description.trim() || undefined,
-      urgencyLevel,
-      amountEstimate: calculateTotal(),
-      departmentId: departmentId ? parseInt(departmentId) : undefined,
-      categoryId: categoryId ? parseInt(categoryId) : undefined,
-      costCenterId: costCenterId ? parseInt(costCenterId) : undefined,
-      projectId: projectId ? parseInt(projectId) : undefined,
-      billingStringId: billingStringId ? parseInt(billingStringId) : undefined,
-      items: items.filter(item => item.itemName.trim() !== ""),
-    });
-
-    if (result?.id) {
-      await submitMutation.mutateAsync({ id: result.id });
-    }
+    if (!title.trim()) { toast.error("Veuillez saisir un titre"); return; }
+    if (items.every(it => !it.itemName.trim())) { toast.error("Ajoutez au moins un article"); return; }
+    const data = await createMutation.mutateAsync(buildPayload()).catch(() => null);
+    if (data?.id) submitMutation.mutate({ id: data.id });
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR').format(amount);
-  };
+  const isPending = createMutation.isPending || submitMutation.isPending;
+
+  const URGENCY = [
+    { value: "low", label: "Faible", color: "text-gray-600" },
+    { value: "medium", label: "Moyen", color: "text-blue-600" },
+    { value: "high", label: "Élevé", color: "text-orange-600" },
+    { value: "critical", label: "Critique", color: "text-red-600" },
+  ];
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="max-w-4xl mx-auto space-y-5 pb-10">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t('purchaseRequests.new')}</h1>
-        <p className="text-muted-foreground mt-2">Créer une nouvelle demande d'achat</p>
+      <div className="flex items-center gap-3">
+        <button onClick={() => setLocation("/purchase-requests")} className="p-2 rounded-lg hover:bg-muted transition-colors">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold">Nouvelle demande d'achat</h1>
+          <p className="text-sm text-muted-foreground">Remplissez les informations de votre demande</p>
+        </div>
       </div>
 
-      {/* Basic Information */}
+      {/* Step 1 - General info */}
       <Card>
-        <CardHeader>
-          <CardTitle>Informations générales</CardTitle>
-          <CardDescription>Détails de base de la demande</CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <div className="h-6 w-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">1</div>
+            Informations générales
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">{t('purchaseRequests.requestTitle')} *</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Fournitures de bureau pour Q1 2026"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">{t('common.description')}</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description détaillée de la demande"
-              rows={3}
-            />
+          <div className="space-y-1.5">
+            <Label>Titre de la demande *</Label>
+            <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Achat de fournitures de bureau Q2 2026" className="text-base" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="urgency">{t('purchaseRequests.urgencyLevel')}</Label>
-              <Select value={urgencyLevel} onValueChange={(value: any) => setUrgencyLevel(value)}>
-                <SelectTrigger id="urgency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">{t('purchaseRequests.urgency.low')}</SelectItem>
-                  <SelectItem value="medium">{t('purchaseRequests.urgency.medium')}</SelectItem>
-                  <SelectItem value="high">{t('purchaseRequests.urgency.high')}</SelectItem>
-                  <SelectItem value="critical">Critique</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="deliveryDate">{t('purchaseRequests.deliveryDate')}</Label>
-              <Input
-                id="deliveryDate"
-                type="date"
-                value={deliveryDate}
-                onChange={(e) => setDeliveryDate(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="justification">{t('purchaseRequests.justification')}</Label>
-            <Textarea
-              id="justification"
-              value={justification}
-              onChange={(e) => setJustification(e.target.value)}
-              placeholder="Justification de la demande"
-              rows={2}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Cost Allocation */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Imputation comptable</CardTitle>
-          <CardDescription>Département, catégorie de dépense et centre de coût</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Department */}
-          <div className="space-y-2">
-            <Label>Département</Label>
-            <Select value={departmentId || "none"} onValueChange={v => setDepartmentId(v === "none" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— Aucun —</SelectItem>
-                {(departments as any[]).filter((d: any) => d.isActive !== false).map((d: any) => (
-                  <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
+            <div className="space-y-1.5">
+              <Label>Niveau d'urgence</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {URGENCY.map(u => (
+                  <button key={u.value} type="button" onClick={() => setUrgencyLevel(u.value as any)}
+                    className={`py-2 px-1 rounded-lg border-2 text-xs font-semibold transition-all ${urgencyLevel === u.value ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}>
+                    <span className={urgencyLevel === u.value ? "text-blue-700" : u.color}>{u.label}</span>
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Date de livraison souhaitée</Label>
+              <Input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} />
+            </div>
           </div>
 
-          {/* Expense Category */}
-          {(categories as any[]).length > 0 && (
-            <div className="space-y-2">
-              <Label>Catégorie de dépense</Label>
-              <Select value={categoryId || "none"} onValueChange={v => setCategoryId(v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Aucune —</SelectItem>
-                  {(categories as any[]).filter((c: any) => c.isActive).map((c: any) => (
-                    <SelectItem key={c.id} value={String(c.id)}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="space-y-1.5">
+            <Label>Justification</Label>
+            <Textarea value={justification} onChange={e => setJustification(e.target.value)}
+              placeholder="Expliquez pourquoi cette demande est nécessaire..." rows={3} />
+          </div>
 
-          {/* Cost Center */}
-          {(costCenters as any[]).length > 0 && (
-            <div className="space-y-2">
-              <Label>Centre de coût</Label>
-              <Select value={costCenterId || "none"} onValueChange={v => setCostCenterId(v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Aucun —</SelectItem>
-                  {(costCenters as any[]).filter((c: any) => c.isActive).map((c: any) => (
-                    <SelectItem key={c.id} value={String(c.id)}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          {/* Advanced - department, category, etc */}
+          <button type="button" onClick={() => setShowAdvanced(v => !v)}
+            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
+            {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {showAdvanced ? "Masquer" : "Afficher"} les champs optionnels (département, catégorie, centre de coût...)
+          </button>
 
-          {/* Project */}
-          {(projects as any[]).length > 0 && (
-            <div className="space-y-2">
-              <Label>Projet</Label>
-              <Select value={projectId || "none"} onValueChange={v => setProjectId(v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Aucun —</SelectItem>
-                  {(projects as any[]).filter((p: any) => p.isActive).map((p: any) => (
-                    <SelectItem key={p.id} value={String(p.id)}>{p.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Billing String */}
-          {(billingStrings as any[]).length > 0 && (
-            <div className="space-y-2">
-              <Label>Code de facturation</Label>
-              <Select value={billingStringId || "none"} onValueChange={v => setBillingStringId(v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Aucun —</SelectItem>
-                  {(billingStrings as any[]).filter((b: any) => b.isActive).map((b: any) => (
-                    <SelectItem key={b.id} value={String(b.id)}>{b.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {showAdvanced && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
+              <div className="space-y-1.5">
+                <Label>Département</Label>
+                <Select value={departmentId || "none"} onValueChange={v => setDepartmentId(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Aucun —</SelectItem>
+                    {(departments as any[]).map((d: any) => <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Catégorie</Label>
+                <Select value={categoryId || "none"} onValueChange={v => setCategoryId(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Aucune —</SelectItem>
+                    {(categories as any[]).filter((c: any) => c.isActive).map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Centre de coût</Label>
+                <Select value={costCenterId || "none"} onValueChange={v => setCostCenterId(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Aucun —</SelectItem>
+                    {(costCenters as any[]).filter((c: any) => c.isActive).map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Projet</Label>
+                <Select value={projectId || "none"} onValueChange={v => setProjectId(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Aucun —</SelectItem>
+                    {(projects as any[]).filter((p: any) => p.isActive).map((p: any) => <SelectItem key={p.id} value={String(p.id)}>{p.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Description (optionnel)</Label>
+                <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Description supplémentaire" />
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Items */}
+      {/* Step 2 - Items */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{t('purchaseRequests.items')}</CardTitle>
-              <CardDescription>Articles demandés</CardDescription>
-            </div>
-            <Button onClick={addItem} variant="outline" size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              {t('purchaseRequests.addItem')}
-            </Button>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <div className="h-6 w-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">2</div>
+              Articles demandés
+            </CardTitle>
+            <button type="button" onClick={addItem}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-blue-300 text-blue-700 hover:bg-blue-50 transition-colors">
+              <Plus className="h-4 w-4" />Ajouter un article
+            </button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {items.map((item, index) => (
-            <div key={index} className="p-4 border rounded-lg space-y-3">
-              <div className="flex items-start justify-between">
-                <h4 className="font-medium">Article {index + 1}</h4>
-                {items.length > 1 && (
-                  <Button
-                    onClick={() => removeItem(index)}
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+        <CardContent className="space-y-3">
+          {/* Table header */}
+          <div className="hidden sm:grid sm:grid-cols-12 gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide px-1">
+            <div className="col-span-4">Article *</div>
+            <div className="col-span-2">Unité</div>
+            <div className="col-span-2 text-center">Qté</div>
+            <div className="col-span-2 text-right">Prix unit. (XOF)</div>
+            <div className="col-span-1 text-right">Total</div>
+            <div className="col-span-1"></div>
+          </div>
+
+          {items.map((item, i) => (
+            <div key={i} className="grid grid-cols-12 gap-2 items-center p-3 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors">
+              {/* Article name */}
+              <div className="col-span-12 sm:col-span-4">
+                <Input value={item.itemName} onChange={e => updateItem(i, "itemName", e.target.value)}
+                  placeholder="Nom de l'article..." className="border-0 bg-transparent p-0 h-8 text-sm font-medium placeholder:text-muted-foreground focus-visible:ring-0" />
+                <Input value={item.description} onChange={e => updateItem(i, "description", e.target.value)}
+                  placeholder="Description (optionnel)" className="border-0 bg-transparent p-0 h-7 text-xs text-muted-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 mt-0.5" />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>{t('purchaseRequests.itemName')} *</Label>
-                  <Input
-                    value={item.itemName}
-                    onChange={(e) => updateItem(index, 'itemName', e.target.value)}
-                    placeholder="Nom de l'article"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>{t('purchaseRequests.unit')}</Label>
-                  <Input
-                    value={item.unit}
-                    onChange={(e) => updateItem(index, 'unit', e.target.value)}
-                    placeholder="pcs, kg, m, etc."
-                  />
-                </div>
+              {/* Unit */}
+              <div className="col-span-4 sm:col-span-2">
+                <Select value={item.unit || "pcs"} onValueChange={v => updateItem(i, "unit", v)}>
+                  <SelectTrigger className="h-8 text-sm border-0 bg-white/80">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>{t('common.description')}</Label>
+              {/* Quantity */}
+              <div className="col-span-4 sm:col-span-2">
+                <Input type="number" min="1" value={item.quantity}
+                  onChange={e => updateItem(i, "quantity", parseInt(e.target.value) || 1)}
+                  className="h-8 text-sm text-center bg-white/80" />
+              </div>
+
+              {/* Unit price */}
+              <div className="col-span-4 sm:col-span-2">
                 <Input
-                  value={item.description}
-                  onChange={(e) => updateItem(index, 'description', e.target.value)}
-                  placeholder="Description de l'article"
+                  type="text"
+                  inputMode="decimal"
+                  value={item.unitPrice}
+                  onChange={e => updateItem(i, "unitPrice", e.target.value)}
+                  onFocus={e => { if (item.unitPrice === "0" || item.unitPrice === "") updateItem(i, "unitPrice", ""); }}
+                  placeholder="0"
+                  className="h-8 text-sm text-right bg-white/80"
                 />
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div className="space-y-2">
-                  <Label>{t('purchaseRequests.quantity')}</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                  />
-                </div>
+              {/* Line total */}
+              <div className="col-span-11 sm:col-span-1 text-right">
+                <span className="text-sm font-semibold text-blue-700">
+                  {fmt(item.quantity * parseNum(item.unitPrice))}
+                </span>
+              </div>
 
-                <div className="space-y-2">
-                  <Label>{t('purchaseRequests.unitPrice')}</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={item.unitPrice}
-                    onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                    placeholder="0"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>{t('purchaseRequests.lineTotal')}</Label>
-                  <div className="h-10 flex items-center px-3 border rounded-md bg-muted">
-                    {formatCurrency(item.quantity * item.unitPrice)} XOF
-                  </div>
-                </div>
+              {/* Remove */}
+              <div className="col-span-1 flex justify-end">
+                {items.length > 1 && (
+                  <button type="button" onClick={() => removeItem(i)}
+                    className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))}
 
-          <div className="flex justify-end pt-4 border-t">
+          {/* Total */}
+          <div className="flex justify-end pt-3 border-t">
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">{t('common.total')}</p>
-              <p className="text-2xl font-bold">{formatCurrency(calculateTotal())} XOF</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Montant total estimé</p>
+              <p className="text-2xl font-bold text-blue-700">{fmt(total)} <span className="text-base font-normal text-muted-foreground">XOF</span></p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Actions */}
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button
-          variant="outline"
-          onClick={() => setLocation("/purchase-requests")}
-          className="w-full sm:w-auto"
-        >
-          {t('common.cancel')}
-        </Button>
-        <Button  variant="outline"
-          onClick={handleSaveDraft}
-          disabled={createMutation.isPending || submitMutation.isPending}
-          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          <Save className="mr-2 h-4 w-4" />
-          {t('purchaseRequests.saveDraft')}
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={createMutation.isPending || submitMutation.isPending}
-          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          <Send className="mr-2 h-4 w-4" />
-          {createMutation.isPending || submitMutation.isPending
-            ? "Soumission en cours..."
-            : t('purchaseRequests.submitForApproval')}
-        </Button>
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+        <button type="button" onClick={() => setLocation("/purchase-requests")}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <ArrowLeft className="h-4 w-4" />Annuler
+        </button>
+        <div className="flex gap-3">
+          <button type="button" onClick={handleSaveDraft} disabled={isPending || !title.trim()}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+            <Save className="h-4 w-4" />Enregistrer brouillon
+          </button>
+          <button type="button" onClick={handleSubmit} disabled={isPending || !title.trim()}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
+            style={{ backgroundColor: "#2563eb" }}>
+            <Send className="h-4 w-4" />
+            {isPending ? "En cours..." : "Soumettre pour approbation"}
+          </button>
+        </div>
       </div>
     </div>
   );
