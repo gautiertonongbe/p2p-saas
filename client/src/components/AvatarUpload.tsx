@@ -136,11 +136,11 @@ export function AvatarUpload({ currentUrl, name, size = "md", onUploaded }: Avat
             type="button"
             onClick={handleSave}
             disabled={loading}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-60"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-60 whitespace-nowrap"
             style={{ backgroundColor: "#2563eb" }}
           >
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            Enregistrer la photo
+            Enregistrer
           </button>
           <button
             type="button"

@@ -763,7 +763,7 @@ export const settingsRouter = router({
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les admins peuvent inviter des utilisateurs" });
       }
-      const dbInstance = await getDb();
+      const dbInstance = await db.getDb();
       if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { users } = await import("../../drizzle/schema");
       const { eq } = await import("drizzle-orm");
@@ -811,7 +811,7 @@ export const settingsRouter = router({
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      const dbInstance = await getDb();
+      const dbInstance = await db.getDb();
       if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { users } = await import("../../drizzle/schema");
       const { eq } = await import("drizzle-orm");
@@ -833,7 +833,7 @@ export const settingsRouter = router({
   uploadAvatar: protectedProcedure
     .input(z.object({ base64: z.string().max(1500000) })) // ~1MB max
     .mutation(async ({ ctx, input }) => {
-      const dbInstance = await getDb();
+      const dbInstance = await db.getDb();
       if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { users } = await import("../../drizzle/schema");
       const { eq } = await import("drizzle-orm");
@@ -845,7 +845,7 @@ export const settingsRouter = router({
 
   // Get current user profile
   getMyProfile: protectedProcedure.query(async ({ ctx }) => {
-    const dbInstance = await getDb();
+    const dbInstance = await db.getDb();
     if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     const { users } = await import("../../drizzle/schema");
     const { eq } = await import("drizzle-orm");
