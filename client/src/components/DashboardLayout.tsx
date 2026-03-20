@@ -176,6 +176,10 @@ function DashboardLayoutContent({
   const navGroups = getNavGroups(t);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  const { isAdmin, canAccessExpenses, canAccessCommunity, canAccessAnalytics, canAccessReports } = usePermissions();
+  const { colorPreset } = useTheme();
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(["Accueil","Achats","Finance","Opérations","Approbations","Insights","Communauté"]);
+  const toggleGroup = (label: string) => setExpandedGroups(g => g.includes(label) ? g.filter(x => x !== label) : [...g, label]);
   const { data: impStatus } = trpc.impersonate.status.useQuery(undefined, { refetchOnWindowFocus: false });
   const { data: org } = trpc.settings.getOrganization.useQuery();
 
