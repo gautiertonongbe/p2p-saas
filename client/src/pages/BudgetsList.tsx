@@ -87,37 +87,46 @@ export default function BudgetsList() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('budgets.title')}</h1>
-          <p className="text-muted-foreground mt-1">{t('budgets.description')}</p>
+      {/* Colorful header banner */}
+      <div className="rounded-2xl p-6 text-white" style={{ background: "linear-gradient(135deg, #d97706 0%, #f59e0b 100%)" }}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+              <DollarSign className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">{t('budgets.title')}</h1>
+              <p className="text-amber-100 text-sm mt-0.5">{t('budgets.description')}</p>
+            </div>
+          </div>
+          <button onClick={() => setLocation("/budgets/new")}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors">
+            <Plus className="h-4 w-4" />{t('budgets.newBudget')}
+          </button>
         </div>
-        <Button onClick={() => setLocation("/budgets/new")}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('budgets.newBudget')}
-        </Button>
       </div>
 
       {/* Summary Cards */}
       {summary && (
         <div className="grid gap-4 md:grid-cols-4">
-          <Card>
+          <Card className="border-0 shadow-sm" style={{ background: "linear-gradient(135deg, #eff6ff, #dbeafe)" }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Budget total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-blue-700">Budget total</CardTitle>
+              <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                <DollarSign className="h-4 w-4 text-blue-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(summary.totalAllocated)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-2xl font-bold text-blue-900">{formatCurrency(summary.totalAllocated)}</div>
+              <p className="text-xs text-blue-600 mt-1">
                 Tous les budgets actifs
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-sm" style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)" }}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Dépensé</CardTitle>
+              <CardTitle className="text-sm font-medium text-amber-700">Dépensé</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>

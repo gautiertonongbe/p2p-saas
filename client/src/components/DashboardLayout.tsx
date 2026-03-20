@@ -22,7 +22,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, ShoppingCart, FileCheck, DollarSign, TrendingUp, Settings, CheckCircle, Languages, ClipboardList, Package, CreditCard, BarChart2, Receipt, Lock } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, ShoppingCart, FileCheck, DollarSign, TrendingUp, Settings, CheckCircle, Languages, ClipboardList, Package, CreditCard, BarChart2, Receipt, Lock, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -32,25 +32,63 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import ImpersonateBanner from "@/components/ImpersonateBanner";
 import { NotificationBell } from "./NotificationBell";
 
-const getMenuItems = (t: (key: string) => string) => [
-  { icon: LayoutDashboard, label: t('navigation.dashboard'), path: "/" },
-  { icon: FileText, label: t('navigation.purchaseRequests'), path: "/purchase-requests" },
-  { icon: CheckCircle, label: t('navigation.approvals'), path: "/approvals" },
-  { icon: ShoppingCart, label: t('navigation.purchaseOrders'), path: "/purchase-orders" },
-  { icon: ClipboardList, label: "Appels d'offres", path: "/rfqs" },
-  { icon: Users, label: t('navigation.vendors'), path: "/vendors" },
-  { icon: FileCheck, label: t('navigation.invoices'), path: "/invoices" },
-  { icon: DollarSign, label: t('navigation.budgets'), path: "/budgets" },
-  { icon: Package, label: "Inventaire", path: "/inventory" },
-  { icon: CreditCard, label: "Paiements", path: "/payments" },
-  { icon: TrendingUp, label: t('navigation.analytics'), path: "/analytics" },
-  { icon: BarChart2, label: "Rapports", path: "/reports" },
-  { icon: Receipt, label: "Notes de frais", path: "/expenses" },
-  { icon: Users, label: "Communauté", path: "/community" },
-  { icon: Lock, label: "Groupes & Accès", path: "/groups" },
-  { icon: Users, label: "Portail Fournisseur", path: "/supplier-portal" },
-  { icon: Settings, label: t('navigation.settings'), path: "/settings" },
+type NavItem = { icon: any; label: string; path: string; color?: string };
+type NavGroup = { label: string; color: string; bgColor: string; items: NavItem[] };
+
+const getNavGroups = (t: (key: string) => string): NavGroup[] => [
+  {
+    label: "Accueil", color: "#2563eb", bgColor: "#eff6ff",
+    items: [{ icon: LayoutDashboard, label: "Tableau de bord", path: "/" }],
+  },
+  {
+    label: "Achats", color: "#7c3aed", bgColor: "#f5f3ff",
+    items: [
+      { icon: FileText, label: "Demandes d'achat", path: "/purchase-requests" },
+      { icon: ShoppingCart, label: "Bons de commande", path: "/purchase-orders" },
+      { icon: ClipboardList, label: "Appels d'offres", path: "/rfqs" },
+    ],
+  },
+  {
+    label: "Finance", color: "#0891b2", bgColor: "#ecfeff",
+    items: [
+      { icon: FileCheck, label: "Factures", path: "/invoices" },
+      { icon: CreditCard, label: "Paiements", path: "/payments" },
+      { icon: Receipt, label: "Notes de frais", path: "/expenses" },
+    ],
+  },
+  {
+    label: "Opérations", color: "#d97706", bgColor: "#fffbeb",
+    items: [
+      { icon: Users, label: "Fournisseurs", path: "/vendors" },
+      { icon: Package, label: "Inventaire", path: "/inventory" },
+      { icon: DollarSign, label: "Budgets", path: "/budgets" },
+    ],
+  },
+  {
+    label: "Approbations", color: "#dc2626", bgColor: "#fff1f2",
+    items: [
+      { icon: CheckCircle, label: "File d'approbation", path: "/approvals" },
+    ],
+  },
+  {
+    label: "Insights", color: "#059669", bgColor: "#f0fdf4",
+    items: [
+      { icon: TrendingUp, label: "Analyses", path: "/analytics" },
+      { icon: BarChart2, label: "Rapports", path: "/reports" },
+    ],
+  },
+  {
+    label: "Communauté", color: "#db2777", bgColor: "#fdf2f8",
+    items: [
+      { icon: Users, label: "Forum", path: "/community" },
+      { icon: Lock, label: "Groupes & Accès", path: "/groups" },
+      { icon: Users, label: "Portail Fournisseur", path: "/supplier-portal" },
+    ],
+  },
 ];
+
+const getMenuItems = (t: (key: string) => string) =>
+  getNavGroups(t).flatMap(g => g.items);
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
@@ -222,24 +260,58 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
-                const isActive = location === item.path;
+            <div className="px-2 py-2 space-y-0.5">
+              {navGroups.map(group => {
+                const isExpanded = expandedGroups.includes(group.label);
+                const hasActive = group.items.some(i => i.path === location);
+                const filteredItems = group.items.filter(item => {
+                  if (item.path === "/expenses" && !isAdmin && !canAccessExpenses) return false;
+                  if (item.path === "/community" && !isAdmin && !canAccessCommunity) return false;
+                  if (item.path === "/analytics" && !isAdmin && !canAccessAnalytics) return false;
+                  if (item.path === "/reports" && !isAdmin && !canAccessReports) return false;
+                  return true;
+                });
+                if (filteredItems.length === 0) return null;
                 return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => setLocation(item.path)}
-                      tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
+                  <div key={group.label}>
+                    {/* Group header */}
+                    <button
+                      onClick={() => toggleGroup(group.label)}
+                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-muted/50 transition-colors group"
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: group.color }} />
+                        <span className={`text-xs font-semibold uppercase tracking-wider ${hasActive ? "" : "text-muted-foreground"}`}
+                          style={hasActive ? { color: group.color } : {}}>
+                          {group.label}
+                        </span>
+                      </div>
+                      <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
+                    </button>
+                    {/* Group items */}
+                    {isExpanded && (
+                      <div className="ml-2 pl-3 border-l border-muted space-y-0.5 mb-1" style={{ borderColor: `${group.color}30` }}>
+                        {filteredItems.map(item => {
+                          const isActive = location === item.path;
+                          return (
+                            <button
+                              key={item.path}
+                              onClick={() => setLocation(item.path)}
+                              className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition-all text-left ${isActive ? "font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}
+                              style={isActive ? { backgroundColor: `${group.color}15`, color: group.color } : {}}
+                            >
+                              <item.icon className="h-3.5 w-3.5 shrink-0" style={isActive ? { color: group.color } : {}} />
+                              <span className="truncate">{item.label}</span>
+                              {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: group.color }} />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
-            </SidebarMenu>
+            </div>
           </SidebarContent>
 
           <SidebarFooter className="p-3">
