@@ -1113,6 +1113,10 @@ function ProfileSection() {
   const { data: profile, refetch } = trpc.settings.getMyProfile.useQuery();
   const { colorPreset, setColorPreset } = useTheme();
   const utils = trpc.useUtils();
+  const updateProfileMut = trpc.settings.updateMyProfile.useMutation({
+    onSuccess: () => { toast.success("Profil mis à jour !"); utils.auth.me.invalidate(); refetch(); },
+    onError: (e: any) => toast.error(e.message),
+  });
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
@@ -1125,25 +1129,9 @@ function ProfileSection() {
     }
   }, [profile]);
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = () => {
     if (!editName.trim()) { toast.error("Le nom est requis"); return; }
-    setProfileSaving(true);
-    try {
-      const res = await fetch("/api/auth/update-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ name: editName.trim() }),
-      });
-      if (!res.ok) throw new Error("Erreur serveur");
-      toast.success("Profil mis à jour !");
-      utils.auth.me.invalidate();
-      refetch();
-    } catch (e: any) {
-      toast.error(e.message || "Erreur");
-    } finally {
-      setProfileSaving(false);
-    }
+    updateProfileMut.mutate({ name: editName.trim() });
   };
 
   const [currentPwd, setCurrentPwd] = useState("");
@@ -1192,9 +1180,9 @@ function ProfileSection() {
                 <p className="text-xs text-muted-foreground">L'email ne peut pas être modifié ici</p>
               </div>
             </div>
-            <button onClick={handleSaveProfile} disabled={profileSaving}
+            <button onClick={handleSaveProfile} disabled={updateProfileMut.isPending}
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium disabled:opacity-50 btn-primary">
-              {profileSaving ? "Enregistrement..." : "Enregistrer les informations"}
+              {updateProfileMut.isPending ? "Enregistrement..." : "Enregistrer les informations"}
             </button>
           </CardContent>
         </Card>
