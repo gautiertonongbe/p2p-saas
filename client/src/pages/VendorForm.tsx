@@ -322,7 +322,7 @@ export default function VendorForm() {
         <Button variant="outline" onClick={() => setLocation("/vendors")} className="w-full sm:w-auto">
           {t("common.cancel")}
         </Button>
-        <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
+        <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full sm:w-auto btn-primary">
           <Save className="mr-2 h-4 w-4" />
           {createMutation.isPending ? "Enregistrement..." : t("common.save")}
         </Button>

@@ -199,13 +199,13 @@ export default function InvoicesList() {
             defaultColumns={INVOICE_COLUMNS.map(c => c.key)}
           />
           <Link href="/invoices/new">
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white" style={{backgroundColor:"#2563eb"}}>
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white" className="btn-primary">
                 <Plus className="h-4 w-4" />Nouvelle facture
               </button>
             </Link>
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
+              <Button className="w-full sm:w-auto btn-primary">
                 <Upload className="mr-2 h-4 w-4" />
                 {t('invoices.upload')}
               </Button>

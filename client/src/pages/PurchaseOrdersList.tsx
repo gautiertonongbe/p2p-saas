@@ -94,7 +94,7 @@ export default function PurchaseOrdersList() {
             defaultColumns={PO_COLUMNS.map(c => c.key)}
           />
           <Link href="/purchase-orders/new">
-            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="w-full sm:w-auto btn-primary">
               <Plus className="mr-2 h-4 w-4" />
               {t('purchaseOrders.new')}
             </Button>

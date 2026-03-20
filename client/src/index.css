@@ -309,3 +309,15 @@
 :root[data-color="pink"]    { --primary: 330 81% 55%; --ring: 330 81% 55%; --sidebar-primary: 330 81% 55%; }
 :root[data-color="cyan"]    { --primary: 192 91% 42%; --ring: 192 91% 42%; --sidebar-primary: 192 91% 42%; }
 :root[data-color="lime"]    { --primary: 85 78% 38%;  --ring: 85 78% 38%;  --sidebar-primary: 85 78% 38%;  }
+
+/* ── Primary action button — uses theme color ── */
+.btn-primary {
+  background-color: hsl(var(--primary)) !important;
+  color: white !important;
+}
+.btn-primary:hover {
+  background-color: hsl(var(--primary) / 0.85) !important;
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+}

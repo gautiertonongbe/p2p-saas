@@ -334,7 +334,7 @@ export default function PurchaseRequestForm() {
           </button>
           <button type="button" onClick={handleSubmit} disabled={isPending || !title.trim()}
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
-            style={{ backgroundColor: "#2563eb" }}>
+            className="btn-primary">
             <Send className="h-4 w-4" />
             {isPending ? "En cours..." : "Soumettre pour approbation"}
           </button>

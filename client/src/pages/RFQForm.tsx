@@ -211,7 +211,7 @@ export default function RFQForm() {
       {/* Actions */}
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Button variant="outline" onClick={() => setLocation("/rfqs")} className="w-full sm:w-auto">Annuler</Button>
-        <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
+        <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full sm:w-auto btn-primary">
           <Send className="mr-2 h-4 w-4" />
           {createMutation.isPending ? "Création en cours..." : "Créer le RFQ"}
         </Button>

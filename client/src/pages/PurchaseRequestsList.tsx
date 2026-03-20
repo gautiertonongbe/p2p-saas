@@ -100,7 +100,7 @@ export default function PurchaseRequestsList() {
             defaultColumns={PR_COLUMNS.map(c => c.key)}
           />
           <Link href="/purchase-requests/new">
-            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="w-full sm:w-auto btn-primary">
               <Plus className="mr-2 h-4 w-4" />
               {t('purchaseRequests.new')}
             </Button>
