@@ -34,7 +34,7 @@ class ErrorBoundary extends Component<Props, State> {
               L'application a rencontré un problème. Rechargez la page ou retournez à l'accueil.
             </p>
 
-            {isDev && this.state.error && (
+            {this.state.error && (
               <div className="w-full mb-6 p-4 rounded-lg bg-muted text-left overflow-auto max-h-48">
                 <p className="text-xs font-mono text-destructive font-semibold mb-1">{this.state.error.message}</p>
                 <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
