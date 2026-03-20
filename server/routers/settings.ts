@@ -847,7 +847,7 @@ export const settingsRouter = router({
   updateMyProfile: protectedProcedure
     .input(z.object({ name: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const dbInstance = await getDb();
+      const dbInstance = await db.getDb();
       if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const safeName = input.name.trim().replace(/'/g, "''");
       await dbInstance.execute(`UPDATE users SET name = '${safeName}' WHERE id = ${ctx.user.id}`);
