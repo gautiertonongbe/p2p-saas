@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
+import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Camera, Save, X } from "lucide-react";
 import { toast } from "sonner";
@@ -47,6 +48,7 @@ export function AvatarUpload({ currentUrl, name, size = "md", onUploaded }: Avat
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = trpc.settings.uploadAvatar.useMutation();
+  const utils = trpc.useUtils();
 
   const sizeMap = { sm: "h-10 w-10", md: "h-16 w-16", lg: "h-24 w-24" };
   const iconMap = { sm: "h-3 w-3", md: "h-4 w-4", lg: "h-5 w-5" };
@@ -75,6 +77,8 @@ export function AvatarUpload({ currentUrl, name, size = "md", onUploaded }: Avat
       toast.success("Photo de profil mise à jour !");
       setPending(null);
       onUploaded?.(pending);
+      // Refresh auth.me so sidebar avatar updates
+      utils.auth.me.invalidate();
     } catch (e: any) {
       toast.error("Erreur lors de la sauvegarde: " + (e?.message || "inconnu"));
     } finally {
