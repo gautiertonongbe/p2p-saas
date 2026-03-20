@@ -296,3 +296,16 @@
     }
   }
 }
+/* ── Color theme overrides ── */
+:root[data-color="blue"]    { --primary: 221 83% 53%; --ring: 221 83% 53%; --sidebar-primary: 221 83% 53%; }
+:root[data-color="violet"]  { --primary: 262 80% 58%; --ring: 262 80% 58%; --sidebar-primary: 262 80% 58%; }
+:root[data-color="emerald"] { --primary: 158 64% 40%; --ring: 158 64% 40%; --sidebar-primary: 158 64% 40%; }
+:root[data-color="rose"]    { --primary: 346 77% 53%; --ring: 346 77% 53%; --sidebar-primary: 346 77% 53%; }
+:root[data-color="orange"]  { --primary: 24 95% 50%;  --ring: 24 95% 50%;  --sidebar-primary: 24 95% 50%;  }
+:root[data-color="teal"]    { --primary: 187 76% 40%; --ring: 187 76% 40%; --sidebar-primary: 187 76% 40%; }
+:root[data-color="indigo"]  { --primary: 239 84% 60%; --ring: 239 84% 60%; --sidebar-primary: 239 84% 60%; }
+:root[data-color="amber"]   { --primary: 43 96% 48%;  --ring: 43 96% 48%;  --sidebar-primary: 43 96% 48%;  }
+:root[data-color="slate"]   { --primary: 215 25% 35%; --ring: 215 25% 35%; --sidebar-primary: 215 25% 35%; }
+:root[data-color="pink"]    { --primary: 330 81% 55%; --ring: 330 81% 55%; --sidebar-primary: 330 81% 55%; }
+:root[data-color="cyan"]    { --primary: 192 91% 42%; --ring: 192 91% 42%; --sidebar-primary: 192 91% 42%; }
+:root[data-color="lime"]    { --primary: 85 78% 38%;  --ring: 85 78% 38%;  --sidebar-primary: 85 78% 38%;  }

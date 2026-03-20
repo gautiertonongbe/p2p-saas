@@ -18,22 +18,9 @@ export const COLOR_PRESETS = [
 ];
 
 function applyColorPreset(presetId: string) {
-  const preset = COLOR_PRESETS.find(p => p.id === presetId) || COLOR_PRESETS[0];
-  const root = document.documentElement;
-  const p = preset.primary;
-
-  // Primary color — buttons, active states, focus rings
-  root.style.setProperty("--primary", p);
-  root.style.setProperty("--ring", p);
-  root.style.setProperty("--primary-foreground", "0 0% 100%");
-
-  // Sidebar — stays neutral white, only the active item uses the color
-  // sidebar-primary is the active item bg in the sidebar
-  root.style.setProperty("--sidebar-primary", p);
-  root.style.setProperty("--sidebar-primary-foreground", "0 0% 100%");
-
-  // Keep sidebar itself white/neutral (NetSuite style)
-  root.style.removeProperty("--sidebar");
+  const id = COLOR_PRESETS.find(p => p.id === presetId) ? presetId : "blue";
+  // Use data attribute - CSS rules handle the variables with correct specificity
+  document.documentElement.setAttribute("data-color", id);
 }
 
 // Apply immediately before React renders to avoid color flash
