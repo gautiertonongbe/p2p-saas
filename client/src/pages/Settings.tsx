@@ -64,6 +64,17 @@ const SECTION_DEFS = [
 
 const groups = [...new Set(SECTION_DEFS.map(s => s.group))];
 
+// ─── Labels ───────────────────────────────────────────────────────────────────
+const SECTION_LABELS: Record<string, string> = {
+  organization: "Organisation", users: "Utilisateurs", departments: "Départements",
+  lookups: "Valeurs de référence", approvals: "Approbations", workflow: "Flux de travail",
+  budgets: "Politiques budgétaires", tolerance: "Tolérances 3 voies",
+  paymentterms: "Conditions de paiement", taxrates: "Taux de taxes",
+  exchangerates: "Taux de change", customfields: "Champs personnalisés",
+  profile: "Mon Profil", notifications: "Notifications",
+  numbering: "Numérotation", localization: "Localisation", security: "Sécurité",
+};
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Settings() {
   const { user } = useAuth();
@@ -72,64 +83,71 @@ export default function Settings() {
   const { colorPreset } = useTheme();
   const activeColor = COLOR_PRESETS.find(p => p.id === colorPreset)?.primary || "221 83% 53%";
 
+  const activeSection = SECTION_DEFS.find(s => s.id === section);
+  const ActiveIcon = SECTION_ICONS[section] ?? Gear;
+
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-background overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-72 border-r flex flex-col shrink-0 bg-card">
-        <div className="p-5 border-b">
-          <div className="flex items-center gap-2">
-            <Gear className="h-5 w-5 text-primary" />
-            <h1 className="text-lg font-semibold">Paramètres</h1>
+      <aside className="w-64 border-r flex flex-col shrink-0 bg-gray-50/50">
+        {/* Header */}
+        <div className="px-4 py-4 border-b bg-white">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `hsl(${activeColor} / 0.15)` }}>
+              <Gear className="h-4 w-4" style={{ color: `hsl(${activeColor})` }} />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold">Paramètres</h1>
+              <p className="text-xs text-muted-foreground">Configuration</p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Configuration de votre organisation</p>
         </div>
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4">
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-2">
           {groups.map(group => (
-            <div key={group}>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-1">{group}</p>
+            <div key={group} className="mb-1">
+              <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest px-4 py-2">{group}</p>
               {SECTION_DEFS.filter(s => s.group === group).map(s => {
                 const Icon = SECTION_ICONS[s.id] ?? Gear;
                 const active = section === s.id;
                 return (
                   <button key={s.id} onClick={() => setSection(s.id)}
-                    className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-sm",
-                      active ? "text-white shadow-sm" : "hover:bg-muted text-foreground"
+                    className={cn(
+                      "w-full flex items-center gap-2.5 px-3 mx-1 py-2 rounded-lg text-left transition-all text-sm",
+                      "w-[calc(100%-8px)]",
+                      active ? "text-white shadow-sm" : "hover:bg-white hover:shadow-sm text-gray-600"
                     )}
                     style={active ? { backgroundColor: `hsl(${activeColor})` } : {}}>
-                    <Icon className={cn("h-4 w-4 shrink-0", active ? "text-white" : "text-muted-foreground")} />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium capitalize">{s.id === "organization" ? "Organisation" :
-                        s.id === "users" ? "Utilisateurs" : s.id === "departments" ? "Départements" :
-                        s.id === "lookups" ? "Valeurs de référence" :
-                        s.id === "approvals" ? "Approbations" : s.id === "workflow" ? "Flux de travail" :
-                        s.id === "budgets" ? "Politiques budgétaires" : s.id === "tolerance" ? "Tolérances" :
-                        s.id === "paymentterms" ? "Conditions de paiement" :
-                        s.id === "taxrates" ? "Taux de taxes" :
-                        s.id === "exchangerates" ? "Taux de change" :
-                        s.id === "customfields" ? "Champs personnalisés" :
-                        s.id === "notifications" ? "Notifications" : s.id === "numbering" ? "Numérotation" :
-                        s.id === "localization" ? "Localisation" : s.id === "profile" ? "Mon Profil" : "Sécurité"}</div>
-                      <div className={cn("text-xs truncate", active ? "text-white/70" : "text-muted-foreground")}>{s.desc}</div>
+                    <div className={cn(
+                      "h-7 w-7 rounded-md flex items-center justify-center shrink-0 transition-colors",
+                      active ? "bg-white/20" : "bg-white border border-gray-200"
+                    )}>
+                      <Icon className={cn("h-3.5 w-3.5", active ? "text-white" : "text-gray-500")} />
                     </div>
-                    {active && <ChevronRight className="h-4 w-4 shrink-0 text-white/70" />}
+                    <span className={cn("font-medium text-sm", active ? "text-white" : "text-gray-700")}>
+                      {SECTION_LABELS[s.id] ?? s.id}
+                    </span>
                   </button>
                 );
               })}
             </div>
           ))}
         </nav>
+
+        {/* Footer */}
         {!isAdmin && (
-          <div className="p-3 border-t">
-            <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-              <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0" />
-              <p className="text-xs text-yellow-800">Accès admin requis pour modifier</p>
+          <div className="p-3 border-t bg-white">
+            <div className="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg border border-amber-200">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+              <p className="text-xs text-amber-700 font-medium">Accès admin requis</p>
             </div>
           </div>
         )}
       </aside>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto bg-white">
         {section === "organization"  && <OrgSection isAdmin={isAdmin} />}
         {section === "users"         && <UsersSection isAdmin={isAdmin} />}
         {section === "departments"   && <DepartmentsSection isAdmin={isAdmin} />}
@@ -155,9 +173,8 @@ export default function Settings() {
 // ─── Section header ───────────────────────────────────────────────────────────
 function SectionHeader({ icon: Icon, title, desc }: { icon: React.FC<any>; title: string; desc: string }) {
   return (
-    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b px-6 py-4 flex items-center gap-3">
-      <div className="p-2 bg-primary/10 rounded-lg"><Icon className="h-5 w-5 text-primary" /></div>
-      <div><h2 className="text-lg font-semibold">{title}</h2><p className="text-sm text-muted-foreground">{desc}</p></div>
+    <div className="sticky top-0 z-10 bg-white border-b px-6 py-4 flex items-center gap-3">
+      <div><h2 className="text-base font-semibold text-gray-900">{title}</h2><p className="text-xs text-muted-foreground mt-0.5">{desc}</p></div>
     </div>
   );
 }
