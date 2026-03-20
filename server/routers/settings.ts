@@ -15,7 +15,7 @@ const updateOrganizationSchema = z.object({
   address: z.string().max(500).optional(),
   city: z.string().max(100).optional(),
   phone: z.string().max(50).optional(),
-  email: z.string().email().optional(),
+  email: z.string().optional().transform(v => v === "" ? undefined : v).pipe(z.string().email().optional()),
   website: z.string().max(255).optional(),
   taxId: z.string().max(100).optional(),
   logoUrl: z.string().optional(),
@@ -110,7 +110,7 @@ const updateOrganizationSchema = z.object({
 const updateUserSchema = z.object({
   userId: z.number(),
   name: z.string().min(1).optional(),
-  email: z.string().email().optional(),
+  email: z.string().optional().transform(v => v === "" ? undefined : v).pipe(z.string().email().optional()),
   departmentId: z.number().optional(),
   role: z.enum(["admin", "procurement_manager", "approver", "requester"]).optional(),
   approvalLimit: z.string().optional(),
