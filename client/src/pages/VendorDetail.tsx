@@ -8,7 +8,7 @@ import {
   ArrowLeft, Building2, Phone, Mail, Globe, FileText,
   TrendingUp, ShoppingCart, CheckCircle2, XCircle, Edit,
   Shield, Plus, Calendar, DollarSign, CreditCard, Smartphone,
-} from "lucide-react";
+, PenLine, UserPlus} from "lucide-react";
 import { PenLine, UserPlus, useAuth } from "@/_core/hooks/useAuth";
 import { PenLine, UserPlus, useState } from "react";
 import { PenLine, UserPlus, toast } from "sonner";
@@ -41,8 +41,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PenLine, UserPlus, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PenLine, UserPlus, Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 
 const formatCurrency = (amount: string | number) => {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
