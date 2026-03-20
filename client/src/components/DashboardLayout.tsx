@@ -27,6 +27,7 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import ImpersonateBanner from "@/components/ImpersonateBanner";
 import { NotificationBell } from "./NotificationBell";
 
 const getMenuItems = (t: (key: string) => string) => [
@@ -61,6 +62,8 @@ export default function DashboardLayout({
   });
   const { loading, user } = useAuth();
   const { t } = useTranslation();
+  const { data: impStatus } = trpc.impersonate.status.useQuery(undefined, { refetchOnWindowFocus: false });
+  const stopImpersonate = trpc.impersonate.stop.useMutation({ onSuccess: () => { window.location.href = "/"; } });
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -220,7 +223,7 @@ function DashboardLayoutContent({
           <SidebarFooter className="p-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <button className={`flex items-center gap-3 rounded-lg px-1 py-1 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${impStatus?.isImpersonating ? "hover:bg-amber-100 bg-amber-50" : "hover:bg-accent/50"}`}>
                   <Avatar className="h-9 w-9 border shrink-0">
                     <AvatarImage src={(user as any)?.avatarUrl || undefined} alt={user?.name || ""} />
                     <AvatarFallback className="text-xs font-medium">
