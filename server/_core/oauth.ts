@@ -117,12 +117,9 @@ export function registerOAuthRoutes(app: Express) {
       if (!session?.openId) return res.status(401).json({ error: "Session invalide" });
       const { name } = req.body;
       if (!name?.trim()) return res.status(400).json({ error: "Nom requis" });
-      const { getDb } = await import("../db");
-      const db = await getDb();
-      if (!db) return res.status(500).json({ error: "DB error" });
-      const { users } = await import("../../drizzle/schema");
-      const { eq } = await import("drizzle-orm");
-      await db.update(users).set({ name: name.trim() }).where(eq(users.openId, session.openId));
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return res.status(500).json({ error: "DB error" });
+      await dbInstance.update(users).set({ name: name.trim() }).where(eq(users.openId, session.openId));
       res.json({ success: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
