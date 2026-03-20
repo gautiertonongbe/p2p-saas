@@ -1,18 +1,18 @@
-import { PenLine, UserPlus, trpc } from "@/lib/trpc";
-import { PenLine, UserPlus, Button } from "@/components/ui/button";
-import { PenLine, UserPlus, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PenLine, UserPlus, Badge } from "@/components/ui/badge";
-import { PenLine, UserPlus, useLocation, useParams } from "wouter";
-import { PenLine, UserPlus, useTranslation } from "react-i18next";
+import { trpc } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useLocation, useParams } from "wouter";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft, Building2, Phone, Mail, Globe, FileText,
   TrendingUp, ShoppingCart, CheckCircle2, XCircle, Edit,
   Shield, Plus, Calendar, DollarSign, CreditCard, Smartphone,
-, PenLine, UserPlus} from "lucide-react";
-import { PenLine, UserPlus, useAuth } from "@/_core/hooks/useAuth";
-import { PenLine, UserPlus, useState } from "react";
-import { PenLine, UserPlus, toast } from "sonner";
-import { PenLine, UserPlus, EntityHistory } from "@/components/EntityHistory";
+  PenLine, UserPlus} from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useState } from "react";
+import { toast } from "sonner";
+import { EntityHistory } from "@/components/EntityHistory";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,8 +31,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { PenLine, UserPlus, Input } from "@/components/ui/input";
-import { PenLine, UserPlus, Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
