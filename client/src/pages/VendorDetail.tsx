@@ -1,18 +1,18 @@
-import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useLocation, useParams } from "wouter";
-import { useTranslation } from "react-i18next";
+import { PenLine, UserPlus, trpc } from "@/lib/trpc";
+import { PenLine, UserPlus, Button } from "@/components/ui/button";
+import { PenLine, UserPlus, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PenLine, UserPlus, Badge } from "@/components/ui/badge";
+import { PenLine, UserPlus, useLocation, useParams } from "wouter";
+import { PenLine, UserPlus, useTranslation } from "react-i18next";
 import {
   ArrowLeft, Building2, Phone, Mail, Globe, FileText,
   TrendingUp, ShoppingCart, CheckCircle2, XCircle, Edit,
   Shield, Plus, Calendar, DollarSign, CreditCard, Smartphone,
 } from "lucide-react";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { useState } from "react";
-import { toast } from "sonner";
-import { EntityHistory } from "@/components/EntityHistory";
+import { PenLine, UserPlus, useAuth } from "@/_core/hooks/useAuth";
+import { PenLine, UserPlus, useState } from "react";
+import { PenLine, UserPlus, toast } from "sonner";
+import { PenLine, UserPlus, EntityHistory } from "@/components/EntityHistory";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,8 +31,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { PenLine, UserPlus, Input } from "@/components/ui/input";
+import { PenLine, UserPlus, Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -41,8 +41,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
+import { PenLine, UserPlus, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PenLine, UserPlus, Progress } from "@/components/ui/progress";
 
 const formatCurrency = (amount: string | number) => {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
@@ -60,10 +60,23 @@ export default function VendorDetail() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const utils = trpc.useUtils();
+  const sendForSignatureMut = trpc.esignature.sendForSignature.useMutation({
+    onSuccess: (data) => { toast.success(data.message); setSignatureDialogOpen(false); utils.vendors.getById.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const inviteVendorUserMut = trpc.supplierPortal.inviteVendorUser.useMutation({
+    onSuccess: (data) => { toast.success(`Accès créé ! Mot de passe temporaire: ${data.tempPassword}`); setInviteVendorOpen(false); },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
   const [contractDialogOpen, setContractDialogOpen] = useState(false);
+  const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
+  const [selectedContractId, setSelectedContractId] = useState<number | null>(null);
+  const [inviteVendorOpen, setInviteVendorOpen] = useState(false);
+  const [vendorInviteForm, setVendorInviteForm] = useState({ name: "", email: "" });
+  const [signatories, setSignatories] = useState([{ name: "", email: "", role: "" }]);
   const [deactivateReason, setDeactivateReason] = useState("");
 
   // Contract form state
@@ -485,6 +498,7 @@ export default function VendorDetail() {
                       <TableHead>Fin</TableHead>
                       <TableHead>Valeur totale</TableHead>
                       <TableHead>Statut</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -509,12 +523,26 @@ export default function VendorDetail() {
                                 : "destructive"
                             }
                           >
-                            {contract.status === "active"
-                              ? "Actif"
-                              : contract.status === "expired"
-                              ? "Expiré"
-                              : "Résilié"}
+                            {contract.status === "active" ? "Actif" : contract.status === "expired" ? "Expiré" : "Résilié"}
                           </Badge>
+                          {(contract.signatureStatus) && (
+                            <Badge variant="outline" className="ml-1 text-xs">
+                              {contract.signatureStatus === "fully_signed" ? "✅ Signé" :
+                               contract.signatureStatus === "partially_signed" ? "🖊 Partiel" :
+                               contract.signatureStatus === "pending_signature" ? "⏳ En attente" : ""}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {canManage && (
+                            <Button size="sm" variant="outline" className="gap-1 text-xs"
+                              onClick={() => {
+                                setSelectedContractId(contract.id);
+                                setSignatureDialogOpen(true);
+                              }}>
+                              <PenLine className="h-3 w-3" />Signer
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -714,6 +742,71 @@ export default function VendorDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* E-Signature Dialog */}
+      {signatureDialogOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2"><PenLine className="h-5 w-5 text-blue-600" />Envoyer pour signature</h3>
+            <p className="text-sm text-muted-foreground">Ajoutez les signataires. Chacun recevra un lien unique pour signer électroniquement.</p>
+            <div className="space-y-3">
+              {signatories.map((sig, i) => (
+                <div key={i} className="grid grid-cols-3 gap-2">
+                  <input value={sig.name} onChange={e => setSignatories(s => s.map((x, idx) => idx === i ? {...x, name: e.target.value} : x))}
+                    placeholder="Nom" className="border rounded-lg px-3 py-2 text-sm col-span-1" />
+                  <input value={sig.email} onChange={e => setSignatories(s => s.map((x, idx) => idx === i ? {...x, email: e.target.value} : x))}
+                    placeholder="Email" className="border rounded-lg px-3 py-2 text-sm col-span-1" />
+                  <input value={sig.role} onChange={e => setSignatories(s => s.map((x, idx) => idx === i ? {...x, role: e.target.value} : x))}
+                    placeholder="Rôle" className="border rounded-lg px-3 py-2 text-sm col-span-1" />
+                </div>
+              ))}
+              <button onClick={() => setSignatories(s => [...s, { name: "", email: "", role: "" }])}
+                className="text-sm text-blue-600 hover:underline">+ Ajouter un signataire</button>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+              💡 Chaque signataire recevra un lien de signature unique. Copiez et partagez le lien avec eux directement.
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setSignatureDialogOpen(false)} className="px-4 py-2 border rounded-lg text-sm text-gray-700 hover:bg-gray-50">Annuler</button>
+              <button
+                onClick={() => selectedContractId && sendForSignatureMut.mutate({
+                  contractId: selectedContractId,
+                  signatories: signatories.filter(s => s.name && s.email),
+                })}
+                disabled={sendForSignatureMut.isPending || signatories.every(s => !s.name || !s.email)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium disabled:opacity-50 btn-primary">
+                {sendForSignatureMut.isPending ? "Envoi..." : "Envoyer pour signature"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Vendor Portal User Dialog */}
+      {inviteVendorOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="text-lg font-semibold">Inviter au portail fournisseur</h3>
+            <p className="text-sm text-muted-foreground">Créez un accès au portail pour ce fournisseur.</p>
+            <div className="space-y-3">
+              <input value={vendorInviteForm.name} onChange={e => setVendorInviteForm(f => ({...f, name: e.target.value}))}
+                placeholder="Nom du contact" className="w-full border rounded-lg px-3 py-2 text-sm" />
+              <input type="email" value={vendorInviteForm.email} onChange={e => setVendorInviteForm(f => ({...f, email: e.target.value}))}
+                placeholder="Email" className="w-full border rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setInviteVendorOpen(false)} className="px-4 py-2 border rounded-lg text-sm text-gray-700 hover:bg-gray-50">Annuler</button>
+              <button
+                onClick={() => vendor && inviteVendorUserMut.mutate({ vendorId: vendor.id, name: vendorInviteForm.name, email: vendorInviteForm.email })}
+                disabled={inviteVendorUserMut.isPending || !vendorInviteForm.name || !vendorInviteForm.email}
+                className="px-4 py-2 rounded-lg text-white text-sm font-medium disabled:opacity-50 btn-primary">
+                {inviteVendorUserMut.isPending ? "Création..." : "Créer l'accès"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
