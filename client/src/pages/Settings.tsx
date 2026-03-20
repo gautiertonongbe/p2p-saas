@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { AvatarUpload } from "@/components/AvatarUpload";
+import { useTheme, COLOR_PRESETS } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -962,7 +963,7 @@ function ToleranceSection({ isAdmin }: { isAdmin: boolean }) {
 function ProfileSection() {
   const { user } = useAuth();
   const { data: profile, refetch } = trpc.settings.getMyProfile.useQuery();
-  const changePasswordMutation = trpc.settings.uploadAvatar.useMutation();
+  const { colorPreset, setColorPreset } = useTheme();
   const [currentPwd, setCurrentPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
@@ -1009,9 +1010,35 @@ function ProfileSection() {
                 <p className="font-semibold text-lg">{profile?.name || user?.name}</p>
                 <p className="text-muted-foreground text-sm">{profile?.email || user?.email}</p>
                 <Badge className="mt-2" variant="outline">{profile?.role === "admin" ? "Administrateur" : profile?.role === "procurement_manager" ? "Resp. Achats" : profile?.role === "approver" ? "Approbateur" : "Demandeur"}</Badge>
-                <p className="text-xs text-muted-foreground mt-3">Survolez la photo et cliquez pour la modifier.<br/>Formats acceptés: JPG, PNG, WebP (max 2 Mo)</p>
+                <p className="text-xs text-muted-foreground mt-3">Survolez la photo et cliquez pour la modifier.<br/>Formats acceptés: JPG, PNG, WebP · max 5 Mo</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Color theme */}
+        <Card className="mb-6">
+          <CardHeader><CardTitle className="text-base">Couleur de l'interface</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">Choisissez votre couleur préférée pour personnaliser l'interface.</p>
+            <div className="grid grid-cols-6 gap-3">
+              {COLOR_PRESETS.map(preset => (
+                <button
+                  key={preset.id}
+                  title={preset.label}
+                  onClick={() => setColorPreset(preset.id)}
+                  className={`relative h-10 w-10 rounded-full border-4 transition-transform hover:scale-110 ${colorPreset === preset.id ? "border-foreground scale-110" : "border-transparent"}`}
+                  style={{ backgroundColor: `hsl(${preset.primary})` }}
+                >
+                  {colorPreset === preset.id && (
+                    <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-xs">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              Couleur actuelle: <strong>{COLOR_PRESETS.find(p => p.id === colorPreset)?.label || "Bleu"}</strong> — La préférence est sauvegardée automatiquement dans votre navigateur.
+            </p>
           </CardContent>
         </Card>
 

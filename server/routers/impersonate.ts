@@ -7,71 +7,91 @@ import { sdk } from "../_core/sdk";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 
+const ADMIN_COOKIE = "original_admin_openId";
+
+function parseCookies(cookieHeader?: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  if (!cookieHeader) return result;
+  cookieHeader.split(";").forEach(pair => {
+    const [key, ...vals] = pair.trim().split("=");
+    if (key) result[key.trim()] = decodeURIComponent(vals.join("=").trim());
+  });
+  return result;
+}
+
 export const impersonateRouter = router({
-  // Start impersonating a user
   start: protectedProcedure
     .input(z.object({ targetUserId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can impersonate users" });
+        throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les administrateurs peuvent utiliser cette fonctionnalité" });
       }
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       const [target] = await db.select().from(users).where(eq(users.id, input.targetUserId)).limit(1);
-      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
-      if (target.id === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot impersonate yourself" });
+      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "Utilisateur introuvable" });
+      if (target.id === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Impossible de s'imiter soi-même" });
 
-      // Store original admin openId in a separate cookie
-      const cookieOptions = { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/" };
-      ctx.res.cookie("original_admin_openId", ctx.user.openId, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      // Save original admin openId
+      ctx.res.cookie(ADMIN_COOKIE, ctx.user.openId, {
+        httpOnly: true,
+        path: "/",
+        maxAge: ONE_YEAR_MS / 1000,
+        sameSite: "lax",
+      });
 
-      // Create session token for target user
+      // Create session for target
       const sessionToken = await sdk.createSessionToken(target.openId, {
         name: target.name || target.email || "",
         expiresInMs: ONE_YEAR_MS,
       });
 
-      ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      ctx.res.cookie(COOKIE_NAME, sessionToken, {
+        httpOnly: true,
+        path: "/",
+        maxAge: ONE_YEAR_MS / 1000,
+        sameSite: "lax",
+      });
 
-      return { success: true, user: { id: target.id, name: target.name, email: target.email, role: target.role } };
+      return { success: true };
     }),
 
-  // Stop impersonating — return to admin
   stop: protectedProcedure
     .mutation(async ({ ctx }) => {
-      const cookies = ctx.req.headers.cookie || "";
-      const match = cookies.match(/original_admin_openId=([^;]+)/);
-      const adminOpenId = match ? decodeURIComponent(match[1]) : null;
+      const cookies = parseCookies(ctx.req.headers.cookie);
+      const adminOpenId = cookies[ADMIN_COOKIE];
 
       if (!adminOpenId) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Not currently impersonating" });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Pas d'impersonation active" });
       }
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       const [admin] = await db.select().from(users).where(eq(users.openId, adminOpenId)).limit(1);
-      if (!admin) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!admin) throw new TRPCError({ code: "NOT_FOUND", message: "Compte admin introuvable" });
 
       const sessionToken = await sdk.createSessionToken(admin.openId, {
         name: admin.name || admin.email || "",
         expiresInMs: ONE_YEAR_MS,
       });
 
-      const cookieOptions = { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/" };
-      ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      ctx.res.clearCookie("original_admin_openId", { path: "/" });
+      ctx.res.cookie(COOKIE_NAME, sessionToken, {
+        httpOnly: true,
+        path: "/",
+        maxAge: ONE_YEAR_MS / 1000,
+        sameSite: "lax",
+      });
 
-      return { success: true, user: { id: admin.id, name: admin.name, email: admin.email, role: admin.role } };
+      ctx.res.clearCookie(ADMIN_COOKIE, { path: "/" });
+
+      return { success: true };
     }),
 
-  // List users available to impersonate
   listUsers: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") {
-      throw new TRPCError({ code: "FORBIDDEN" });
-    }
+    if (ctx.user.role !== "admin") return [];
     const db = await getDb();
     if (!db) return [];
     const allUsers = await db.select({
@@ -84,14 +104,17 @@ export const impersonateRouter = router({
     return allUsers.filter(u => u.id !== ctx.user.id);
   }),
 
-  // Check if currently impersonating
   status: protectedProcedure.query(async ({ ctx }) => {
-    const cookies = ctx.req.headers.cookie || "";
-    const match = cookies.match(/original_admin_openId=([^;]+)/);
-    const isImpersonating = !!match;
+    const cookies = parseCookies(ctx.req.headers.cookie);
+    const isImpersonating = !!cookies[ADMIN_COOKIE];
     return {
       isImpersonating,
-      currentUser: { id: ctx.user.id, name: ctx.user.name, email: ctx.user.email, role: ctx.user.role },
+      currentUser: {
+        id: ctx.user.id,
+        name: ctx.user.name,
+        email: ctx.user.email,
+        role: ctx.user.role,
+      },
     };
   }),
 });

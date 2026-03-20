@@ -10,9 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Users, Loader2, UserPlus } from "lucide-react";
+import { Plus, Edit, Users, Loader2, UserPlus, UserCheck, UserX } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export function UserManagement() {
+  const { user: currentUser } = useAuth();
   const { t } = useTranslation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -197,9 +199,36 @@ export function UserManagement() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {currentUser?.role === "admin" && user.id !== currentUser?.id && (
+                          impersonateStatus?.isImpersonating ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs text-amber-600 border-amber-300 hover:bg-amber-50"
+                              onClick={() => stopImpersonate.mutate()}
+                              disabled={stopImpersonate.isPending}
+                            >
+                              <UserX className="h-3 w-3 mr-1" />
+                              Quitter
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs text-blue-600 border-blue-300 hover:bg-blue-50"
+                              onClick={() => startImpersonate.mutate({ targetUserId: user.id })}
+                              disabled={startImpersonate.isPending}
+                            >
+                              <UserCheck className="h-3 w-3 mr-1" />
+                              Agir en tant que
+                            </Button>
+                          )
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -14,7 +14,6 @@ import {
   Package,
   ClipboardList,
 } from "lucide-react";import { Link } from "wouter";
-import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
   const { user } = useAuth();
