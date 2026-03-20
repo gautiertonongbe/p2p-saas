@@ -64,7 +64,6 @@ export default function DashboardLayout({
   const { loading, user } = useAuth();
   const { t } = useTranslation();
   const { data: impStatus } = trpc.impersonate.status.useQuery(undefined, { refetchOnWindowFocus: false });
-  const stopImpersonate = trpc.impersonate.stop.useMutation({ onSuccess: () => { window.location.href = "/"; } });
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
