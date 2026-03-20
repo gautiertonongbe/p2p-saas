@@ -20,6 +20,7 @@ import SignaturePage from "./pages/SignaturePage";
 import ExpensesList from "./pages/ExpensesList";
 import ExpenseForm from "./pages/ExpenseForm";
 import ExpenseDetail from "./pages/ExpenseDetail";
+import Community from "./pages/Community";
 import SupplierPortal from "./pages/SupplierPortal";
 import Analytics from "./pages/Analytics";
 import PurchaseOrdersList from "./pages/PurchaseOrdersList";
@@ -59,6 +60,7 @@ function Router() {
       <Route path="/expenses"><DashboardLayout><ExpensesList /></DashboardLayout></Route>
       <Route path="/expenses/new"><DashboardLayout><ExpenseForm /></DashboardLayout></Route>
       <Route path="/expenses/:id"><DashboardLayout><ExpenseDetail /></DashboardLayout></Route>
+      <Route path="/community"><DashboardLayout><Community /></DashboardLayout></Route>
       <Route path="/supplier-portal"><SupplierPortal /></Route>
       <Route path="/invoices/:id"><DashboardLayout><InvoiceDetail /></DashboardLayout></Route>
       <Route path="/payments"><DashboardLayout><PaymentsList /></DashboardLayout></Route>

@@ -20,6 +20,7 @@ import { esignatureRouter } from "./routers/esignature";
 import { supplierPortalRouter } from "./routers/supplierPortal";
 import { ocrRouter } from "./routers/ocr";
 import { expensesRouter } from "./routers/expenses";
+import { communityRouter } from "./routers/community";
 
 export const appRouter = router({
   system: systemRouter,
@@ -54,6 +55,7 @@ export const appRouter = router({
   supplierPortal: supplierPortalRouter,
   ocr: ocrRouter,
   expenses: expensesRouter,
+  community: communityRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -45,6 +45,7 @@ const getMenuItems = (t: (key: string) => string) => [
   { icon: TrendingUp, label: t('navigation.analytics'), path: "/analytics" },
   { icon: BarChart2, label: "Rapports", path: "/reports" },
   { icon: Receipt, label: "Notes de frais", path: "/expenses" },
+  { icon: Users, label: "Communauté", path: "/community" },
   { icon: Users, label: "Portail Fournisseur", path: "/supplier-portal" },
   { icon: Settings, label: t('navigation.settings'), path: "/settings" },
 ];

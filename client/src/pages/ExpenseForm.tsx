@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Save, Send, Loader2, Receipt } from "lucide-react";
+import { ExpenseScore } from "@/components/ExpenseScore";
 
 const CATEGORIES = [
   "Transport / Déplacement",
@@ -233,6 +234,11 @@ export default function ExpenseForm() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Compliance Score — live feedback */}
+      {lines.some(l => l.amount) && (
+        <ExpenseScore lines={lines.map(l => ({ ...l, amount: l.amount }))} title={title} />
+      )}
 
       {/* Actions */}
       <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
