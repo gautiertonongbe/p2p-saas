@@ -12,7 +12,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     THIS IS THE END OF A COMMENT BLOCK, BLOCK TO BE DELETED -->
-  </head>
+    <script>
+    (function() {
+      var presets = {
+        blue:"221 83% 53%",violet:"262 80% 58%",emerald:"158 64% 40%",
+        rose:"346 77% 53%",orange:"24 95% 50%",teal:"187 76% 40%",
+        indigo:"239 84% 60%",amber:"43 96% 48%",slate:"215 25% 35%",
+        pink:"330 81% 55%",cyan:"192 91% 42%",lime:"85 78% 38%"
+      };
+      var id = localStorage.getItem("colorPreset") || "blue";
+      var primary = presets[id] || presets.blue;
+      var r = document.documentElement;
+      r.style.setProperty("--primary", primary);
+      r.style.setProperty("--ring", primary);
+      r.style.setProperty("--sidebar-primary", primary);
+    })();
+  </script>
+</head>
 
   <body>
     <div id="root"></div>

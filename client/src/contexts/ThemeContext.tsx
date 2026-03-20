@@ -2,21 +2,48 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
-// 12 beautiful accent color presets
 export const COLOR_PRESETS = [
-  { id: "blue",    label: "Bleu",       primary: "221 83% 53%",  sidebar: "221 83% 25%" },
-  { id: "violet",  label: "Violet",     primary: "262 80% 58%",  sidebar: "262 80% 28%" },
-  { id: "emerald", label: "Émeraude",   primary: "158 64% 40%",  sidebar: "158 64% 20%" },
-  { id: "rose",    label: "Rose",       primary: "346 77% 53%",  sidebar: "346 77% 25%" },
-  { id: "orange",  label: "Orange",     primary: "24 95% 50%",   sidebar: "24 95% 25%" },
-  { id: "teal",    label: "Sarcelle",   primary: "187 76% 40%",  sidebar: "187 76% 20%" },
-  { id: "indigo",  label: "Indigo",     primary: "239 84% 60%",  sidebar: "239 84% 28%" },
-  { id: "amber",   label: "Ambre",      primary: "43 96% 48%",   sidebar: "43 96% 22%" },
-  { id: "slate",   label: "Ardoise",    primary: "215 25% 35%",  sidebar: "215 25% 15%" },
-  { id: "pink",    label: "Rose vif",   primary: "330 81% 55%",  sidebar: "330 81% 25%" },
-  { id: "cyan",    label: "Cyan",       primary: "192 91% 42%",  sidebar: "192 91% 20%" },
-  { id: "lime",    label: "Lime",       primary: "85 78% 38%",   sidebar: "85 78% 18%" },
+  { id: "blue",    label: "Bleu",       primary: "221 83% 53%" },
+  { id: "violet",  label: "Violet",     primary: "262 80% 58%" },
+  { id: "emerald", label: "Émeraude",   primary: "158 64% 40%" },
+  { id: "rose",    label: "Rose",       primary: "346 77% 53%" },
+  { id: "orange",  label: "Orange",     primary: "24 95% 50%"  },
+  { id: "teal",    label: "Sarcelle",   primary: "187 76% 40%" },
+  { id: "indigo",  label: "Indigo",     primary: "239 84% 60%" },
+  { id: "amber",   label: "Ambre",      primary: "43 96% 48%"  },
+  { id: "slate",   label: "Ardoise",    primary: "215 25% 35%" },
+  { id: "pink",    label: "Rose vif",   primary: "330 81% 55%" },
+  { id: "cyan",    label: "Cyan",       primary: "192 91% 42%" },
+  { id: "lime",    label: "Lime",       primary: "85 78% 38%"  },
 ];
+
+function applyColorPreset(presetId: string) {
+  const preset = COLOR_PRESETS.find(p => p.id === presetId) || COLOR_PRESETS[0];
+  const root = document.documentElement;
+  const p = preset.primary;
+
+  // Primary color — buttons, active states, focus rings
+  root.style.setProperty("--primary", p);
+  root.style.setProperty("--ring", p);
+  root.style.setProperty("--primary-foreground", "0 0% 100%");
+
+  // Sidebar — stays neutral white, only the active item uses the color
+  // sidebar-primary is the active item bg in the sidebar
+  root.style.setProperty("--sidebar-primary", p);
+  root.style.setProperty("--sidebar-primary-foreground", "0 0% 100%");
+
+  // Keep sidebar itself white/neutral (NetSuite style)
+  root.style.removeProperty("--sidebar");
+}
+
+// Apply immediately before React renders to avoid color flash
+const storedPreset = typeof window !== "undefined"
+  ? (localStorage.getItem("colorPreset") || "blue")
+  : "blue";
+
+if (typeof window !== "undefined") {
+  applyColorPreset(storedPreset);
+}
 
 interface ThemeContextType {
   theme: Theme;
@@ -34,41 +61,24 @@ interface ThemeProviderProps {
   switchable?: boolean;
 }
 
-function applyColorPreset(presetId: string) {
-  const preset = COLOR_PRESETS.find(p => p.id === presetId) || COLOR_PRESETS[0];
-  const root = document.documentElement;
-  root.style.setProperty("--primary", preset.primary);
-  root.style.setProperty("--sidebar-primary", preset.sidebar);
-  root.style.setProperty("--ring", preset.primary);
-}
-
 export function ThemeProvider({
   children,
   defaultTheme = "light",
   switchable = false,
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
-    if (switchable) {
-      const stored = localStorage.getItem("theme");
-      return (stored as Theme) || defaultTheme;
+    if (typeof window !== "undefined" && switchable) {
+      return (localStorage.getItem("theme") as Theme) || defaultTheme;
     }
     return defaultTheme;
   });
 
-  const [colorPreset, setColorPresetState] = useState<string>(() => {
-    return localStorage.getItem("colorPreset") || "blue";
-  });
+  const [colorPreset, setColorPresetState] = useState<string>(storedPreset);
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    if (switchable) {
-      localStorage.setItem("theme", theme);
-    }
+    root.classList.toggle("dark", theme === "dark");
+    if (switchable) localStorage.setItem("theme", theme);
   }, [theme, switchable]);
 
   useEffect(() => {
