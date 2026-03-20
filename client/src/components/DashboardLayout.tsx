@@ -172,14 +172,7 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const allMenuItems = getMenuItems(t);
-  const menuItems = allMenuItems.filter(item => {
-    if (item.path === "/expenses" && !isAdmin && !canAccessExpenses) return false;
-    if (item.path === "/community" && !isAdmin && !canAccessCommunity) return false;
-    if (item.path === "/analytics" && !isAdmin && !canAccessAnalytics) return false;
-    if (item.path === "/reports" && !isAdmin && !canAccessReports) return false;
-    return true;
-  });
+  const menuItems = getMenuItems(t);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   const { data: impStatus } = trpc.impersonate.status.useQuery(undefined, { refetchOnWindowFocus: false });
