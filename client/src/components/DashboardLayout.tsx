@@ -63,7 +63,6 @@ export default function DashboardLayout({
   });
   const { loading, user } = useAuth();
   const { t } = useTranslation();
-  const { data: impStatus } = trpc.impersonate.status.useQuery(undefined, { refetchOnWindowFocus: false });
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -133,6 +132,7 @@ function DashboardLayoutContent({
   const menuItems = getMenuItems(t);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  const { data: impStatus } = trpc.impersonate.status.useQuery(undefined, { refetchOnWindowFocus: false });
 
   useEffect(() => {
     if (isCollapsed) {
