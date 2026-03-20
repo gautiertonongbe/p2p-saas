@@ -3,9 +3,45 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
-import * as bcrypt from "bcryptjs";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+async function comparePassword(password: string, stored: string): Promise<boolean> {
+  try {
+    // Handle bcrypt hashes (starts with $2)
+    if (stored.startsWith("$2")) {
+      // Use dynamic import for bcryptjs
+      const { default: bcrypt } = await import("bcryptjs") as any;
+      if (bcrypt && typeof bcrypt.compare === "function") {
+        return bcrypt.compare(password, stored);
+      }
+      // Fallback: try compare from named export
+      const mod = await import("bcryptjs") as any;
+      const compareFn = mod.compare || mod.default?.compare;
+      if (compareFn) return compareFn(password, stored);
+      return false;
+    }
+    // Handle scrypt hashes (our new format)
+    const [hashedPassword, salt] = stored.split(".");
+    if (!hashedPassword || !salt) return false;
+    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+    const storedBuf = Buffer.from(hashedPassword, "hex");
+    return timingSafeEqual(buf, storedBuf);
+  } catch (e) {
+    console.error("[Auth] comparePassword error:", e);
+    return false;
+  }
+}
 
 export function registerOAuthRoutes(app: Express) {
   app.post("/api/auth/login", async (req: Request, res: Response) => {
@@ -39,14 +75,15 @@ export function registerOAuthRoutes(app: Express) {
 
       const passwordField = (user as any).password;
       if (!passwordField) {
-        res.status(401).json({ error: "Aucun mot de passe défini" });
-        return;
-      }
-
-      const valid = await bcrypt.compare(password, passwordField);
-      if (!valid) {
-        res.status(401).json({ error: "Email ou mot de passe incorrect" });
-        return;
+        // No password set — set it now and log in
+        const hashed = await hashPassword(password);
+        await database.update(users).set({ password: hashed } as any).where(eq(users.id, user.id));
+      } else {
+        const valid = await comparePassword(password, passwordField);
+        if (!valid) {
+          res.status(401).json({ error: "Email ou mot de passe incorrect" });
+          return;
+        }
       }
 
       await database.update(users)
