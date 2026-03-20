@@ -48,6 +48,7 @@ function Router() {
       <Route path="/vendors/new"><DashboardLayout><VendorForm /></DashboardLayout></Route>
       <Route path="/vendors/:id"><DashboardLayout><VendorDetail /></DashboardLayout></Route>
       <Route path="/invoices"><DashboardLayout><InvoicesList /></DashboardLayout></Route>
+      <Route path="/invoices/new"><DashboardLayout><InvoiceForm /></DashboardLayout></Route>
       <Route path="/invoices/:id"><DashboardLayout><InvoiceDetail /></DashboardLayout></Route>
       <Route path="/payments"><DashboardLayout><PaymentsList /></DashboardLayout></Route>
       <Route path="/budgets"><DashboardLayout><BudgetsList /></DashboardLayout></Route>
