@@ -543,7 +543,7 @@ function ViewBuilderDialog({
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger><SelectValue placeholder="Aucun tri par défaut" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun</SelectItem>
+                    <SelectItem value="none">Aucun</SelectItem>
                     {columns.filter(c => c.sortable !== false).map(col => (
                       <SelectItem key={col.key} value={col.key}>{col.label}</SelectItem>
                     ))}

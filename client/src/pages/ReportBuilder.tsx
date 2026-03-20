@@ -307,7 +307,7 @@ export default function ReportBuilder() {
                   <Select value={groupBy} onValueChange={setGroupBy}>
                     <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Aucun regroupement" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Aucun</SelectItem>
+                      <SelectItem value="none">Aucun</SelectItem>
                       {colDefs.map(c => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -318,7 +318,7 @@ export default function ReportBuilder() {
                     <Select value={sortBy} onValueChange={setSortBy}>
                       <SelectTrigger className="h-8 text-sm flex-1"><SelectValue placeholder="Aucun tri" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Aucun</SelectItem>
+                        <SelectItem value="none">Aucun</SelectItem>
                         {colDefs.map(c => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
                       </SelectContent>
                     </Select>

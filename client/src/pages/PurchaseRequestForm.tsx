@@ -273,10 +273,10 @@ export default function PurchaseRequestForm() {
           {/* Department */}
           <div className="space-y-2">
             <Label>Département</Label>
-            <Select value={departmentId} onValueChange={setDepartmentId}>
+            <Select value={departmentId || "none"} onValueChange={v => setDepartmentId(v === "none" ? "" : v)}>
               <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— Aucun —</SelectItem>
+                <SelectItem value="none">— Aucun —</SelectItem>
                 {(departments as any[]).filter((d: any) => d.isActive !== false).map((d: any) => (
                   <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
                 ))}
@@ -288,10 +288,10 @@ export default function PurchaseRequestForm() {
           {(categories as any[]).length > 0 && (
             <div className="space-y-2">
               <Label>Catégorie de dépense</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
+              <Select value={categoryId || "none"} onValueChange={v => setCategoryId(v === "none" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Aucune —</SelectItem>
+                  <SelectItem value="none">— Aucune —</SelectItem>
                   {(categories as any[]).filter((c: any) => c.isActive).map((c: any) => (
                     <SelectItem key={c.id} value={String(c.id)}>{c.label}</SelectItem>
                   ))}
@@ -304,10 +304,10 @@ export default function PurchaseRequestForm() {
           {(costCenters as any[]).length > 0 && (
             <div className="space-y-2">
               <Label>Centre de coût</Label>
-              <Select value={costCenterId} onValueChange={setCostCenterId}>
+              <Select value={costCenterId || "none"} onValueChange={v => setCostCenterId(v === "none" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Aucun —</SelectItem>
+                  <SelectItem value="none">— Aucun —</SelectItem>
                   {(costCenters as any[]).filter((c: any) => c.isActive).map((c: any) => (
                     <SelectItem key={c.id} value={String(c.id)}>{c.label}</SelectItem>
                   ))}
@@ -320,10 +320,10 @@ export default function PurchaseRequestForm() {
           {(projects as any[]).length > 0 && (
             <div className="space-y-2">
               <Label>Projet</Label>
-              <Select value={projectId} onValueChange={setProjectId}>
+              <Select value={projectId || "none"} onValueChange={v => setProjectId(v === "none" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Aucun —</SelectItem>
+                  <SelectItem value="none">— Aucun —</SelectItem>
                   {(projects as any[]).filter((p: any) => p.isActive).map((p: any) => (
                     <SelectItem key={p.id} value={String(p.id)}>{p.label}</SelectItem>
                   ))}
@@ -336,10 +336,10 @@ export default function PurchaseRequestForm() {
           {(billingStrings as any[]).length > 0 && (
             <div className="space-y-2">
               <Label>Code de facturation</Label>
-              <Select value={billingStringId} onValueChange={setBillingStringId}>
+              <Select value={billingStringId || "none"} onValueChange={v => setBillingStringId(v === "none" ? "" : v)}>
                 <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Aucun —</SelectItem>
+                  <SelectItem value="none">— Aucun —</SelectItem>
                   {(billingStrings as any[]).filter((b: any) => b.isActive).map((b: any) => (
                     <SelectItem key={b.id} value={String(b.id)}>{b.label}</SelectItem>
                   ))}
@@ -460,11 +460,10 @@ export default function PurchaseRequestForm() {
         >
           {t('common.cancel')}
         </Button>
-        <Button
-          variant="outline"
+        <Button  variant="outline"
           onClick={handleSaveDraft}
           disabled={createMutation.isPending || submitMutation.isPending}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
         >
           <Save className="mr-2 h-4 w-4" />
           {t('purchaseRequests.saveDraft')}
@@ -472,7 +471,7 @@ export default function PurchaseRequestForm() {
         <Button
           onClick={handleSubmit}
           disabled={createMutation.isPending || submitMutation.isPending}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
         >
           <Send className="mr-2 h-4 w-4" />
           {createMutation.isPending || submitMutation.isPending

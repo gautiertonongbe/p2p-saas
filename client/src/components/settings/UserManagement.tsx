@@ -265,7 +265,7 @@ export function UserManagement() {
               <Select value={inviteForm.departmentId} onValueChange={v => setInviteForm(f => ({ ...f, departmentId: v }))}>
                 <SelectTrigger><SelectValue placeholder="Aucun département" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun</SelectItem>
+                  <SelectItem value="none">Aucun</SelectItem>
                   {departments.map((d: any) => (
                     <SelectItem key={d.id} value={String(d.id)}>
                       <div className="flex items-center gap-2">
@@ -376,7 +376,7 @@ export function UserManagement() {
               <Select value={editForm.departmentId} onValueChange={v => setEditForm(f => ({ ...f, departmentId: v }))}>
                 <SelectTrigger><SelectValue placeholder="Aucun département" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun</SelectItem>
+                  <SelectItem value="none">Aucun</SelectItem>
                   {departments.map((d: any) => <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>)}
                 </SelectContent>
               </Select>

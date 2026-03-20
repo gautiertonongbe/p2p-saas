@@ -200,7 +200,7 @@ export default function InvoicesList() {
           />
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
                 <Upload className="mr-2 h-4 w-4" />
                 {t('invoices.upload')}
               </Button>
