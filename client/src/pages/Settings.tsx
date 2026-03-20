@@ -69,6 +69,8 @@ export default function Settings() {
   const { user } = useAuth();
   const [section, setSection] = useState("organization");
   const isAdmin = user?.role === "admin";
+  const { colorPreset } = useTheme();
+  const activeColor = COLOR_PRESETS.find(p => p.id === colorPreset)?.primary || "221 83% 53%";
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-background overflow-hidden">
@@ -91,8 +93,9 @@ export default function Settings() {
                 return (
                   <button key={s.id} onClick={() => setSection(s.id)}
                     className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-sm",
-                      active ? "bg-blue-600 text-white shadow-sm" : "hover:bg-muted text-foreground"
-                    )}>
+                      active ? "text-white shadow-sm" : "hover:bg-muted text-foreground"
+                    )}
+                    style={active ? { backgroundColor: `hsl(${activeColor})` } : {}}>
                     <Icon className={cn("h-4 w-4 shrink-0", active ? "text-white" : "text-muted-foreground")} />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium capitalize">{s.id === "organization" ? "Organisation" :
