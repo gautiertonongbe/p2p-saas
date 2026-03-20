@@ -228,7 +228,7 @@ export default function Dashboard() {
       </div>
 
       {/* Alerts row */}
-      {(isAdmin && ((budgetAlerts as any[]).length > 0 || (expiringContracts as any[]).length > 0 || (inventoryAlerts as any[]).length > 0 || disputedInvoices.length > 0)) && (
+      {(isAdmin && ((budgetAlerts as any[]).length > 0 || (expiringContracts as any[]).length > 0 || (inventoryAlerts as any[]).length > 0 || disputedInvoices.length > 0) && ((budgetAlerts as any[]).length + (expiringContracts as any[]).length + (inventoryAlerts as any[]).length + disputedInvoices.length > 0)) && (
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
             <Bell className="h-3.5 w-3.5" />Alertes organisation

@@ -24,7 +24,7 @@ function applyColorPreset(presetId: string) {
   // Set data attribute for CSS rules
   root.setAttribute("data-color", id);
   // Also directly set sidebar-accent so active items use the right color
-  root.style.setProperty("--sidebar-accent", `hsl(${preset.primary})`);
+  root.style.setProperty("--sidebar-accent", preset.primary);
   root.style.setProperty("--sidebar-accent-foreground", "0 0% 100%");
   root.style.setProperty("--primary", preset.primary);
   root.style.setProperty("--ring", preset.primary);
