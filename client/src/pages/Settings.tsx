@@ -1112,6 +1112,40 @@ function ProfileSection() {
   const { user } = useAuth();
   const { data: profile, refetch } = trpc.settings.getMyProfile.useQuery();
   const { colorPreset, setColorPreset } = useTheme();
+  const utils = trpc.useUtils();
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  // Initialize form with current profile data
+  useEffect(() => {
+    if (profile) {
+      setEditName((profile as any).name || "");
+      setEditEmail((profile as any).email || "");
+    }
+  }, [profile]);
+
+  const handleSaveProfile = async () => {
+    if (!editName.trim()) { toast.error("Le nom est requis"); return; }
+    setProfileSaving(true);
+    try {
+      const res = await fetch("/api/auth/update-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name: editName.trim() }),
+      });
+      if (!res.ok) throw new Error("Erreur serveur");
+      toast.success("Profil mis à jour !");
+      utils.auth.me.invalidate();
+      refetch();
+    } catch (e: any) {
+      toast.error(e.message || "Erreur");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
   const [currentPwd, setCurrentPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
@@ -1143,6 +1177,28 @@ function ProfileSection() {
     <div className="space-y-6 max-w-2xl">
       <SectionHeader icon={Users} title="Mon Profil" desc="Gérez votre photo de profil et vos informations personnelles" />
       <div className="p-6">
+        {/* Name & Email */}
+        <Card className="mb-6">
+          <CardHeader><CardTitle className="text-base">Informations personnelles</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Nom complet</Label>
+                <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Votre nom" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Email</Label>
+                <Input value={editEmail} disabled className="bg-muted" />
+                <p className="text-xs text-muted-foreground">L'email ne peut pas être modifié ici</p>
+              </div>
+            </div>
+            <button onClick={handleSaveProfile} disabled={profileSaving}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium disabled:opacity-50 btn-primary">
+              {profileSaving ? "Enregistrement..." : "Enregistrer les informations"}
+            </button>
+          </CardContent>
+        </Card>
+
         {/* Avatar section */}
         <Card className="mb-6">
           <CardHeader><CardTitle className="text-base">Photo de profil</CardTitle></CardHeader>
