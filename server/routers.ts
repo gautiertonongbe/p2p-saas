@@ -16,6 +16,8 @@ import { inventoryRouter } from "./routers/inventory";
 import { reportsRouter } from "./routers/reports";
 import { viewsRouter } from "./routers/views";
 import { impersonateRouter } from "./routers/impersonate";
+import { esignatureRouter } from "./routers/esignature";
+import { supplierPortalRouter } from "./routers/supplierPortal";
 
 export const appRouter = router({
   system: systemRouter,
@@ -46,6 +48,8 @@ export const appRouter = router({
   reports: reportsRouter,
   views: viewsRouter,
   impersonate: impersonateRouter,
+  esignature: esignatureRouter,
+  supplierPortal: supplierPortalRouter,
 });
 
 export type AppRouter = typeof appRouter;

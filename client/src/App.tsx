@@ -16,6 +16,8 @@ import VendorDetail from "./pages/VendorDetail";
 import ApprovalsList from "./pages/ApprovalsList";
 import InvoicesList from "./pages/InvoicesList";
 import InvoiceForm from "./pages/InvoiceForm";
+import SignaturePage from "./pages/SignaturePage";
+import SupplierPortal from "./pages/SupplierPortal";
 import Analytics from "./pages/Analytics";
 import PurchaseOrdersList from "./pages/PurchaseOrdersList";
 import PurchaseOrderForm from "./pages/PurchaseOrderForm";
@@ -50,6 +52,8 @@ function Router() {
       <Route path="/vendors/:id"><DashboardLayout><VendorDetail /></DashboardLayout></Route>
       <Route path="/invoices"><DashboardLayout><InvoicesList /></DashboardLayout></Route>
       <Route path="/invoices/new"><DashboardLayout><InvoiceForm /></DashboardLayout></Route>
+      <Route path="/sign"><SignaturePage /></Route>
+      <Route path="/supplier-portal"><SupplierPortal /></Route>
       <Route path="/invoices/:id"><DashboardLayout><InvoiceDetail /></DashboardLayout></Route>
       <Route path="/payments"><DashboardLayout><PaymentsList /></DashboardLayout></Route>
       <Route path="/budgets"><DashboardLayout><BudgetsList /></DashboardLayout></Route>
