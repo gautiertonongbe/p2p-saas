@@ -10,15 +10,24 @@ export const ocrRouter = router({
       mimeType: z.string().default("image/jpeg"),
     }))
     .mutation(async ({ ctx, input }) => {
-      if (!ENV.forgeApiKey) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Clé API non configurée" });
+      // Debug: log available env vars
+      const availableKeys = Object.keys(process.env).filter(k => 
+        k.includes('API') || k.includes('KEY') || k.includes('ANTHROPIC') || k.includes('FORGE') || k.includes('CLAUDE')
+      );
+      console.log("[OCR] Available API-related env vars:", availableKeys);
+      console.log("[OCR] forgeApiKey value:", ENV.forgeApiKey ? "SET (length:" + ENV.forgeApiKey.length + ")" : "NOT SET");
+      
+      const apiKey = ENV.forgeApiKey || process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+      if (!apiKey) {
+        console.error("[OCR] No API key found. Available vars:", availableKeys);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Clé API non configurée. Vars disponibles: " + availableKeys.join(", ") });
       }
 
       // Call Anthropic API directly — forge proxy uses OpenAI format which doesn't support vision the same way
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          "x-api-key": ENV.forgeApiKey,
+          "x-api-key": apiKey,
           "anthropic-version": "2023-06-01",
           "content-type": "application/json",
         },
