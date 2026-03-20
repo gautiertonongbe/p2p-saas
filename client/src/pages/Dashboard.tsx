@@ -18,7 +18,6 @@ import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { t } = useTranslation();
   
   // Fetch dashboard data
   const { data: myRequests, isLoading: loadingRequests } = trpc.purchaseRequests.getMyRequests.useQuery();
@@ -57,7 +56,7 @@ export default function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          {t('auth.welcomeBack')}, {user?.name || "User"}. {t('dashboard.subtitle')}
+          {"Bienvenue"}, {user?.name || "User"}. {t('dashboard.subtitle')}
         </p>
       </div>
 
@@ -106,7 +105,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-900">{budgetAlertCount}</div>
-                <p className="text-xs text-red-700 mt-1">{t('dashboard.alerts.budgetAlertsDesc')}</p>
+                <p className="text-xs text-red-700 mt-1">{"Budgets ayant dépassé leur limite"}</p>
                 <Link href="/budgets">
                   <Button variant="outline" size="sm" className="mt-3 border-red-300 hover:bg-red-100">{t('dashboard.alerts.reviewNow')}</Button>
                 </Link>
@@ -116,12 +115,12 @@ export default function Dashboard() {
           {contractAlertCount > 0 && (
             <Card className="border-orange-200 bg-orange-50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('dashboard.alerts.expiringContracts')}</CardTitle>
+                <CardTitle className="text-sm font-medium">{"Contrats expirant bientôt"}</CardTitle>
                 <FileCheck className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-orange-900">{contractAlertCount}</div>
-                <p className="text-xs text-orange-700 mt-1">{t('dashboard.alerts.expiringContractsDesc')}</p>
+                <p className="text-xs text-orange-700 mt-1">{"Contrats à renouveler dans 30 jours"}</p>
                 <Link href="/vendors">
                   <Button variant="outline" size="sm" className="mt-3 border-orange-300 hover:bg-orange-100">{t('dashboard.alerts.reviewNow')}</Button>
                 </Link>
@@ -131,12 +130,12 @@ export default function Dashboard() {
           {inventoryAlertCount > 0 && (
             <Card className="border-blue-200 bg-blue-50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('dashboard.alerts.lowStock')}</CardTitle>
+                <CardTitle className="text-sm font-medium">{"Alertes stock bas"}</CardTitle>
                 <Package className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-900">{inventoryAlertCount}</div>
-                <p className="text-xs text-blue-700 mt-1">{t('dashboard.alerts.lowStockDesc')}</p>
+                <p className="text-xs text-blue-700 mt-1">{"Articles sous le niveau de réapprovisionnement"}</p>
                 <Link href="/inventory">
                   <Button variant="outline" size="sm" className="mt-3 border-blue-300 hover:bg-blue-100">{t('dashboard.alerts.reviewNow')}</Button>
                 </Link>
@@ -157,7 +156,7 @@ export default function Dashboard() {
             <div className="text-2xl font-bold">{totalRequests}</div>
             <p className="text-xs text-muted-foreground mt-1">{pendingRequests} {t('dashboard.metrics.pending')}</p>
             <Link href="/purchase-requests">
-              <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto text-xs">{t('common.viewAll')} →</Button>
+              <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto text-xs">{"Voir tout"} →</Button>
             </Link>
           </CardContent>
         </Card>
@@ -168,9 +167,9 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalOrders}</div>
-            <p className="text-xs text-muted-foreground mt-1">{activeOrders} {t('dashboard.metrics.active')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{activeOrders} {"actif(s)"}</p>
             <Link href="/purchase-orders">
-              <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto text-xs">{t('common.viewAll')} →</Button>
+              <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto text-xs">{"Voir tout"} →</Button>
             </Link>
           </CardContent>
         </Card>
@@ -183,7 +182,7 @@ export default function Dashboard() {
             <div className="text-2xl font-bold">{totalInvoices}</div>
             <p className="text-xs text-muted-foreground mt-1">{pendingInvoices} {t('dashboard.metrics.pending')}</p>
             <Link href="/invoices">
-              <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto text-xs">{t('common.viewAll')} →</Button>
+              <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto text-xs">{"Voir tout"} →</Button>
             </Link>
           </CardContent>
         </Card>
@@ -194,9 +193,9 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeVendors}</div>
-            <p className="text-xs text-muted-foreground mt-1">{t('dashboard.metrics.activeVendors')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{"fournisseurs actifs"}</p>
             <Link href="/vendors">
-              <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto text-xs">{t('common.viewAll')} →</Button>
+              <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto text-xs">{"Voir tout"} →</Button>
             </Link>
           </CardContent>
         </Card>
@@ -206,12 +205,12 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>{t('dashboard.myRequests.title')}</CardTitle>
-            <CardDescription>{t('dashboard.myRequests.desc')}</CardDescription>
+            <CardTitle>{"Mes demandes récentes"}</CardTitle>
+            <CardDescription>{"Vos dernières demandes d'achat"}</CardDescription>
           </CardHeader>
           <CardContent>
             {loadingRequests ? (
-              <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+              <p className="text-sm text-muted-foreground">{"Chargement..."}</p>
             ) : myRequests && myRequests.length > 0 ? (
               <div className="space-y-3">
                 {myRequests.slice(0, 5).map((req) => (
@@ -226,26 +225,26 @@ export default function Dashboard() {
                       req.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {req.status === 'draft' ? t('status.draft') :
-                       req.status === 'submitted' ? t('status.submitted') :
-                       req.status === 'pending_approval' ? t('status.pendingApproval') :
-                       req.status === 'approved' ? t('status.approved') :
-                       req.status === 'rejected' ? t('status.rejected') : req.status}
+                      {req.status === 'draft' ? "Brouillon" :
+                       req.status === 'submitted' ? "Soumis" :
+                       req.status === 'pending_approval' ? "En attente" :
+                       req.status === 'approved' ? "Approuvé" :
+                       req.status === 'rejected' ? "Rejeté" : req.status}
                     </span>
                   </div>
                 ))}
                 {myRequests.length > 5 && (
                   <Link href="/purchase-requests">
-                    <Button variant="outline" size="sm" className="w-full">{t('common.viewAll')}</Button>
+                    <Button variant="outline" size="sm" className="w-full">{"Voir tout"}</Button>
                   </Link>
                 )}
               </div>
             ) : (
               <div className="text-center py-8">
                 <ClipboardList className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">{t('dashboard.myRequests.empty')}</p>
+                <p className="text-sm text-muted-foreground">{"Aucune demande récente"}</p>
                 <Link href="/purchase-requests/new">
-                  <Button size="sm" className="mt-3">{t('dashboard.myRequests.create')}</Button>
+                  <Button size="sm" className="mt-3">{"Créer une demande"}</Button>
                 </Link>
               </div>
             )}
@@ -254,35 +253,35 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{t('dashboard.pendingApprovals.title')}</CardTitle>
-            <CardDescription>{t('dashboard.pendingApprovals.desc')}</CardDescription>
+            <CardTitle>{"Approbations en attente"}</CardTitle>
+            <CardDescription>{"Demandes en attente de votre approbation"}</CardDescription>
           </CardHeader>
           <CardContent>
             {loadingApprovals ? (
-              <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+              <p className="text-sm text-muted-foreground">{"Chargement..."}</p>
             ) : pendingApprovals && pendingApprovals.length > 0 ? (
               <div className="space-y-3">
                 {pendingApprovals.slice(0, 5).map((approval) => (
                   <div key={approval.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{(approval as any).request?.title || `Demande #${approval.requestId}`}</p>
-                      <p className="text-xs text-muted-foreground">{t('approvals.step')} {approval.stepOrder}</p>
+                      <p className="text-xs text-muted-foreground">{"Étape"} {approval.stepOrder}</p>
                     </div>
                     <Link href={`/approvals/${approval.id}`}>
-                      <Button size="sm" variant="outline">{t('common.review')}</Button>
+                      <Button size="sm" variant="outline">{"Examiner"}</Button>
                     </Link>
                   </div>
                 ))}
                 {pendingApprovals.length > 5 && (
                   <Link href="/approvals">
-                    <Button variant="outline" size="sm" className="w-full">{t('common.viewAll')}</Button>
+                    <Button variant="outline" size="sm" className="w-full">{"Voir tout"}</Button>
                   </Link>
                 )}
               </div>
             ) : (
               <div className="text-center py-8">
                 <CheckCircle className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">{t('dashboard.pendingApprovals.empty')}</p>
+                <p className="text-sm text-muted-foreground">{"Aucune approbation en attente"}</p>
               </div>
             )}
           </CardContent>
