@@ -327,13 +327,25 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <div className="border-t pt-4">
               <Label className="text-sm font-medium">Couleur principale</Label>
-              <div className="flex items-center gap-4 mt-2">
-                <div className="h-10 w-10 rounded-lg border" style={{ backgroundColor: form.primaryColor }} />
-                <div className="space-y-1 flex-1 max-w-xs">
-                  <Input type="color" value={form.primaryColor} onChange={e => setForm(f => ({...f, primaryColor: e.target.value}))} disabled={!isAdmin} className="h-10 cursor-pointer" />
-                </div>
-                <p className="text-sm text-muted-foreground">{form.primaryColor}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 mb-3">Appliquée sur les boutons et éléments actifs de l'interface</p>
+              <div className="grid grid-cols-6 gap-2">
+                {COLOR_PRESETS.map(preset => (
+                  <button key={preset.id} type="button" disabled={!isAdmin}
+                    onClick={() => setForm(f => ({...f, primaryColor: `hsl(${preset.primary})`}))}
+                    className="flex flex-col items-center gap-1.5 group disabled:opacity-50 disabled:cursor-not-allowed">
+                    <div className={`h-9 w-9 rounded-full transition-all ${form.primaryColor === `hsl(${preset.primary})` ? "ring-2 ring-offset-2 ring-gray-400 scale-110" : "hover:scale-105"}`}
+                      style={{ backgroundColor: `hsl(${preset.primary})` }}>
+                      {form.primaryColor === `hsl(${preset.primary})` && (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground">{preset.label}</span>
+                  </button>
+                ))}
               </div>
+              <p className="text-xs text-muted-foreground mt-3">Couleur actuelle: <strong>{COLOR_PRESETS.find(p => `hsl(${p.primary})` === form.primaryColor)?.label || form.primaryColor}</strong></p>
             </div>
           </CardContent>
         </Card>
