@@ -727,7 +727,10 @@ function PolicyStepsPanel({ policyId, isAdmin, users }: { policyId: number; isAd
             )}
             <div className="flex items-center justify-between">
               <div><Label>Approbation parallèle</Label><p className="text-xs text-muted-foreground">S'exécute en même temps que l'étape précédente</p></div>
-              <Switch checked={stepForm.isParallel} onCheckedChange={v => setStepForm(f => ({...f, isParallel: v}))} />
+              <button type="button" onClick={() => setStepForm(f => ({...f, isParallel: !f.isParallel}))}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer ${stepForm.isParallel ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${stepForm.isParallel ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </div>
           </div>
           <DialogFooter>
@@ -1256,7 +1259,10 @@ function NotificationsSection({ isAdmin }: { isAdmin: boolean }) {
             ].map(({ key, label, desc }) => (
               <div key={key} className="flex items-center justify-between">
                 <div><p className="font-medium text-sm">{label}</p><p className="text-xs text-muted-foreground">{desc}</p></div>
-                <Switch checked={cfg[key]} onCheckedChange={v => setCfg(c => ({...c, [key]: v}))} disabled={!isAdmin} />
+                <button type="button" onClick={() => isAdmin && setCfg(c => ({...c, [key]: !c[key]}))}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${cfg[key] ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg[key] ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
               </div>
             ))}
           </CardContent>
@@ -1269,11 +1275,10 @@ function NotificationsSection({ isAdmin }: { isAdmin: boolean }) {
               {Object.entries(EVENT_LABELS).filter(([, v]) => v.category === cat).map(([key, { label }]) => (
                 <div key={key} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                   <p className="text-sm">{label}</p>
-                  <Switch
-                    checked={cfg.events[key as keyof typeof defaultEvents]}
-                    onCheckedChange={v => setCfg(c => ({...c, events: {...c.events, [key]: v}}))}
-                    disabled={!isAdmin}
-                  />
+                  <button type="button" onClick={() => isAdmin && setCfg(c => ({...c, events: {...c.events, [key]: !c.events[key as keyof typeof defaultEvents]}}))}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${!isAdmin ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${cfg.events[key as keyof typeof defaultEvents] ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.events[key as keyof typeof defaultEvents] ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
                 </div>
               ))}
             </CardContent>
@@ -1948,7 +1953,10 @@ function CustomFieldsSection({ isAdmin }: { isAdmin: boolean }) {
               )}
               <div className="flex items-center justify-between">
                 <Label>Champ obligatoire</Label>
-                <Switch checked={newField.required} onCheckedChange={v => setNewField(f => ({...f, required: v}))} />
+                <button type="button" onClick={() => setNewField(f => ({...f, required: !f.required}))}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors cursor-pointer ${newField.required ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${newField.required ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
               </div>
             </div>
             <DialogFooter>
