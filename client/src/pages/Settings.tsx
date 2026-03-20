@@ -163,9 +163,9 @@ function SaveBar({ onSave, pending, onReset }: { onSave: () => void; pending: bo
   return (
     <div className="flex justify-end gap-3 pt-6 border-t mt-6">
       {onReset && <Button variant="outline" onClick={onReset} disabled={pending}><RotateCcw className="mr-2 h-4 w-4" />Réinitialiser</Button>}
-      <Button onClick={onSave} disabled={pending}>
+      <button onClick={onSave} disabled={pending} style={{backgroundColor:"#2563eb",color:"white"}} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50">
         {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enregistrement...</> : <><Save className="mr-2 h-4 w-4" />Enregistrer</>}
-      </Button>
+      </button>
     </div>
   );
 }
@@ -474,7 +474,7 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
               <p className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded p-3">L'utilisateur devra changer son mot de passe via Paramètres → Mon Profil.</p>
               <p className="text-xs text-muted-foreground">Lien: <strong>{window.location.origin}/login</strong></p>
             </div>
-            <DialogFooter><Button onClick={() => setTempPwd(d=>({...d,open:false}))}>Fermer</Button></DialogFooter>
+            <DialogFooter><button onClick={() => setTempPwd(d=>({...d,open:false}))} style={{backgroundColor:"#2563eb",color:"white"}} className="px-4 py-2 rounded-lg text-sm font-medium">Fermer</button></DialogFooter>
           </DialogContent>
         </Dialog>
 
@@ -522,9 +522,9 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditUser(null)}>Annuler</Button>
-              <Button disabled={updateMut.isPending} onClick={() => updateMut.mutate({ userId:editUser.id, role:editForm.role as any, departmentId:editForm.departmentId?parseInt(editForm.departmentId):undefined, approvalLimit:editForm.approvalLimit||undefined, status:editForm.status as any })}>
+              <button disabled={updateMut.isPending} onClick={() => updateMut.mutate({ userId:editUser.id, role:editForm.role as any, departmentId:editForm.departmentId?parseInt(editForm.departmentId):undefined, approvalLimit:editForm.approvalLimit||undefined, status:editForm.status as any })} style={{backgroundColor:"#2563eb",color:"white"}} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50">
                 {updateMut.isPending ? "Enregistrement..." : "Enregistrer"}
-              </Button>
+              </button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -556,7 +556,7 @@ function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
       <div className="p-6 max-w-3xl">
         {isAdmin && (
           <div className="flex justify-end mb-4">
-            <Button onClick={() => setNewOpen(true)}><Plus className="mr-2 h-4 w-4" />Nouveau département</Button>
+            <button onClick={() => setNewOpen(true)} style={{backgroundColor:"#2563eb",color:"white"}} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"><Plus className="h-4 w-4" />Nouveau département</button>
           </div>
         )}
         <Card>
@@ -624,12 +624,12 @@ function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => { setNewOpen(false); setEditDept(null); }}>Annuler</Button>
-              <Button disabled={!code || !name || createMut.isPending || updateMut.isPending}
+              <button disabled={!code || !name || createMut.isPending || updateMut.isPending} style={{backgroundColor:"#2563eb",color:"white"}} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                 onClick={() => editDept
                   ? updateMut.mutate({ id: editDept.id, code, name, managerId: managerId ? parseInt(managerId) : undefined })
                   : createMut.mutate({ code, name, managerId: managerId ? parseInt(managerId) : undefined })}>
                 {(createMut.isPending || updateMut.isPending) ? "Enregistrement..." : "Enregistrer"}
-              </Button>
+              </button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -732,7 +732,7 @@ function PolicyStepsPanel({ policyId, isAdmin, users }: { policyId: number; isAd
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
-            <Button disabled={addMut.isPending || (stepForm.approverType !== "manager" && !stepForm.approverId)}
+            <button disabled={addMut.isPending || (stepForm.approverType !== "manager" && !stepForm.approverId)} style={{backgroundColor:"#2563eb",color:"white"}} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
               onClick={() => addMut.mutate({
                 policyId,
                 stepOrder: stepForm.stepOrder,
@@ -742,7 +742,7 @@ function PolicyStepsPanel({ policyId, isAdmin, users }: { policyId: number; isAd
                 isParallel: stepForm.isParallel,
               })}>
               {addMut.isPending ? "Ajout..." : "Ajouter"}
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -780,7 +780,7 @@ function ApprovalsSection({ isAdmin }: { isAdmin: boolean }) {
 
         {isAdmin && (
           <div className="flex justify-end mt-4 mb-4">
-            <Button onClick={() => setNewOpen(true)}><Plus className="mr-2 h-4 w-4" />Nouvelle politique</Button>
+            <button onClick={() => setNewOpen(true)} style={{backgroundColor:"#2563eb",color:"white"}} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"><Plus className="h-4 w-4" />Nouvelle politique</button>
           </div>
         )}
 
@@ -790,7 +790,7 @@ function ApprovalsSection({ isAdmin }: { isAdmin: boolean }) {
               <Card><CardContent className="p-8 text-center">
                 <Shield className="mx-auto h-10 w-10 text-muted-foreground/30 mb-3" />
                 <p className="text-muted-foreground">Aucune politique — toutes les demandes sont auto-approuvées</p>
-                {isAdmin && <Button className="mt-4" onClick={() => setNewOpen(true)}><Plus className="mr-2 h-4 w-4" />Créer la première politique</Button>}
+                {isAdmin && <button onClick={() => setNewOpen(true)} style={{backgroundColor:"#2563eb",color:"white"}} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium mt-4"><Plus className="h-4 w-4" />Créer la première politique</button>}
               </CardContent></Card>
             ) : policies.map((p: any, i: number) => (
               <Card key={p.id} className={cn("transition-shadow", expanded === p.id ? "border-primary shadow-sm" : "hover:shadow-sm")}>
@@ -840,10 +840,10 @@ function ApprovalsSection({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setNewOpen(false)}>Annuler</Button>
-              <Button disabled={!pName || createMut.isPending}
+              <button disabled={!pName || createMut.isPending} style={{backgroundColor:"#2563eb",color:"white"}} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                 onClick={() => createMut.mutate({ name: pName, conditions: { minAmount: minAmt ? parseFloat(minAmt) : undefined, maxAmount: maxAmt ? parseFloat(maxAmt) : undefined }, requiresAllApprovals: true })}>
                 {createMut.isPending ? "Création..." : "Créer la politique"}
-              </Button>
+              </button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1200,9 +1200,9 @@ function ProfileSection() {
               <Label>Confirmer le nouveau mot de passe</Label>
               <Input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} placeholder="••••••••" />
             </div>
-            <Button onClick={handlePasswordChange} disabled={pwdLoading || !currentPwd || !newPwd || !confirmPwd}>
+            <button onClick={handlePasswordChange} disabled={pwdLoading || !currentPwd || !newPwd || !confirmPwd} style={{backgroundColor:"#2563eb",color:"white"}} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50">
               {pwdLoading ? "Modification..." : "Changer le mot de passe"}
-            </Button>
+            </button>
           </CardContent>
         </Card>
       </div>
@@ -1515,7 +1515,7 @@ function LookupsSection({ isAdmin }: { isAdmin: boolean }) {
                 <CardHeader className="flex flex-row items-center justify-between pb-3">
                   <CardTitle className="text-base">{TYPE_LABELS[types.find((t: any) => t.id === selectedTypeId)?.name] || "Valeurs"}</CardTitle>
                   {isAdmin && (
-                    <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Ajouter</Button>
+                    <button onClick={() => setAddOpen(true)} style={{backgroundColor:"#2563eb",color:"white"}} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium"><Plus className="h-3.5 w-3.5" />Ajouter</button>
                   )}
                 </CardHeader>
                 <CardContent className="p-0">
@@ -1572,10 +1572,10 @@ function LookupsSection({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
-              <Button disabled={!newValue.code || !newValue.label || createMut.isPending}
+              <button disabled={!newValue.code || !newValue.label || createMut.isPending} style={{backgroundColor:"#2563eb",color:"white"}} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                 onClick={() => createMut.mutate({ lookupTypeId: selectedTypeId!, ...newValue })}>
                 {createMut.isPending ? "Ajout..." : "Ajouter"}
-              </Button>
+              </button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1624,7 +1624,7 @@ function PaymentTermsSection({ isAdmin }: { isAdmin: boolean }) {
       <div className="p-6 max-w-3xl">
         {isAdmin && (
           <div className="flex justify-end mb-4">
-            <Button onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Ajouter</Button>
+            <button onClick={() => setAddOpen(true)} style={{backgroundColor:"#2563eb",color:"white"}} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"><Plus className="h-4 w-4" />Ajouter</button>
           </div>
         )}
         <Card>
@@ -1679,11 +1679,11 @@ function PaymentTermsSection({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
-              <Button disabled={!newTerm.code || !newTerm.label || mut.isPending}
+              <button disabled={!newTerm.code || !newTerm.label || mut.isPending} style={{backgroundColor:"#2563eb",color:"white"}} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                 onClick={() => {
                   const updated = [...terms, { code: newTerm.code, label: newTerm.label, days: newTerm.days, ...(newTerm.discountPercent ? { discountPercent: parseFloat(newTerm.discountPercent), discountDays: parseInt(newTerm.discountDays) || 0 } : {}) }];
                   setTerms(updated); save(updated); setAddOpen(false);
-                }}>Ajouter</Button>
+                }}>Ajouter</button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1722,7 +1722,7 @@ function TaxRatesSection({ isAdmin }: { isAdmin: boolean }) {
       <SectionHeader icon={DollarSign} title="Taux de taxes" desc="TVA, retenues à la source et autres taxes applicables sur les achats" />
       <div className="p-6 max-w-3xl">
         <InfoBox>Bénin: TVA 18% (standard). Côte d'Ivoire: TVA 18%. Ces taux sont appliqués automatiquement lors de la création de factures selon la configuration du fournisseur.</InfoBox>
-        {isAdmin && <div className="flex justify-end mt-4 mb-4"><Button onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Ajouter un taux</Button></div>}
+        {isAdmin && <div className="flex justify-end mt-4 mb-4"><button onClick={() => setAddOpen(true)} style={{backgroundColor:"#2563eb",color:"white"}} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"><Plus className="h-4 w-4" />Ajouter un taux</button></div>}
         <Card>
           <CardContent className="p-0">
             <Table>
@@ -1771,8 +1771,8 @@ function TaxRatesSection({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
-              <Button disabled={!newRate.code || !newRate.label || mut.isPending}
-                onClick={() => { const u = [...rates, {...newRate}]; setRates(u); save(u); setAddOpen(false); }}>Ajouter</Button>
+              <button disabled={!newRate.code || !newRate.label || mut.isPending} style={{backgroundColor:"#2563eb",color:"white"}} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                onClick={() => { const u = [...rates, {...newRate}]; setRates(u); save(u); setAddOpen(false); }}>Ajouter</button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1822,9 +1822,9 @@ function ExchangeRatesSection({ isAdmin }: { isAdmin: boolean }) {
         </Card>
         {isAdmin && (
           <div className="mt-6 flex justify-end">
-            <Button disabled={mut.isPending} onClick={() => mut.mutate({ settings: { exchangeRates: Object.fromEntries(Object.entries(rates).map(([k, v]) => [k, parseFloat(v) || 0])) } } as any)}>
+            <button disabled={mut.isPending} onClick={() => mut.mutate({ settings: { exchangeRates: Object.fromEntries(Object.entries(rates).map(([k, v]) => [k, parseFloat(v) || 0])) } } as any)}>
               {mut.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enregistrement...</> : <><Save className="mr-2 h-4 w-4" />Enregistrer</>}
-            </Button>
+            </button>
           </div>
         )}
       </div>
@@ -1874,7 +1874,7 @@ function CustomFieldsSection({ isAdmin }: { isAdmin: boolean }) {
               </button>
             ))}
           </div>
-          {isAdmin && <Button onClick={() => setAddOpen(true)}><Plus className="mr-2 h-4 w-4" />Nouveau champ</Button>}
+          {isAdmin && <button onClick={() => setAddOpen(true)} style={{backgroundColor:"#2563eb",color:"white"}} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"><Plus className="h-4 w-4" />Nouveau champ</button>}
         </div>
 
         <Card>
@@ -1953,18 +1953,18 @@ function CustomFieldsSection({ isAdmin }: { isAdmin: boolean }) {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setAddOpen(false)}>Annuler</Button>
-              <Button disabled={!newField.label || mut.isPending}
+              <button disabled={!newField.label || mut.isPending} style={{backgroundColor:"#2563eb",color:"white"}} className="px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                 onClick={() => {
                   const id = `cf_${Date.now()}`;
                   const options = newField.type === "select" ? newField.options.split('\n').map(s => s.trim()).filter(Boolean) : undefined;
                   const u = [...fields, { id, label: newField.label, entity: newField.entity, type: newField.type, required: newField.required, options, isActive: true }];
                   setFields(u); save(u); setAddOpen(false);
                   setNewField({ label: "", entity: "purchaseRequest", type: "text", required: false, options: "" });
-                }}>Créer</Button>
+                }}>Créer</button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
     </div>
   );
-}
+}eact, { useState, useEffect } from "react";
