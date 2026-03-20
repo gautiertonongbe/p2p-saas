@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Save, X } from "lucide-react";
+import { Loader2, Camera, Save, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface AvatarUploadProps {
@@ -17,7 +16,6 @@ function getInitials(name?: string | null) {
   return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
 }
 
-// Compress image to max 200KB base64
 async function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -25,125 +23,140 @@ async function compressImage(file: File): Promise<string> {
     img.onload = () => {
       URL.revokeObjectURL(url);
       const canvas = document.createElement("canvas");
-      const maxSize = 256;
+      const maxSize = 300;
       let { width, height } = img;
       if (width > height) {
-        if (width > maxSize) { height = (height * maxSize) / width; width = maxSize; }
+        if (width > maxSize) { height = Math.round((height * maxSize) / width); width = maxSize; }
       } else {
-        if (height > maxSize) { width = (width * maxSize) / height; height = maxSize; }
+        if (height > maxSize) { width = Math.round((width * maxSize) / height); height = maxSize; }
       }
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL("image/jpeg", 0.8));
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
     };
-    img.onerror = reject;
+    img.onerror = () => reject(new Error("Failed to load image"));
     img.src = url;
   });
 }
 
 export function AvatarUpload({ currentUrl, name, size = "md", onUploaded }: AvatarUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [pendingBase64, setPendingBase64] = useState<string | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = trpc.settings.uploadAvatar.useMutation();
 
   const sizeMap = { sm: "h-10 w-10", md: "h-16 w-16", lg: "h-24 w-24" };
-  const iconSize = { sm: "h-3 w-3", md: "h-4 w-4", lg: "h-5 w-5" };
+  const iconMap = { sm: "h-3 w-3", md: "h-4 w-4", lg: "h-5 w-5" };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image trop grande. Maximum 5 Mo.");
-      return;
-    }
-
-    setUploading(true);
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image trop grande (max 5 Mo)"); return; }
+    setLoading(true);
     try {
       const compressed = await compressImage(file);
       setPreview(compressed);
-      setPendingBase64(compressed);
+      setPending(compressed);
     } catch {
       toast.error("Impossible de lire l'image");
     } finally {
-      setUploading(false);
+      setLoading(false);
     }
   };
 
   const handleSave = async () => {
-    if (!pendingBase64) return;
-    setUploading(true);
+    if (!pending) return;
+    setLoading(true);
     try {
-      await uploadMutation.mutateAsync({ base64: pendingBase64 });
+      await uploadMutation.mutateAsync({ base64: pending });
       toast.success("Photo de profil mise à jour !");
-      onUploaded?.(pendingBase64);
-      setPendingBase64(null);
+      setPending(null);
+      onUploaded?.(pending);
     } catch (e: any) {
-      toast.error("Erreur: " + (e?.message || "Échec du téléchargement"));
+      toast.error("Erreur lors de la sauvegarde: " + (e?.message || "inconnu"));
     } finally {
-      setUploading(false);
+      setLoading(false);
     }
   };
 
   const handleCancel = () => {
     setPreview(null);
-    setPendingBase64(null);
+    setPending(null);
     if (inputRef.current) inputRef.current.value = "";
   };
 
   const displayUrl = preview || currentUrl;
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="relative inline-block group">
-        <Avatar className={sizeMap[size]}>
-          <AvatarImage src={displayUrl || undefined} alt={name || "Avatar"} />
-          <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
-            {getInitials(name)}
-          </AvatarFallback>
-        </Avatar>
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-          className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-          title="Changer la photo"
-        >
-          {uploading
-            ? <Loader2 className={`${iconSize[size]} text-white animate-spin`} />
-            : <Camera className={`${iconSize[size]} text-white`} />
-          }
-        </button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={handleFileChange}
-        />
+    <div className="flex flex-col items-start gap-4">
+      {/* Avatar + hover overlay */}
+      <div className="flex items-center gap-4">
+        <div className="relative inline-block group">
+          <Avatar className={sizeMap[size]}>
+            <AvatarImage src={displayUrl || undefined} alt={name || "Avatar"} />
+            <AvatarFallback className="text-sm font-semibold" style={{ backgroundColor: "#e0e7ff", color: "#4338ca" }}>
+              {getInitials(name)}
+            </AvatarFallback>
+          </Avatar>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={loading}
+            className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+            title="Changer la photo"
+          >
+            {loading
+              ? <Loader2 className={`${iconMap[size]} text-white animate-spin`} />
+              : <Camera className={`${iconMap[size]} text-white`} />
+            }
+          </button>
+          <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
+        </div>
+
+        {/* Click hint */}
+        {!pending && (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="text-sm text-blue-600 hover:text-blue-800 underline cursor-pointer"
+          >
+            Changer la photo
+          </button>
+        )}
       </div>
 
-      {/* Save / Cancel buttons when image is selected */}
-      {pendingBase64 && (
-        <div className="flex gap-2">
-          <Button size="sm" onClick={handleSave} disabled={uploading} className="gap-1">
-            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-            Enregistrer
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleCancel} disabled={uploading} className="gap-1">
-            <X className="h-3 w-3" />
+      {/* Save / Cancel — shown below avatar when image selected */}
+      {pending && (
+        <div className="flex gap-2 items-center">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-60"
+            style={{ backgroundColor: "#2563eb" }}
+          >
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            Enregistrer la photo
+          </button>
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+          >
+            <X className="h-3.5 w-3.5" />
             Annuler
-          </Button>
+          </button>
+          <span className="text-xs text-gray-500">Photo prête — cliquez Enregistrer</span>
         </div>
       )}
 
-      {!pendingBase64 && (
-        <p className="text-xs text-muted-foreground text-center">
-          Survolez et cliquez pour changer<br/>JPG, PNG, WebP · max 5 Mo
-        </p>
+      {!pending && (
+        <p className="text-xs text-gray-500">JPG, PNG, WebP · max 5 Mo</p>
       )}
     </div>
   );

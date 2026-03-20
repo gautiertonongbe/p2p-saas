@@ -324,9 +324,11 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
           <p className="text-sm text-muted-foreground mt-0.5">Gérer les accès, rôles et limites d'approbation</p>
         </div>
         {isAdmin && (
-          <Button onClick={() => setInviteOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />Inviter un utilisateur
-          </Button>
+          <button onClick={() => setInviteOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white"
+            style={{backgroundColor: "#2563eb"}}>
+            <Plus className="h-4 w-4" />Inviter un utilisateur
+          </button>
         )}
       </div>
       <div className="p-6 pt-2 max-w-5xl">
@@ -443,11 +445,12 @@ function UsersSection({ isAdmin }: { isAdmin: boolean }) {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setInviteOpen(false)}>Annuler</Button>
-              <Button onClick={() => inviteMut.mutate({ name:inviteForm.name, email:inviteForm.email, role:inviteForm.role as any, departmentId:inviteForm.departmentId?Number(inviteForm.departmentId):undefined, approvalLimit:inviteForm.approvalLimit||undefined })}
-                disabled={inviteMut.isPending||!inviteForm.name||!inviteForm.email}>
+              <button onClick={() => setInviteOpen(false)} className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">Annuler</button>
+              <button onClick={() => inviteMut.mutate({ name:inviteForm.name, email:inviteForm.email, role:inviteForm.role as any, departmentId:inviteForm.departmentId?Number(inviteForm.departmentId):undefined, approvalLimit:inviteForm.approvalLimit||undefined })}
+                disabled={inviteMut.isPending||!inviteForm.name||!inviteForm.email}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50" style={{backgroundColor:"#2563eb"}}>
                 {inviteMut.isPending ? "Création..." : "Créer et inviter"}
-              </Button>
+              </button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -891,14 +894,14 @@ function WorkflowSection({ isAdmin }: { isAdmin: boolean }) {
             </Row>
             <Row label="Escalade automatique" desc="Notifier les managers si le délai est dépassé">
               <button type="button" disabled={!isAdmin}
-                onClick={() => v => setCfg(c => ({...c, escalationEnabled: v}))(!cfg.escalationEnabled)}
+                onClick={() => setCfg(c => ({...c, escalationEnabled: !c.escalationEnabled}))}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.escalationEnabled ? 'bg-blue-600' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.escalationEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </Row>
             <Row label="Séparation des tâches" desc="Bloquer l'auto-approbation d'une demande par son créateur">
               <button type="button" disabled={!isAdmin}
-                onClick={() => v => setCfg(c => ({...c, segregationOfDuties: v}))(!cfg.segregationOfDuties)}
+                onClick={() => setCfg(c => ({...c, segregationOfDuties: !c.segregationOfDuties}))}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.segregationOfDuties ? 'bg-blue-600' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.segregationOfDuties ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
@@ -911,14 +914,14 @@ function WorkflowSection({ isAdmin }: { isAdmin: boolean }) {
           <CardContent className="divide-y">
             <Row label="Justification obligatoire" desc="Exiger un texte de justification sur toutes les demandes">
               <button type="button" disabled={!isAdmin}
-                onClick={() => v => setCfg(c => ({...c, requireJustification: v}))(!cfg.requireJustification)}
+                onClick={() => setCfg(c => ({...c, requireJustification: !c.requireJustification}))}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.requireJustification ? 'bg-blue-600' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.requireJustification ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </Row>
             <Row label="Émettre le BC automatiquement" desc="Créer et émettre le bon de commande dès approbation complète">
               <button type="button" disabled={!isAdmin}
-                onClick={() => v => setCfg(c => ({...c, poAutoIssue: v}))(!cfg.poAutoIssue)}
+                onClick={() => setCfg(c => ({...c, poAutoIssue: !c.poAutoIssue}))}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.poAutoIssue ? 'bg-blue-600' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.poAutoIssue ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
@@ -977,28 +980,28 @@ function BudgetsSection({ isAdmin }: { isAdmin: boolean }) {
           <CardContent className="divide-y">
             <Row label="Vérification budgétaire obligatoire" desc="Bloquer les demandes qui dépassent le budget disponible">
               <button type="button" disabled={!isAdmin}
-                onClick={() => v => setCfg(c => ({...c, enforceBudgetCheck: v}))(!cfg.enforceBudgetCheck)}
+                onClick={() => setCfg(c => ({...c, enforceBudgetCheck: !c.enforceBudgetCheck}))}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.enforceBudgetCheck ? 'bg-blue-600' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.enforceBudgetCheck ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </Row>
             <Row label="Autoriser les dépassements avec justification" desc="Permettre les dépassements si une raison est fournie">
               <button type="button" disabled={!isAdmin}
-                onClick={() => v => setCfg(c => ({...c, allowOverspend: v}))(!cfg.allowOverspend)}
+                onClick={() => setCfg(c => ({...c, allowOverspend: !c.allowOverspend}))}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.allowOverspend ? 'bg-blue-600' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.allowOverspend ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </Row>
             <Row label="Code budget obligatoire" desc="Exiger un centre de coût sur chaque demande d'achat">
               <button type="button" disabled={!isAdmin}
-                onClick={() => v => setCfg(c => ({...c, requireBudgetCode: v}))(!cfg.requireBudgetCode)}
+                onClick={() => setCfg(c => ({...c, requireBudgetCode: !c.requireBudgetCode}))}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.requireBudgetCode ? 'bg-blue-600' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.requireBudgetCode ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </Row>
             <Row label="Reporter le solde non consommé" desc="Transférer automatiquement les budgets non utilisés à la période suivante">
               <button type="button" disabled={!isAdmin}
-                onClick={() => v => setCfg(c => ({...c, carryForwardUnspent: v}))(!cfg.carryForwardUnspent)}
+                onClick={() => setCfg(c => ({...c, carryForwardUnspent: !c.carryForwardUnspent}))}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${cfg.carryForwardUnspent ? 'bg-blue-600' : 'bg-gray-200'}`}>
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform ${cfg.carryForwardUnspent ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
