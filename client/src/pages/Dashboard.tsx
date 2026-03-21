@@ -227,10 +227,10 @@ export default function Dashboard() {
       </div>
 
       {/* Main content row */}
-      <div className="grid gap-3 lg:grid-cols-3 items-start">
+      <div className="grid gap-3 lg:grid-cols-3 items-stretch">
         {/* Recent requests */}
-        <div className="lg:col-span-2 flex flex-col">
-          <Card className="flex-1">
+        <div className="lg:col-span-2">
+          <Card className="h-full">
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-blue-700">
                 <div className="h-6 w-6 rounded-md bg-blue-100 flex items-center justify-center">
@@ -245,6 +245,7 @@ export default function Dashboard() {
               </Link>
             </CardHeader>
             <CardContent>
+              <div className="min-h-[280px]">
               {(myRequests as any[]).length === 0 ? (
                 <div className="text-center py-10">
                   <div className="h-14 w-14 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
@@ -281,14 +282,15 @@ export default function Dashboard() {
                   ))}
                 </div>
               )}
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Right column */}
-        <div className="space-y-3 flex flex-col">
+        <div className="flex flex-col gap-3">
           {/* Quick actions */}
-          <Card>
+          <Card className="flex-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-purple-700">
                 <div className="h-6 w-6 rounded-md bg-purple-100 flex items-center justify-center">

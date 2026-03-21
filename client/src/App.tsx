@@ -77,6 +77,7 @@ function Router() {
       <Route path="/analytics"><DashboardLayout><Analytics /></DashboardLayout></Route>
       <Route path="/reports"><DashboardLayout><ReportBuilder /></DashboardLayout></Route>
       <Route path="/settings"><DashboardLayout><Settings /></DashboardLayout></Route>
+      <Route path="/help"><DashboardLayout><HelpCenter /></DashboardLayout></Route>
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
