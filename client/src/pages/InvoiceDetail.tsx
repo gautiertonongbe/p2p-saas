@@ -123,11 +123,11 @@ function ThreeWayMatchPanel({
       )}
     </Card>
 
-      {/* Approval chain - Coupa style */}
       {approvals && approvals.length > 0 && (
         <ApprovalChainVisualization approvals={approvals} />
       )}
 
+    </div>
   );
 }
 
