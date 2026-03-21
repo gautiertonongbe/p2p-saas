@@ -389,10 +389,15 @@ export async function createAuditLog(data: {
   ipAddress?: string;
   userAgent?: string;
 }) {
+  if (!data.entityId || isNaN(data.entityId)) return; // Guard against NaN
   const db = await getDb();
   if (!db) return;
   
-  await db.insert(auditLogs).values(data);
+  try {
+    await db.insert(auditLogs).values(data);
+  } catch (e) {
+    console.error("createAuditLog error:", e);
+  }
 }
 
 export async function getAuditLogs(organizationId: number, entityType?: string, entityId?: number) {

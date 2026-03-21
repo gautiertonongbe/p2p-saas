@@ -112,9 +112,9 @@ export const viewsRouter = router({
         isDefault: input.isDefault,
       });
 
-      const newId = Number((r as any).insertId);
+      const newId = Number((r as any).insertId) || 0;
 
-      await createAuditLog({
+      if (newId > 0) await createAuditLog({
         organizationId: ctx.user.organizationId,
         entityType: "savedView",
         entityId: newId,
