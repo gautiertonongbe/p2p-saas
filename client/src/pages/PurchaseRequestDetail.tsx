@@ -1,4 +1,4 @@
-import { trpc } from "@/lib/trpc";
+import { Edit, Send, trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useParams } from "wouter";
@@ -379,79 +379,91 @@ export default function PurchaseRequestDetail() {
           <EntityHistory entries={history || []} isLoading={historyLoading} />
         </div>
       </div>
+      {/* ── Action Bar — visible to all based on status + role ── */}
+      {(() => {
+        const isAdmin = user?.role === 'admin' || user?.role === 'procurement_manager';
+        const isDraft = request.status === 'draft';
+        const isPending = request.status === 'pending_approval';
+        const isApproved = request.status === 'approved';
+        const canActOnDoc = isAdmin || request.requesterId === user?.id;
 
-      {request.status === 'approved' && (user?.role === 'admin' || user?.role === 'procurement_manager') && (
-        <Card className="border-emerald-200 bg-emerald-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <ShoppingCart className="h-5 w-5 text-emerald-600" />
+        return (
+          <Card className="sticky bottom-4 shadow-md border-2">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                {/* Left: context label */}
+                <div className="text-sm text-muted-foreground">
+                  {isDraft && "Brouillon — choisissez une action"}
+                  {isPending && "En attente d'approbation"}
+                  {isApproved && "Approuvée — prête pour commande"}
+                  {request.status === 'rejected' && "Demande refusée"}
+                  {request.status === 'cancelled' && "Demande annulée"}
+                  {request.status === 'converted_to_po' && "Convertie en bon de commande"}
                 </div>
-                <div>
-                  <p className="font-semibold text-emerald-900">Demande approuvée — prête pour commande</p>
-                  <p className="text-sm text-emerald-700">Créez un bon de commande pré-rempli depuis cette demande</p>
+
+                {/* Right: actions */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Edit — always on draft */}
+                  {isDraft && canActOnDoc && (
+                    <Button variant="outline" onClick={() => setLocation(`/purchase-requests/${request.id}/edit`)}>
+                      <Edit className="mr-2 h-4 w-4" />{t('common.edit')}
+                    </Button>
+                  )}
+
+                  {/* Submit for approval */}
+                  {isDraft && canActOnDoc && (
+                    <Button variant="outline" onClick={handleSubmit} disabled={submitMutation.isPending}>
+                      <Send className="mr-2 h-4 w-4" />
+                      {submitMutation.isPending ? "Envoi..." : "Soumettre"}
+                    </Button>
+                  )}
+
+                  {/* Admin: approve directly from draft OR pending */}
+                  {isAdmin && (isDraft || isPending) && (
+                    <Button
+                      onClick={() => setBypassDialogOpen(true)}
+                      className="bg-amber-500 hover:bg-amber-600 text-white"
+                    >
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      Approuver directement
+                    </Button>
+                  )}
+
+                  {/* Admin: create PO from draft OR approved */}
+                  {isAdmin && (isDraft || isApproved) && (
+                    <Button
+                      onClick={() => setLocation(`/purchase-orders/new?requestId=${request.id}`)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Créer un bon de commande
+                    </Button>
+                  )}
+
+                  {/* Approver: approve/reject on pending */}
+                  {userPendingApproval && isPending && (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => setRejectDialogOpen(true)}
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />Rejeter
+                      </Button>
+                      <Button
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => setApproveDialogOpen(true)}
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />Approuver
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
-              <Button
-                onClick={() => setLocation(`/purchase-orders/new?requestId=${request.id}`)}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                Créer un bon de commande
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Actions */}
-      {request.status === 'draft' && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex gap-3 justify-end">
-              <Button 
-                variant="outline"
-                onClick={() => setLocation(`/purchase-requests/${request.id}/edit`)}
-              >
-                {t('common.edit')}
-              </Button>
-              <Button 
-                onClick={handleSubmit}
-                disabled={submitMutation.isPending}
-              >
-                {submitMutation.isPending ? "Soumission en cours..." : t('purchaseRequests.submitForApproval')}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Admin Bypass Approval */}
-      {user?.role === 'admin' && request.status === 'pending_approval' && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <ShieldCheck className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-amber-900">Privilège administrateur</p>
-                  <p className="text-sm text-amber-700">Vous pouvez approuver cette demande directement sans passer par la chaîne d'approbation</p>
-                </div>
-              </div>
-              <Button 
-                onClick={() => setBypassDialogOpen(true)}
-                className="bg-amber-600 hover:bg-amber-700"
-              >
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                Approuver directement
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Approve/Reject Buttons for Approvers */}
       {userPendingApproval && request.status === 'pending_approval' && (
