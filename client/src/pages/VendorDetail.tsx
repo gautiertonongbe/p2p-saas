@@ -11,6 +11,7 @@ import {ArrowLeft, Building2, Phone, Mail, Globe, FileText,
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Clock } from "lucide-react";
 import { EntityHistory } from "@/components/EntityHistory";
 import {
   AlertDialog,

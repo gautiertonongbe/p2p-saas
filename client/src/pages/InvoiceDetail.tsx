@@ -842,7 +842,18 @@ export default function InvoiceDetail() {
       )}
 
       {/* History */}
-      <EntityHistory entries={history || []} isLoading={historyLoading} />
+      <div className="rounded-xl border bg-card">
+        <div className="flex items-center gap-2 px-5 py-4 border-b">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-sm">Historique</h3>
+          {history && history.length > 0 && (
+            <span className="ml-auto text-xs text-muted-foreground">{history.length} action{history.length > 1 ? "s" : ""}</span>
+          )}
+        </div>
+        <div className="px-4 py-3">
+          <EntityHistory entries={history || []} isLoading={historyLoading} />
+        </div>
+      </div>
 
       {["pending", "approved"].includes(invoice.status) && (
         <DisputePanel invoiceId={parseInt(id!)} onSuccess={() => utils.invoices.getById.invalidate()} />

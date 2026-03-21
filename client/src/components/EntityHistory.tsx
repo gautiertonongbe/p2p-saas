@@ -1,6 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Clock, User, FileText } from "lucide-react";
+import {
+  Clock, User, FileText, CheckCircle, XCircle, Send,
+  Plus, Edit, Package, CreditCard, AlertTriangle, RefreshCw,
+  ArrowRight, ShoppingCart, Banknote,
+} from "lucide-react";
 
 interface HistoryEntry {
   id: number;
@@ -12,163 +14,168 @@ interface HistoryEntry {
   newValue?: any;
 }
 
-interface EntityHistoryProps {
+interface Props {
   entries: HistoryEntry[];
   isLoading?: boolean;
 }
 
-export function EntityHistory({ entries, isLoading }: EntityHistoryProps) {
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleString('fr-FR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+// Action config: icon, color, label, description builder
+const ACTION_CONFIG: Record<string, {
+  icon: any;
+  color: string;
+  bg: string;
+  label: string;
+  desc?: (e: HistoryEntry) => string;
+}> = {
+  created:   { icon: Plus,         color: "#2563eb", bg: "#eff6ff", label: "Créé",                    desc: () => "Document créé" },
+  updated:   { icon: Edit,         color: "#6b7280", bg: "#f9fafb", label: "Modifié",                 desc: (e) => describeChanges(e) },
+  submitted: { icon: Send,         color: "#d97706", bg: "#fffbeb", label: "Soumis",                  desc: () => "Soumis pour approbation" },
+  approved:  { icon: CheckCircle,  color: "#059669", bg: "#f0fdf4", label: "Approuvé",                desc: (e) => e.newValue?.comment ? `"${e.newValue.comment}"` : "Approuvé" },
+  rejected:  { icon: XCircle,      color: "#dc2626", bg: "#fff1f2", label: "Refusé",                  desc: (e) => e.newValue?.comment ? `"${e.newValue.comment}"` : "Refusé" },
+  issued:    { icon: ShoppingCart, color: "#7c3aed", bg: "#f5f3ff", label: "Bon émis",                desc: () => "Bon de commande émis au fournisseur" },
+  received:  { icon: Package,      color: "#0891b2", bg: "#ecfeff", label: "Réceptionné",             desc: (e) => e.newValue?.quantity ? `Qté reçue : ${e.newValue.quantity}` : "Réception confirmée" },
+  paid:      { icon: Banknote,     color: "#059669", bg: "#f0fdf4", label: "Payé",                    desc: (e) => e.newValue?.amount ? `Montant : ${Number(e.newValue.amount).toLocaleString("fr-FR")} XOF` : "Paiement effectué" },
+  cancelled: { icon: XCircle,      color: "#dc2626", bg: "#fff1f2", label: "Annulé",                  desc: (e) => e.newValue?.reason || "Annulé" },
+  disputed:  { icon: AlertTriangle,color: "#d97706", bg: "#fffbeb", label: "Contesté",                desc: (e) => e.newValue?.reason || "Facture contestée" },
+  revised:   { icon: RefreshCw,    color: "#6b7280", bg: "#f9fafb", label: "Révision demandée",       desc: (e) => e.newValue?.comment || "Révision demandée" },
+  matched:   { icon: CheckCircle,  color: "#059669", bg: "#f0fdf4", label: "Rapprochement OK",        desc: () => "Rapprochement 3 voies réussi" },
+  converted: { icon: ArrowRight,   color: "#7c3aed", bg: "#f5f3ff", label: "Converti en BC",          desc: () => "Converti en bon de commande" },
+  closed:    { icon: CheckCircle,  color: "#6b7280", bg: "#f9fafb", label: "Clôturé",                 desc: () => "Document clôturé" },
+};
 
-  const getActionLabel = (action: string): string => {
-    const labels: Record<string, string> = {
-      created: "Créé",
-      updated: "Modifié",
-      submitted: "Soumis pour approbation",
-      approved: "Approuvé",
-      rejected: "Rejeté",
-      issued: "Émis",
-      received: "Reçu",
-      paid: "Payé",
-      cancelled: "Annulé",
-    };
-    return labels[action] || action;
-  };
+const FIELD_LABELS: Record<string, string> = {
+  status: "Statut", title: "Titre", amount: "Montant", totalAmount: "Montant total",
+  vendorId: "Fournisseur", description: "Description", notes: "Notes",
+  dueDate: "Date d'échéance", deliveryDate: "Date livraison",
+  urgency: "Urgence", departmentId: "Département",
+};
 
-  const getActionColor = (action: string): string => {
-    const colors: Record<string, string> = {
-      created: "bg-blue-100 text-blue-800",
-      updated: "bg-gray-100 text-gray-800",
-      submitted: "bg-yellow-100 text-yellow-800",
-      approved: "bg-green-100 text-green-800",
-      rejected: "bg-red-100 text-red-800",
-      issued: "bg-purple-100 text-purple-800",
-      received: "bg-indigo-100 text-indigo-800",
-      paid: "bg-emerald-100 text-emerald-800",
-      cancelled: "bg-orange-100 text-orange-800",
-    };
-    return colors[action] || "bg-gray-100 text-gray-800";
-  };
+function describeChanges(entry: HistoryEntry): string {
+  if (!entry.newValue || typeof entry.newValue !== "object") return "Document modifié";
+  const keys = Object.keys(entry.newValue).filter(k => k !== "updatedAt");
+  if (keys.length === 0) return "Document modifié";
+  const labels = keys.slice(0, 2).map(k => FIELD_LABELS[k] || k);
+  const rest = keys.length > 2 ? ` +${keys.length - 2}` : "";
+  return `Modifié : ${labels.join(", ")}${rest}`;
+}
 
+function timeAgo(date: Date): string {
+  const d = new Date(date);
+  const diff = Date.now() - d.getTime();
+  const m = Math.floor(diff / 60000);
+  const h = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (m < 1) return "À l'instant";
+  if (m < 60) return `il y a ${m} min`;
+  if (h < 24) return `il y a ${h}h`;
+  if (days < 7) return `il y a ${days}j`;
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: days > 365 ? "numeric" : undefined });
+}
+
+function fullDate(date: Date): string {
+  return new Date(date).toLocaleString("fr-FR", {
+    day: "numeric", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function getInitials(name: string | null, id: number): string {
+  if (!name) return `#${id}`;
+  return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+}
+
+export function EntityHistory({ entries, isLoading }: Props) {
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Historique
-          </CardTitle>
-          <CardDescription>Chargement de l'historique...</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="space-y-3">
+        {[1,2,3].map(i => (
+          <div key={i} className="flex gap-3 animate-pulse">
+            <div className="h-8 w-8 rounded-full bg-muted shrink-0" />
+            <div className="flex-1 space-y-2 pt-1">
+              <div className="h-4 bg-muted rounded w-32" />
+              <div className="h-3 bg-muted rounded w-48" />
+            </div>
+          </div>
+        ))}
+      </div>
     );
   }
 
   if (!entries || entries.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Historique
-          </CardTitle>
-          <CardDescription>Historique des actions effectuées sur cet enregistrement</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <FileText className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-            <p>Aucun historique disponible</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center py-10 text-muted-foreground">
+        <Clock className="h-8 w-8 mb-2 opacity-30" />
+        <p className="text-sm">Aucun historique disponible</p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Historique
-        </CardTitle>
-        <CardDescription>
-          Historique des actions effectuées sur cet enregistrement ({entries.length} {entries.length > 1 ? 'entrées' : 'entrée'})
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {entries.map((entry, index) => (
-            <div
-              key={entry.id}
-              className={`flex gap-4 pb-4 ${
-                index !== entries.length - 1 ? 'border-b border-border' : ''
-              }`}
-            >
-              {/* Timeline indicator */}
-              <div className="flex flex-col items-center">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-primary" />
-                </div>
-                {index !== entries.length - 1 && (
-                  <div className="w-0.5 flex-1 bg-border mt-2" />
-                )}
+    <div className="relative">
+      {/* Timeline vertical line */}
+      <div className="absolute left-4 top-4 bottom-4 w-px bg-border" />
+
+      <div className="space-y-1">
+        {entries.map((entry, idx) => {
+          const cfg = ACTION_CONFIG[entry.action] || {
+            icon: Clock, color: "#6b7280", bg: "#f9fafb",
+            label: entry.action, desc: () => entry.action,
+          };
+          const Icon = cfg.icon;
+          const isLast = idx === entries.length - 1;
+
+          return (
+            <div key={entry.id} className="relative flex gap-4 pl-2 py-2 group">
+              {/* Icon bubble */}
+              <div
+                className="relative z-10 h-8 w-8 rounded-full flex items-center justify-center shrink-0 ring-2 ring-background"
+                style={{ backgroundColor: cfg.bg, border: `1.5px solid ${cfg.color}40` }}
+              >
+                <Icon className="h-3.5 w-3.5" style={{ color: cfg.color }} />
               </div>
 
               {/* Content */}
-              <div className="flex-1 pt-1">
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={getActionColor(entry.action)}>
-                      {getActionLabel(entry.action)}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {formatDate(entry.createdAt)}
+              <div className={`flex-1 min-w-0 pb-3 ${!isLast ? "border-b border-border/50" : ""}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Action pill */}
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                      style={{ backgroundColor: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}30` }}
+                    >
+                      {cfg.label}
+                    </span>
+                    {/* Description */}
+                    <span className="text-sm text-foreground">
+                      {cfg.desc ? cfg.desc(entry) : ""}
                     </span>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">
-                    {entry.actorName || `Utilisateur #${entry.actorId}`}
+                  {/* Time */}
+                  <span
+                    className="text-xs text-muted-foreground whitespace-nowrap shrink-0 mt-0.5"
+                    title={fullDate(entry.createdAt)}
+                  >
+                    {timeAgo(entry.createdAt)}
                   </span>
                 </div>
 
-                {/* Show changes if available */}
-                {entry.newValue && typeof entry.newValue === 'object' && (
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    {Object.keys(entry.newValue).length > 0 && (
-                      <div className="bg-muted/50 rounded p-2 mt-1">
-                        <p className="font-medium mb-1">Modifications:</p>
-                        <ul className="list-disc list-inside space-y-0.5">
-                          {Object.entries(entry.newValue).slice(0, 3).map(([key, value]) => (
-                            <li key={key}>
-                              <span className="font-medium">{key}:</span> {String(value)}
-                            </li>
-                          ))}
-                          {Object.keys(entry.newValue).length > 3 && (
-                            <li className="text-xs">
-                              ... et {Object.keys(entry.newValue).length - 3} autres modifications
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
+                {/* Actor */}
+                <div className="flex items-center gap-1.5 mt-1">
+                  <div
+                    className="h-4 w-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                    style={{ backgroundColor: "#94a3b8" }}
+                  >
+                    {getInitials(entry.actorName, entry.actorId).slice(0, 1)}
                   </div>
-                )}
+                  <span className="text-xs text-muted-foreground">
+                    {entry.actorName || `Utilisateur #${entry.actorId}`}
+                  </span>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          );
+        })}
+      </div>
+    </div>
   );
 }
