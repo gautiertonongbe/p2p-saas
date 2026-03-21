@@ -1,9 +1,9 @@
-import { Edit, Send, trpc } from "@/lib/trpc";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, FileText, Calendar, User, DollarSign, ShieldCheck, ShoppingCart } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, User, DollarSign, ShieldCheck, ShoppingCart, Edit, Send} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";

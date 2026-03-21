@@ -11,7 +11,7 @@ import { useState } from "react";
 import { Plus, Trash2, Save, Send, ArrowLeft, Package, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
-type Item = { itemName: string; description: string; quantity: number; unit: string; unitPrice: string };
+type Item = { itemName: string; description: string; quantity: string; unit: string; unitPrice: string };
 
 function fmt(n: number) {
   return new Intl.NumberFormat("fr-FR").format(n);
@@ -36,13 +36,12 @@ export default function PurchaseRequestForm() {
   const [departmentId, setDepartmentId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [costCenterId, setCostCenterId] = useState("");
-  const [projectId, setProjectId] = useState("");
   const [billingStringId, setBillingStringId] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [coding, setCoding] = useState<CodingValues>({});
 
   const [items, setItems] = useState<Item[]>([
-    { itemName: "", description: "", quantity: 1, unit: "pcs", unitPrice: "" }
+    { itemName: "", description: "", quantity: "1", unit: "pcs", unitPrice: "" }
   ]);
 
   const { data: departments = [] } = trpc.settings.listDepartments.useQuery();
@@ -55,10 +54,7 @@ export default function PurchaseRequestForm() {
     { lookupTypeId: (lookupTypes as any[]).find((t: any) => t.name === "cost_center")?.id ?? 0 },
     { enabled: (lookupTypes as any[]).some((t: any) => t.name === "cost_center") }
   ).data ?? [];
-  const projects = trpc.settings.getLookupValues.useQuery(
-    { lookupTypeId: (lookupTypes as any[]).find((t: any) => t.name === "project")?.id ?? 0 },
-    { enabled: (lookupTypes as any[]).some((t: any) => t.name === "project") }
-  ).data ?? [];
+
 
   const createMutation = trpc.purchaseRequests.create.useMutation({
     onSuccess: (data) => { utils.purchaseRequests.list.invalidate(); setLocation("/purchase-requests"); },
@@ -69,12 +65,12 @@ export default function PurchaseRequestForm() {
     onError: (e) => toast.error(e.message),
   });
 
-  const addItem = () => setItems(prev => [...prev, { itemName: "", description: "", quantity: 1, unit: "pcs", unitPrice: "" }]);
+  const addItem = () => setItems(prev => [...prev, { itemName: "", description: "", quantity: "1", unit: "pcs", unitPrice: "" }]);
   const removeItem = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i));
   const updateItem = (i: number, field: keyof Item, val: any) =>
     setItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: val } : item));
 
-  const total = items.reduce((sum, it) => sum + (it.quantity * parseNum(it.unitPrice)), 0);
+  const total = items.reduce((sum, it) => sum + ((parseFloat(String(it.quantity)) || 0) * parseNum(it.unitPrice)), 0);
 
   const buildPayload = () => ({
     title: title.trim(),
@@ -85,7 +81,6 @@ export default function PurchaseRequestForm() {
     departmentId: departmentId ? parseInt(departmentId) : undefined,
     categoryId: categoryId ? parseInt(categoryId) : undefined,
     costCenterId: costCenterId ? parseInt(costCenterId) : undefined,
-    projectId: projectId ? parseInt(projectId) : undefined,
     billingStringId: billingStringId ? parseInt(billingStringId) : undefined,
     glAccountId: coding.glAccountId ? parseInt(coding.glAccountId) : undefined,
     costCenterId: coding.costCenterId ? parseInt(coding.costCenterId) : undefined,
@@ -94,10 +89,10 @@ export default function PurchaseRequestForm() {
     items: items.filter(it => it.itemName.trim()).map(it => ({
       itemName: it.itemName.trim(),
       description: it.description.trim() || undefined,
-      quantity: it.quantity,
+      quantity: parseFloat(String(it.quantity)) || 1,
       unit: it.unit || undefined,
       unitPrice: parseNum(it.unitPrice),
-      totalPrice: it.quantity * parseNum(it.unitPrice),
+      totalPrice: (parseFloat(String(it.quantity)) || 1) * parseNum(it.unitPrice),
     })),
   });
 
@@ -213,16 +208,6 @@ export default function PurchaseRequestForm() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Projet</Label>
-                <Select value={projectId || "none"} onValueChange={v => setProjectId(v === "none" ? "" : v)}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— Aucun —</SelectItem>
-                    {(projects as any[]).filter((p: any) => p.isActive).map((p: any) => <SelectItem key={p.id} value={String(p.id)}>{p.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
                 <Label>Description (optionnel)</Label>
                 <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Description supplémentaire" />
               </div>
@@ -287,8 +272,10 @@ export default function PurchaseRequestForm() {
 
               {/* Quantity */}
               <div className="col-span-4 sm:col-span-2">
-                <Input type="number" min="1" value={item.quantity}
-                  onChange={e => updateItem(i, "quantity", parseInt(e.target.value) || 1)}
+                <Input type="text" inputMode="decimal" value={item.quantity}
+                  onFocus={e => e.target.select()}
+                  onChange={e => updateItem(i, "quantity", e.target.value)}
+                  onBlur={e => { if (!e.target.value.trim() || parseFloat(e.target.value) <= 0) updateItem(i, "quantity", "1"); }}
                   className="h-8 text-sm text-center bg-white/80" />
               </div>
 
@@ -308,7 +295,7 @@ export default function PurchaseRequestForm() {
               {/* Line total */}
               <div className="col-span-11 sm:col-span-1 text-right">
                 <span className="text-sm font-semibold text-blue-700">
-                  {fmt(item.quantity * parseNum(item.unitPrice))}
+                  {fmt((parseFloat(String(item.quantity)) || 0) * parseNum(item.unitPrice))}
                 </span>
               </div>
 
