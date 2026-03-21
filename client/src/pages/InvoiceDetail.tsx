@@ -738,7 +738,7 @@ export default function InvoiceDetail() {
                   )}
                   {invoice.status === 'approved' && isAdmin && (
                     <Button className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => markAsPaidMutation.mutate({ id: invoice.id, paymentDate: new Date().toISOString(), paymentMethod: "bank_transfer" })}
+                      onClick={() => markAsPaidMutation.mutate({ invoiceId: invoice.id, paymentDate: new Date().toISOString().split("T")[0], paymentMethod: "bank_transfer" })}
                       disabled={markAsPaidMutation?.isPending}>
                       <Banknote className="mr-2 h-4 w-4" />Marquer comme payée
                     </Button>
@@ -768,7 +768,7 @@ export default function InvoiceDetail() {
           <Textarea value={approveComment} onChange={(e) => setApproveComment(e.target.value)} placeholder="Commentaire (optionnel)" rows={2} className="mt-2" />
           <div className="flex gap-3 justify-end mt-2">
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => approveMutation.mutate({ id: invoice.id, comment: approveComment })} disabled={approveMutation?.isPending} className="bg-green-600 hover:bg-green-700">Approuver</AlertDialogAction>
+            <AlertDialogAction onClick={() => approveMutation.mutate({ invoiceId: invoice.id, comment: approveComment })} disabled={approveMutation?.isPending} className="bg-green-600 hover:bg-green-700">Approuver</AlertDialogAction>
           </div>
         </AlertDialogContent>
       </AlertDialog>
@@ -780,7 +780,7 @@ export default function InvoiceDetail() {
           <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Motif du rejet *" rows={2} className="mt-2" />
           <div className="flex gap-3 justify-end mt-2">
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => rejectMutation.mutate({ id: invoice.id, reason: rejectReason })} disabled={rejectMutation?.isPending || !rejectReason.trim()} className="bg-red-600 hover:bg-red-700">Rejeter</AlertDialogAction>
+            <AlertDialogAction onClick={() => rejectMutation.mutate({ invoiceId: invoice.id, reason: rejectReason })} disabled={rejectMutation?.isPending || !rejectReason.trim()} className="bg-red-600 hover:bg-red-700">Rejeter</AlertDialogAction>
           </div>
         </AlertDialogContent>
       </AlertDialog>
@@ -792,7 +792,7 @@ export default function InvoiceDetail() {
           <Textarea value={bypassComment} onChange={(e) => setBypassComment(e.target.value)} placeholder="Motif (optionnel)" rows={2} className="mt-2" />
           <div className="flex gap-3 justify-end mt-2">
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => bypassMutation.mutate({ id: invoice.id, comment: bypassComment })} disabled={bypassMutation?.isPending} className="bg-amber-600 hover:bg-amber-700">Approuver directement</AlertDialogAction>
+            <AlertDialogAction onClick={() => bypassMutation.mutate({ invoiceId: invoice.id, comment: bypassComment })} disabled={bypassMutation?.isPending} className="bg-amber-600 hover:bg-amber-700">Approuver directement</AlertDialogAction>
           </div>
         </AlertDialogContent>
       </AlertDialog>
