@@ -699,7 +699,7 @@ export default function InvoiceDetail() {
           canManage={user?.role === 'admin' || user?.role === 'procurement_manager'}
           onMatchComplete={() => utils.invoices.getById.invalidate()}
         />
-      )}}
+      )}
 
       
       {/* ── Invoice Action Bar — sticky, role-aware ── */}
