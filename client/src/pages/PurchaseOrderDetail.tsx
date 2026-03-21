@@ -216,7 +216,7 @@ export default function PurchaseOrderDetail() {
             <p className="text-sm text-muted-foreground">{STATUS_LABEL[p.status] || p.status}</p>
             <div className="flex items-center gap-2 flex-wrap">
               {p.status === "draft" && isAdmin && (
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => issueMutation.mutate({ id: p.id })} disabled={issueMutation.isPending}>
+                <Button className="btn-primary text-white" onClick={() => issueMutation.mutate({ id: p.id })} disabled={issueMutation.isPending}>
                   <Send className="mr-2 h-4 w-4" />Émettre le bon
                 </Button>
               )}
@@ -231,7 +231,7 @@ export default function PurchaseOrderDetail() {
                 </>
               )}
               {p.status === "issued" && isAdmin && (
-                <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setBypassDialogOpen(true)} disabled={bypassMutation.isPending}>
+                <Button className="bg-amber-500 hover:bg-amber-600 text-white hover:opacity-90" onClick={() => setBypassDialogOpen(true)} disabled={bypassMutation.isPending}>
                   <ShieldCheck className="mr-2 h-4 w-4" />Approuver directement
                 </Button>
               )}

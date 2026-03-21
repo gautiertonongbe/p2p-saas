@@ -231,18 +231,19 @@ export default function PurchaseOrderForm() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="vendor">Fournisseur *</Label>
-                <Select value={vendorId.toString()} onValueChange={(value) => setVendorId(parseInt(value))}>
-                  <SelectTrigger id="vendor">
-                    <SelectValue placeholder="Sélectionner un fournisseur" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vendors?.map((vendor) => (
-                      <SelectItem key={vendor.id} value={vendor.id.toString()}>
-                        {vendor.legalName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  id="vendor"
+                  value={vendorId || ""}
+                  onChange={(e) => setVendorId(parseInt(e.target.value))}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Sélectionner un fournisseur</option>
+                  {vendors?.map((vendor) => (
+                    <option key={vendor.id} value={vendor.id}>
+                      {vendor.legalName}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-2">
@@ -269,20 +270,21 @@ export default function PurchaseOrderForm() {
           </Card>
 
           {/* Actions */}
-          <div className="flex gap-3 justify-end">
+          <div className="flex gap-3 justify-end sticky bottom-4 bg-background/95 backdrop-blur py-3 px-4 rounded-xl border shadow-md">
             <Button
               variant="outline"
               onClick={() => setLocation("/purchase-orders")}
             >
               {t('common.cancel')}
             </Button>
-            <Button
+            <button
               onClick={handleSubmit}
               disabled={createMutation.isPending}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 btn-primary text-white"
             >
               <Send className="mr-2 h-4 w-4" />
               Créer le bon de commande
-            </Button>
+            </button>
           </div>
         </>
       )}
