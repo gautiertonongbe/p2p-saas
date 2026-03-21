@@ -3,9 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
-import { useAuth } from "@/_core/hooks/useAuth";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, FileText, Upload, Download , FileCheck, ChevronRight, CheckCircle, CreditCard} from "lucide-react";
+import { Plus, Search, FileText, Upload, Download } from "lucide-react";
 import React, { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
@@ -33,12 +32,9 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { PageHeader } from "@/components/PageHeader";
 
 export default function InvoicesList() {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewState, setViewState] = useState<ViewState>({ filters: [], displayType: "table" });
@@ -187,8 +183,7 @@ export default function InvoicesList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<FileCheck className="h-5 w-5" />} title={t("invoices.title")} description={t("invoices.description")} />
-
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('invoices.title')}</h1>
@@ -203,14 +198,14 @@ export default function InvoicesList() {
             onChange={setViewState}
             defaultColumns={INVOICE_COLUMNS.map(c => c.key)}
           />
-          {canManage && <Link href="/invoices/new">
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium btn-primary">
+          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+            <DialogTrigger asChild>
+              <Link href="/invoices/new">
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white" style={{backgroundColor:"#2563eb"}}>
                 <Plus className="h-4 w-4" />Nouvelle facture
               </button>
-            </Link>}
-          {canManage && <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto btn-primary">
+            </Link>
+            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
                 <Upload className="mr-2 h-4 w-4" />
                 {t('invoices.upload')}
               </Button>
@@ -355,7 +350,7 @@ export default function InvoicesList() {
                   <TableHead>{t('invoices.invoiceDate')}</TableHead>
                   <TableHead>{t('invoices.dueDate')}</TableHead>
                   <TableHead className="text-right">{t('invoices.amount')}</TableHead>
-                  <TableHead>{t('invoices.matchStatusLabel')}</TableHead>
+                  <TableHead>{t('invoices.matchStatus')}</TableHead>
                   <TableHead>{t('common.status')}</TableHead>
                   <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
@@ -397,34 +392,21 @@ export default function InvoicesList() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {invoice.status === "approved" && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-1">
-                            <CheckCircle className="h-3 w-3" />À payer
-                          </span>
-                        )}
-                        {invoice.status === "disputed" && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
-                            En litige
-                          </span>
-                        )}
-                        {invoice.status === "pending_approval" && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
-                            À approuver
-                          </span>
-                        )}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); exportPDFMutation.mutate({ id: invoice.id }); }}
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            exportPDFMutation.mutate({ id: invoice.id });
+                          }}
                           disabled={exportPDFMutation.isPending}
-                          className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground"
-                          title="Télécharger PDF">
-                          <Download className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; }}
-                          className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground">
-                          <ChevronRight className="h-4 w-4" />
-                        </button>
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          {t('common.view')}
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -435,10 +417,10 @@ export default function InvoicesList() {
             <div className="p-8 text-center">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground/50" />
               <p className="mt-4 text-muted-foreground">Aucune facture trouvée</p>
-              {canManage && <Button className="mt-4" variant="outline" onClick={() => setUploadDialogOpen(true)}>
+              <Button className="mt-4" variant="outline" onClick={() => setUploadDialogOpen(true)}>
                 <Upload className="mr-2 h-4 w-4" />
                 {t('invoices.upload')}
-              </Button>}
+              </Button>
             </div>
           )}
         </CardContent>
