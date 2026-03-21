@@ -7,7 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -315,6 +314,25 @@ function DashboardLayoutContent({
             </div>
           </SidebarContent>
 
+          {/* Settings - pinned above footer like Linear/Stripe */}
+          <div className="px-3 py-2 border-t">
+            <button
+              onClick={() => setLocation("/settings")}
+              className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition-all ${
+                location === "/settings"
+                  ? "font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+              style={location === "/settings" ? {
+                backgroundColor: `hsl(${activeColor} / 0.12)`,
+                color: `hsl(${activeColor})`
+              } : {}}
+            >
+              <Settings className="h-4 w-4 shrink-0" style={location === "/settings" ? { color: `hsl(${activeColor})` } : {}} />
+              <span>Paramètres</span>
+            </button>
+          </div>
+
           <SidebarFooter className="p-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -336,14 +354,6 @@ function DashboardLayoutContent({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={() => setLocation("/settings")}
-                  className="cursor-pointer"
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Paramètres</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"
