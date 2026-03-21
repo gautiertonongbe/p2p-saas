@@ -70,6 +70,12 @@ export default function PurchaseRequestDetail() {
   );
 
   const utils = trpc.useUtils();
+  const [justifDialogOpen, setJustifDialogOpen] = useState(false);
+  const [justifText, setJustifText] = useState("");
+  const updateMutation = trpc.purchaseRequests.update.useMutation({
+    onSuccess: () => submitMutation.mutate({ id: request!.id }),
+    onError: (e: any) => toast.error(e.message),
+  });
   const submitMutation = trpc.purchaseRequests.submit.useMutation({
     onSuccess: (data) => {
       toast.success(
@@ -93,7 +99,21 @@ export default function PurchaseRequestDetail() {
 
   const handleSubmit = () => {
     if (!request) return;
+    // If no description/justification, prompt the user
+    if (!request.description?.trim()) {
+      setJustifDialogOpen(true);
+      return;
+    }
     submitMutation.mutate({ id: request.id });
+  };
+
+  const handleJustifSubmit = () => {
+    if (!justifText.trim() || justifText.trim().length < 10) {
+      toast.error("La justification doit contenir au moins 10 caractères");
+      return;
+    }
+    setJustifDialogOpen(false);
+    updateMutation.mutate({ id: request!.id, description: justifText.trim() });
   };
 
   const bypassMutation = trpc.purchaseRequests.adminBypassApproval.useMutation({
@@ -601,5 +621,35 @@ export default function PurchaseRequestDetail() {
         </DialogContent>
       </Dialog>
     </div>
+      {/* Justification required dialog */}
+      <Dialog open={justifDialogOpen} onOpenChange={setJustifDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Justification requise</DialogTitle>
+            <DialogDescription>
+              La politique de votre organisation exige une justification avant de soumettre une demande d'achat.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Textarea
+              value={justifText}
+              onChange={e => setJustifText(e.target.value)}
+              placeholder="Expliquez pourquoi cet achat est nécessaire, pour quel projet, et l'impact si non satisfait..."
+              rows={4}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground mt-1">{justifText.length}/10 caractères minimum</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setJustifDialogOpen(false)}>Annuler</Button>
+            <button
+              onClick={handleJustifSubmit}
+              disabled={justifText.trim().length < 10 || updateMutation.isPending || submitMutation.isPending}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold btn-primary text-white disabled:opacity-50">
+              {(updateMutation.isPending || submitMutation.isPending) ? "Envoi..." : "Soumettre la demande"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
   );
 }
