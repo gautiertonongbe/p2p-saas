@@ -1,10 +1,12 @@
+import { ActionMenu } from "@/components/ActionMenu";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, ShoppingCart, FileText, ChevronRight, Truck} from "lucide-react";
+import { Plus, Search, ShoppingCart, FileText, ChevronRight, Truck, Eye, Edit2, Send, CheckCircle, XCircle, Download} from "lucide-react";
 import { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
@@ -26,6 +28,8 @@ import {
 
 export default function PurchaseOrdersList() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewState, setViewState] = useState<ViewState>({ filters: [], displayType: "table" });
@@ -217,7 +221,7 @@ export default function PurchaseOrdersList() {
               </TableHeader>
               <TableBody>
                 {filteredOrders.map((po) => (
-                  <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50 group">
                     <TableCell className="font-medium">{po.poNumber}</TableCell>
                     <TableCell>-</TableCell>
                     <TableCell>{po.issuedAt ? formatDate(po.issuedAt) : formatDate(po.createdAt)}</TableCell>
@@ -229,28 +233,15 @@ export default function PurchaseOrdersList() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {po.status === "draft" && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">Brouillon</span>
-                        )}
-                        {(po.status === "approved" || po.status === "confirmed") && (
-                          <Link href={`/invoices/new?poId=${po.id}`}>
-                            <button className="text-xs px-2 py-1 rounded-md border border-cyan-200 text-cyan-700 hover:bg-cyan-50 transition-colors font-medium">
-                              Facturer
-                            </button>
-                          </Link>
-                        )}
-                        {po.status === "issued" && (
-                          <button className="text-xs px-2 py-1 rounded-md border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors font-medium">
-                            En attente
-                          </button>
-                        )}
-                        <Link href={`/purchase-orders/${po.id}`}>
-                          <button className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground">
-                            <ChevronRight className="h-4 w-4" />
-                          </button>
-                        </Link>
-                      </div>
+                      <ActionMenu actions={[
+                        { icon: <Eye className="h-4 w-4" />, label: "Voir le détail", href: `/purchase-orders/${po.id}` },
+                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/purchase-orders/${po.id}/edit`, hidden: po.status !== "draft" || !canManage },
+                        { icon: <Send className="h-4 w-4" />, label: "Envoyer au fournisseur", hidden: po.status !== "approved" || !canManage, variant: "success", onClick: () => {} },
+                        { icon: <FileText className="h-4 w-4" />, label: "Créer une facture", href: `/invoices/new?poId=${po.id}`, hidden: !["approved","confirmed","issued"].includes(po.status) || !canManage, variant: "success" },
+                        { icon: <Truck className="h-4 w-4" />, label: "Enregistrer réception", href: `/purchase-orders/${po.id}`, hidden: !["issued","partially_received"].includes(po.status), variant: "warning" },
+                        { icon: <Download className="h-4 w-4" />, label: "Télécharger PDF", onClick: () => {}, hidden: po.status === "draft" },
+                        { icon: <XCircle className="h-4 w-4" />, label: "Annuler le BC", hidden: !["draft","approved"].includes(po.status) || !canManage, variant: "danger", onClick: () => {} },
+                      ]} />
                     </TableCell>
                   </TableRow>
                 ))}

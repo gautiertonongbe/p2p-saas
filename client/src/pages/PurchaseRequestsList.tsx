@@ -1,10 +1,11 @@
 import { trpc } from "@/lib/trpc";
+import { ActionMenu } from "@/components/ActionMenu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, FileText, Eye, ChevronRight, Copy, Send, CheckCircle} from "lucide-react";
+import { Plus, Search, FileText, Eye, ChevronRight, Copy, Send, CheckCircle, Edit2, ShoppingCart, XCircle} from "lucide-react";
 import { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
@@ -26,6 +27,8 @@ import {
 
 export default function PurchaseRequestsList() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewState, setViewState] = useState<ViewState>({
@@ -166,7 +169,7 @@ export default function PurchaseRequestsList() {
               </TableHeader>
               <TableBody>
                 {filteredRequests.map((request) => (
-                  <TableRow key={request.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableRow key={request.id} className="cursor-pointer hover:bg-muted/50 group">
                     <TableCell className="font-medium">{request.requestNumber}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -193,27 +196,14 @@ export default function PurchaseRequestsList() {
                     </TableCell>
                     <TableCell>{formatDate(request.createdAt)}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {request.status === "draft" && (
-                          <Link href={`/purchase-requests/${request.id}/edit`}>
-                            <button className="text-xs px-2 py-1 rounded-md border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors font-medium">
-                              Modifier
-                            </button>
-                          </Link>
-                        )}
-                        {request.status === "approved" && (
-                          <Link href={`/purchase-orders/new?requestId=${request.id}`}>
-                            <button className="text-xs px-2 py-1 rounded-md border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-colors font-medium">
-                              Créer BC
-                            </button>
-                          </Link>
-                        )}
-                        <Link href={`/purchase-requests/${request.id}`}>
-                          <button className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground">
-                            <ChevronRight className="h-4 w-4" />
-                          </button>
-                        </Link>
-                      </div>
+                      <ActionMenu actions={[
+                        { icon: <Eye className="h-4 w-4" />, label: "Voir le détail", href: `/purchase-requests/${request.id}` },
+                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/purchase-requests/${request.id}/edit`, hidden: request.status !== "draft" || !canManage },
+                        { icon: <Send className="h-4 w-4" />, label: "Soumettre", hidden: request.status !== "draft", onClick: () => setLocation(`/purchase-requests/${request.id}`), variant: "success" },
+                        { icon: <ShoppingCart className="h-4 w-4" />, label: "Créer un bon de commande", href: `/purchase-orders/new?requestId=${request.id}`, hidden: request.status !== "approved", variant: "success" },
+                        { icon: <Copy className="h-4 w-4" />, label: "Dupliquer", href: `/purchase-requests/new?copyFrom=${request.id}`, hidden: !canManage },
+                        { icon: <XCircle className="h-4 w-4" />, label: "Annuler", hidden: !["draft","submitted"].includes(request.status) || !canManage, variant: "danger", onClick: () => {} },
+                      ]} />
                     </TableCell>
                   </TableRow>
                 ))}

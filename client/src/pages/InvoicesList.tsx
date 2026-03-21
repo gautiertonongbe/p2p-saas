@@ -1,3 +1,4 @@
+import { ActionMenu } from "@/components/ActionMenu";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, FileText, Upload, Download , FileCheck, ChevronRight, CheckCircle, CreditCard} from "lucide-react";
+import { Plus, Search, FileText, Upload, Download , FileCheck, ChevronRight, CheckCircle, CreditCard, Eye, Edit2, CheckCircle2, XCircle, AlertTriangle, RefreshCw} from "lucide-react";
 import React, { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
@@ -364,7 +365,7 @@ export default function InvoicesList() {
                 {filteredInvoices.map((invoice) => (
                   <TableRow
                     key={invoice.id}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 group"
                     onClick={() => window.location.href = `/invoices/${invoice.id}`}
                   >
                     <TableCell className="font-medium">
@@ -397,35 +398,16 @@ export default function InvoicesList() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {invoice.status === "approved" && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-1">
-                            <CheckCircle className="h-3 w-3" />À payer
-                          </span>
-                        )}
-                        {invoice.status === "disputed" && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
-                            En litige
-                          </span>
-                        )}
-                        {invoice.status === "pending_approval" && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
-                            À approuver
-                          </span>
-                        )}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); exportPDFMutation.mutate({ id: invoice.id }); }}
-                          disabled={exportPDFMutation.isPending}
-                          className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground"
-                          title="Télécharger PDF">
-                          <Download className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; }}
-                          className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground">
-                          <ChevronRight className="h-4 w-4" />
-                        </button>
-                      </div>
+                      <ActionMenu actions={[
+                        { icon: <Eye className="h-4 w-4" />, label: "Voir le détail", href: `/invoices/${invoice.id}` },
+                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/invoices/${invoice.id}/edit`, hidden: !["draft","pending_approval"].includes(invoice.status) || !canManage },
+                        { icon: <CheckCircle2 className="h-4 w-4" />, label: "Approuver la facture", hidden: invoice.status !== "pending_approval" || !canManage, variant: "success", onClick: e => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; } },
+                        { icon: <CreditCard className="h-4 w-4" />, label: "Enregistrer le paiement", hidden: invoice.status !== "approved" || !canManage, variant: "success", onClick: e => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; } },
+                        { icon: <AlertTriangle className="h-4 w-4" />, label: "Contester la facture", hidden: !["pending_approval","approved"].includes(invoice.status) || !canManage, variant: "warning", onClick: e => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; } },
+                        { icon: <RefreshCw className="h-4 w-4" />, label: "Demander une révision", hidden: invoice.status !== "disputed" || !canManage, variant: "warning", onClick: e => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; } },
+                        { icon: <Download className="h-4 w-4" />, label: "Télécharger PDF", onClick: e => { e.stopPropagation(); exportPDFMutation.mutate({ id: invoice.id }); }, disabled: exportPDFMutation.isPending },
+                        { icon: <XCircle className="h-4 w-4" />, label: "Rejeter la facture", hidden: invoice.status !== "pending_approval" || !canManage, variant: "danger", onClick: e => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; } },
+                      ]} />
                     </TableCell>
                   </TableRow>
                 ))}
