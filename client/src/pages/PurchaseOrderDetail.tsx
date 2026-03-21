@@ -670,7 +670,6 @@ export default function PurchaseOrderDetail() {
       {/* History */}
       <EntityHistory entries={history || []} isLoading={historyLoading} />
 
-      {/* Create Invoice from PO */}
       {["issued", "confirmed", "partially_received", "received"].includes(po.status) &&
         (user?.role === 'admin' || user?.role === 'procurement_manager') && (
         <CreateInvoiceFromPOPanel poId={po.id} poNumber={po.poNumber} totalAmount={po.totalAmount} onSuccess={(id) => setLocation(`/invoices/${id}`)} />

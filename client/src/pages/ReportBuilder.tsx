@@ -197,7 +197,7 @@ export default function ReportBuilder() {
         title="Rapports"
         description="Créez des rapports personnalisés"
       />
-       */}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">

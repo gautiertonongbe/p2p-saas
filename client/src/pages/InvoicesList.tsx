@@ -189,7 +189,7 @@ export default function InvoicesList() {
         title="Factures"
         description="Gérez vos factures fournisseurs"
       />
-       */}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('invoices.title')}</h1>

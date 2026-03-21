@@ -279,7 +279,7 @@ export default function GroupsPage() {
         title="Groupes & Accès"
         description="Contrôlez les permissions utilisateurs"
       />
-       */}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2"><Lock className="h-6 w-6 text-blue-600" />Groupes & Accès</h1>

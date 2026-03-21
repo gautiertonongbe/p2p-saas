@@ -280,7 +280,6 @@ export default function Community() {
         ) : undefined}
       />
 
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Questions ouvertes", value: (stats as any)?.openQuestions || 0, icon: HelpCircle, color: "text-blue-600" },

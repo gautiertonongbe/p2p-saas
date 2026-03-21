@@ -84,7 +84,7 @@ export default function PurchaseOrdersList() {
         title="Bons de commande"
         description="Gérez vos commandes fournisseurs"
       />
-      {/* Header */}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('purchaseOrders.title')}</h1>

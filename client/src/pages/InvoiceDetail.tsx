@@ -844,7 +844,6 @@ export default function InvoiceDetail() {
       {/* History */}
       <EntityHistory entries={history || []} isLoading={historyLoading} />
 
-      {/* Dispute panel — any user on pending/approved invoices */}
       {["pending", "approved"].includes(invoice.status) && (
         <DisputePanel invoiceId={parseInt(id!)} onSuccess={() => utils.invoices.getById.invalidate()} />
       )}

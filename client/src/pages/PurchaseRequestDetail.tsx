@@ -369,7 +369,6 @@ export default function PurchaseRequestDetail() {
       {/* History */}
       <EntityHistory entries={history || []} isLoading={historyLoading} />
 
-      {/* Convert to PO — shown for approved PRs */}
       {request.status === 'approved' && (user?.role === 'admin' || user?.role === 'procurement_manager') && (
         <Card className="border-emerald-200 bg-emerald-50/50">
           <CardContent className="pt-6">

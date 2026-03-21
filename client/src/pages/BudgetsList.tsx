@@ -93,7 +93,7 @@ export default function BudgetsList() {
         title="Budgets"
         description="Contrôle budgétaire et suivi des dépenses"
       />
-{/* Colorful header banner */}
+
 }
         title={t('budgets.title')}
         description={t('budgets.description')}
@@ -105,7 +105,6 @@ export default function BudgetsList() {
         }
       />
 
-      {/* Summary Cards */}
       {summary && (
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="border-0 shadow-sm" style={{ background: "linear-gradient(135deg, #eff6ff, #dbeafe)" }}>
