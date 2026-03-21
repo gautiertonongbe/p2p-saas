@@ -462,7 +462,7 @@ export default function RFQDetail() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAwardDialogOpen(false)}>Annuler</Button>
-            <Button
+            <Button className="btn-primary text-white"
               disabled={!awardResponseId || awardMutation.isPending}
               onClick={() => awardMutation.mutate({ rfqId: numId, responseId: awardResponseId!, vendorId: parseInt(awardVendorId) })}
               className="bg-green-600 hover:bg-green-700"
@@ -489,7 +489,7 @@ export default function RFQDetail() {
           </Select>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddVendorOpen(false)}>Annuler</Button>
-            <Button disabled={!addVendorId || addVendorMutation.isPending}
+            <Button className="btn-primary text-white" disabled={!addVendorId || addVendorMutation.isPending}
               onClick={() => addVendorMutation.mutate({ rfqId: numId, vendorId: parseInt(addVendorId) })}>
               Ajouter
             </Button>

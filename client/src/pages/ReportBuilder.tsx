@@ -546,7 +546,7 @@ export default function ReportBuilder() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSaveOpen(false)}>Annuler</Button>
-            <Button disabled={!reportName.trim() || saveMutation.isPending}
+            <Button className="btn-primary text-white" disabled={!reportName.trim() || saveMutation.isPending}
               onClick={() => saveMutation.mutate({
                 name: reportName.trim(),
                 definition: {

@@ -736,7 +736,7 @@ export default function VendorDetail() {
             <Button variant="outline" onClick={() => setContractDialogOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={handleAddContract} disabled={addContractMutation.isPending}>
+            <Button className="btn-primary text-white" onClick={handleAddContract} disabled={addContractMutation.isPending}>
               {addContractMutation.isPending ? "Enregistrement..." : "Enregistrer"}
             </Button>
           </DialogFooter>

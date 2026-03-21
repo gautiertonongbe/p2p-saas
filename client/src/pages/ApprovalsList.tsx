@@ -410,7 +410,7 @@ export default function ApprovalsList() {
             <Button variant="outline" onClick={() => setDelegateDialogOpen(false)}>
               Annuler
             </Button>
-            <Button
+            <Button className="btn-primary text-white"
               onClick={handleDelegate}
               disabled={!delegateToUserId || delegateMutation.isPending}
             >

@@ -613,7 +613,7 @@ function ViewBuilderDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
-          <Button disabled={!name.trim() || saving} onClick={handleSave}>
+          <Button className="btn-primary text-white" disabled={!name.trim() || saving} onClick={handleSave}>
             {saving ? "Enregistrement…" : editingView ? "Mettre à jour" : "Créer la vue"}
           </Button>
         </DialogFooter>

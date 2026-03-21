@@ -247,7 +247,7 @@ function ResolveDisputePanel({ invoiceId, disputeReason, onSuccess }: { invoiceI
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
             <Button
-              className={resolution === "approve" ? "bg-green-600 hover:bg-green-700" : resolution === "reject" ? "bg-red-600 hover:bg-red-700" : ""}
+              className={resolution === "approve" ? "bg-green-600 hover:bg-green-700 text-white" : resolution === "reject" ? "bg-red-600 hover:bg-red-700 text-white" : "btn-primary text-white"}
               disabled={notes.length < 5 || mut.isPending}
               onClick={() => mut.mutate({ invoiceId, resolution, notes })}>
               {mut.isPending ? "Enregistrement..." : "Confirmer"}
@@ -457,7 +457,7 @@ function MarkAsPaidSection({ invoiceId, onSuccess }: { invoiceId: number; onSucc
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button
+            <Button className="btn-primary text-white"
               disabled={!paymentMethod || !valueDate || mutation.isPending}
               onClick={() => mutation.mutate({
                 invoiceId,

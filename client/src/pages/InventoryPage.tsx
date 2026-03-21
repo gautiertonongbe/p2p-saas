@@ -267,7 +267,7 @@ export default function InventoryPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNewItemOpen(false)}>Annuler</Button>
-            <Button disabled={!itemCode.trim() || !itemName.trim() || createItemMutation.isPending}
+            <Button className="btn-primary text-white" disabled={!itemCode.trim() || !itemName.trim() || createItemMutation.isPending}
               onClick={() => createItemMutation.mutate({ itemCode, itemName, unit: unit || undefined, reorderLevel: reorderLevel ? parseFloat(reorderLevel) : undefined })}>
               {createItemMutation.isPending ? "Création..." : "Créer"}
             </Button>
@@ -288,7 +288,7 @@ export default function InventoryPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNewWarehouseOpen(false)}>Annuler</Button>
-            <Button disabled={!whCode.trim() || !whName.trim() || createWhMutation.isPending}
+            <Button className="btn-primary text-white" disabled={!whCode.trim() || !whName.trim() || createWhMutation.isPending}
               onClick={() => createWhMutation.mutate({ code: whCode, name: whName, location: whLocation || undefined })}>
               {createWhMutation.isPending ? "Création..." : "Créer"}
             </Button>
@@ -334,7 +334,7 @@ export default function InventoryPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAdjustOpen(false)}>Annuler</Button>
-            <Button disabled={!adjustQty || !adjustWarehouseId || adjustMutation.isPending}
+            <Button className="btn-primary text-white" disabled={!adjustQty || !adjustWarehouseId || adjustMutation.isPending}
               onClick={() => adjustMutation.mutate({ itemId: adjustItem.id, warehouseId: parseInt(adjustWarehouseId), quantity: parseFloat(adjustQty), type: adjustType })}>
               {adjustMutation.isPending ? "Enregistrement..." : "Enregistrer"}
             </Button>
