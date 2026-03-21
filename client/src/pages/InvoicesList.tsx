@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, FileText, Upload, Download , FileCheck, ChevronRight, CheckCircle, CreditCard} from "lucide-react";
 import React, { useState } from "react";
@@ -36,6 +37,8 @@ import { PageHeader } from "@/components/PageHeader";
 
 export default function InvoicesList() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewState, setViewState] = useState<ViewState>({ filters: [], displayType: "table" });
@@ -200,17 +203,17 @@ export default function InvoicesList() {
             onChange={setViewState}
             defaultColumns={INVOICE_COLUMNS.map(c => c.key)}
           />
-          <Link href="/invoices/new">
+          {canManage && <Link href="/invoices/new">
               <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium btn-primary">
                 <Plus className="h-4 w-4" />Nouvelle facture
               </button>
-            </Link>
+            </Link>}
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto btn-primary">
                 <Upload className="mr-2 h-4 w-4" />
                 {t('invoices.upload')}
-              </Button>
+              </Button>}
             </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -435,7 +438,7 @@ export default function InvoicesList() {
               <Button className="mt-4" variant="outline" onClick={() => setUploadDialogOpen(true)}>
                 <Upload className="mr-2 h-4 w-4" />
                 {t('invoices.upload')}
-              </Button>
+              </Button>}
             </div>
           )}
         </CardContent>

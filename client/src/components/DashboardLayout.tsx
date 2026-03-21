@@ -278,6 +278,25 @@ function DashboardLayoutContent({
                 const isExpanded = expandedGroups.includes(group.label);
                 const hasActive = group.items.some(i => i.path === location);
                 const filteredItems = group.items.filter(item => {
+                  // Role-based visibility — hide items users cannot act on
+                  const role = user?.role;
+                  const isProcurement = isAdmin || role === "procurement_manager";
+                  const isApprover = role === "approver";
+                  const isRequester = role === "requester" || (!isAdmin && !isApprover);
+
+                  // Admin-only pages
+                  if (["/vendor-onboarding", "/vendor-risk", "/workflow-builder", "/groups", "/contracts", "/savings", "/renewal-calendar"].includes(item.path) && !isProcurement) return false;
+
+                  // Finance pages — admin/procurement only
+                  if (["/payments", "/budgets", "/rfqs"].includes(item.path) && !isProcurement) return false;
+
+                  // Approvals — approvers and admins only
+                  if (item.path === "/approvals" && !isApprover && !isAdmin) return false;
+
+                  // Supplier portal — hide for regular users
+                  if (item.path === "/supplier-portal" && !isProcurement) return false;
+
+                  // Group-permission gated pages
                   if (item.path === "/expenses" && !isAdmin && !canAccessExpenses) return false;
                   if (item.path === "/community" && !isAdmin && !canAccessCommunity) return false;
                   if (item.path === "/analytics" && !isAdmin && !canAccessAnalytics) return false;
@@ -351,7 +370,7 @@ function DashboardLayoutContent({
                 <Settings className="h-3.5 w-3.5" style={{ color: location === "/settings" ? "#fff" : `hsl(${activeColor})` }} />
               </div>
               <span>{t("navigation.settings")}</span>
-            </button>
+            </button>}
           </div>
 
           <SidebarFooter className="p-2">
@@ -368,9 +387,17 @@ function DashboardLayoutContent({
                     <p className="text-sm font-semibold truncate leading-tight">
                       {user?.name || "-"}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5 capitalize">
-                      {user?.role?.replace("_", " ") || user?.email || "-"}
-                    </p>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium mt-0.5 inline-block ${
+                        user?.role === "admin" ? "bg-red-100 text-red-700" :
+                        user?.role === "procurement_manager" ? "bg-blue-100 text-blue-700" :
+                        user?.role === "approver" ? "bg-amber-100 text-amber-700" :
+                        "bg-gray-100 text-gray-600"
+                      }`}>{
+                        user?.role === "admin" ? "Administrateur" :
+                        user?.role === "procurement_manager" ? "Resp. Achats" :
+                        user?.role === "approver" ? "Approbateur" :
+                        "Demandeur"
+                      }</span>
                   </div>
                 </button>
               </DropdownMenuTrigger>

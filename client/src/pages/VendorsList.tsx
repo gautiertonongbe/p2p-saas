@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, Users, Building2 } from "lucide-react";
 import { useState } from "react";
@@ -26,6 +27,8 @@ import {
 
 export default function VendorsList() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewState, setViewState] = useState<ViewState>({ filters: [], displayType: "table" });
@@ -77,12 +80,12 @@ export default function VendorsList() {
             onChange={setViewState}
             defaultColumns={VENDOR_COLUMNS.map(c => c.key)}
           />
-          <Link href="/vendors/new">
+          {canManage && <Link href="/vendors/new">
             <Button className="w-full sm:w-auto btn-primary">
               <Plus className="mr-2 h-4 w-4" />
               {t('vendors.new')}
             </Button>
-          </Link>
+          </Link>}
         </div>
       </div>
 
