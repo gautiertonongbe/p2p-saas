@@ -1155,7 +1155,7 @@ function ToleranceSection({ isAdmin }: { isAdmin: boolean }) {
                 <div className="flex items-center justify-between">
                   <div><p className="font-medium text-sm">{label}</p><p className="text-xs text-muted-foreground">{desc}</p></div>
                   <div className="flex items-center gap-2">
-                    <Input type="number" value={cfg[key]} onChange={e => setCfg(c => ({...c, [key]: parseFloat(e.target.value) || 0}))} disabled={!isAdmin} className="w-20 text-center" min={0} max={100} step={0.5} />
+                    <Input type="number" value={cfg[key]} onChange={e => setCfg(c => ({...c, [key]: parseFloat(e.target.value) || 0}))} onFocus={e => e.target.select()} disabled={!isAdmin} className="w-20 text-center" min={0} max={100} step={0.5} />
                     <span className="text-sm text-muted-foreground">%</span>
                   </div>
                 </div>
@@ -1171,7 +1171,7 @@ function ToleranceSection({ isAdmin }: { isAdmin: boolean }) {
           <CardHeader><CardTitle>Auto-approbation facture</CardTitle><CardDescription>Approuver automatiquement les factures sous ce montant si le rapprochement réussit</CardDescription></CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              <Input type="number" value={cfg.autoApproveBelow} onChange={e => setCfg(c => ({...c, autoApproveBelow: parseFloat(e.target.value) || 0}))} disabled={!isAdmin} className="w-48" placeholder="0 = désactivé" />
+              <Input type="number" value={cfg.autoApproveBelow} onChange={e => setCfg(c => ({...c, autoApproveBelow: parseFloat(e.target.value) || 0}))} onFocus={e => e.target.select()} disabled={!isAdmin} className="w-48" placeholder="0 = désactivé" />
               <span className="text-sm text-muted-foreground">XOF (0 = désactivé)</span>
             </div>
           </CardContent>
