@@ -24,7 +24,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, ShoppingCart, FileCheck, DollarSign, TrendingUp, Settings, CheckCircle, Languages, ClipboardList, Package, CreditCard, BarChart2, Receipt, Lock, ChevronDown, HelpCircle, TrendingDown, ClipboardCheck} from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, ShoppingCart, FileCheck, DollarSign, TrendingUp, Settings, CheckCircle, Languages, ClipboardList, Package, CreditCard, BarChart2, Receipt, Lock, ChevronDown, HelpCircle, TrendingDown, ClipboardCheck, ShieldCheck, CalendarDays, GitBranch} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -58,6 +58,7 @@ const getNavGroups = (t: (key: string) => string): NavGroup[] => [
       { icon: Receipt, label: t("expenses.title"), path: "/expenses" },
       { icon: FileText, label: "Contrats", path: "/contracts" },
       { icon: TrendingDown, label: "Économies", path: "/savings" },
+      { icon: CalendarDays, label: "Renouvellements", path: "/renewal-calendar" },
     ],
   },
   {
@@ -65,6 +66,7 @@ const getNavGroups = (t: (key: string) => string): NavGroup[] => [
     items: [
       { icon: Users, label: t("vendors.title"), path: "/vendors" },
       { icon: ClipboardCheck, label: "Qualification fournisseurs", path: "/vendor-onboarding" },
+      { icon: ShieldCheck, label: "Risques fournisseurs", path: "/vendor-risk" },
       { icon: Package, label: t("inventory.title"), path: "/inventory" },
       { icon: DollarSign, label: t("budgets.title"), path: "/budgets" },
     ],
@@ -73,6 +75,7 @@ const getNavGroups = (t: (key: string) => string): NavGroup[] => [
     label: t("approvals.title"), color: "#dc2626", bgColor: "#fff1f2",
     items: [
       { icon: CheckCircle, label: t("approvals.queue"), path: "/approvals" },
+      { icon: GitBranch, label: "Constructeur de workflows", path: "/workflow-builder" },
     ],
   },
   {

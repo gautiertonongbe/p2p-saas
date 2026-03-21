@@ -6,6 +6,9 @@ import ContractsList from "@/pages/ContractsList";
 import ContractForm from "@/pages/ContractForm";
 import SavingsTracker from "@/pages/SavingsTracker";
 import VendorOnboarding from "@/pages/VendorOnboarding";
+import VendorRiskScoring from "@/pages/VendorRiskScoring";
+import RenewalCalendar from "@/pages/RenewalCalendar";
+import WorkflowBuilder from "@/pages/WorkflowBuilder";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -87,6 +90,9 @@ function Router() {
       <Route path="/contracts/new"><DashboardLayout><ContractForm /></DashboardLayout></Route>
       <Route path="/savings"><DashboardLayout><SavingsTracker /></DashboardLayout></Route>
       <Route path="/vendor-onboarding"><DashboardLayout><VendorOnboarding /></DashboardLayout></Route>
+      <Route path="/vendor-risk"><DashboardLayout><VendorRiskScoring /></DashboardLayout></Route>
+      <Route path="/renewal-calendar"><DashboardLayout><RenewalCalendar /></DashboardLayout></Route>
+      <Route path="/workflow-builder"><DashboardLayout><WorkflowBuilder /></DashboardLayout></Route>
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

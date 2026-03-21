@@ -25,6 +25,7 @@ import { groupsRouter } from "./routers/groups";
 import { contractsRouter } from "./routers/contracts";
 import { savingsRouter } from "./routers/savings";
 import { vendorOnboardingRouter } from "./routers/vendorOnboarding";
+import { vendorRiskRouter } from "./routers/vendorRisk";
 
 export const appRouter = router({
   system: systemRouter,
@@ -64,6 +65,7 @@ export const appRouter = router({
   contracts: contractsRouter,
   savings: savingsRouter,
   vendorOnboarding: vendorOnboardingRouter,
+  vendorRisk: vendorRiskRouter,
 });
 
 export type AppRouter = typeof appRouter;
