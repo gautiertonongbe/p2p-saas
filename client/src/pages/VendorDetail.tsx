@@ -1,19 +1,17 @@
 import React from "react";
 import { trpc } from "@/lib/trpc";
-import { CheckCircle, XCircle as XCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
 import {ArrowLeft, Building2, Phone, Mail, Globe, FileText,
-  TrendingUp, ShoppingCart, CheckCircle2, XCircle, Edit,
+  TrendingUp, ShoppingCart, CheckCircle, CheckCircle2, XCircle, Edit,
   Shield, Plus, Calendar, DollarSign, CreditCard, Smartphone,
   PenLine, UserPlus, FileCheck, Clock} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Clock } from "lucide-react";
 import { EntityHistory } from "@/components/EntityHistory";
 import {
   AlertDialog,
