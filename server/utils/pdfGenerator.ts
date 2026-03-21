@@ -68,29 +68,8 @@ export async function generatePurchaseOrderPDF(
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    // Header with logo
+    // Header with logo placeholder - org name shown prominently
     const headerY = 50;
-    if (organization.logoUrl && organization.logoUrl.startsWith('http')) {
-      try {
-        // Fetch logo and embed
-        const https = require('https');
-        const http = require('http');
-        const fetch = organization.logoUrl.startsWith('https') ? https : http;
-        await new Promise<void>((res) => {
-          fetch.get(organization.logoUrl!, (resp: any) => {
-            const chunks: Buffer[] = [];
-            resp.on('data', (c: Buffer) => chunks.push(c));
-            resp.on('end', () => {
-              try {
-                doc.image(Buffer.concat(chunks), 50, headerY, { height: 40, fit: [120, 40] });
-              } catch {}
-              res();
-            });
-            resp.on('error', () => res());
-          }).on('error', () => res());
-        });
-      } catch {}
-    }
     doc.fontSize(22).font('Helvetica-Bold').text('BON DE COMMANDE', { align: 'center' });
     doc.moveDown(0.3);
     doc.fontSize(10).font('Helvetica').text(po.poNumber, { align: 'center' });
