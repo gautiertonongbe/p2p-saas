@@ -22,7 +22,6 @@ export default function BudgetForm() {
 
   const [scopeType, setScopeType] = useState<"department" | "project" | "category">("department");
   const [scopeId, setScopeId] = useState("");
-  const [fiscalPeriod, setFiscalPeriod] = useState("");
   const [allocatedAmount, setAllocatedAmount] = useState("");
 
   const { data: departments } = trpc.settings.listDepartments.useQuery();
@@ -42,7 +41,7 @@ export default function BudgetForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!scopeId || !fiscalPeriod || !allocatedAmount) {
+    if (!scopeId || !computedFiscalPeriod || !allocatedAmount) {
       toast.error("Veuillez remplir tous les champs requis");
       return;
     }
@@ -56,30 +55,25 @@ export default function BudgetForm() {
     const payload = {
       scopeType,
       scopeId: parseInt(scopeId),
-      fiscalPeriod,
+      fiscalPeriod: computedFiscalPeriod,
       allocatedAmount: amount,
     };
     createMutation.mutate(payload);
   };
 
-  // Generate fiscal period options
   const currentYear = new Date().getFullYear();
-  const fiscalPeriodOptions = [
-    // Quarterly
-    ...Array.from({ length: 4 }, (_, i) => ({
-      value: `${currentYear}-Q${i + 1}`,
-      label: `${currentYear} - Trimestre ${i + 1}`,
-    })),
-    ...Array.from({ length: 4 }, (_, i) => ({
-      value: `${currentYear + 1}-Q${i + 1}`,
-      label: `${currentYear + 1} - Trimestre ${i + 1}`,
-    })),
-    // Monthly
-    ...Array.from({ length: 12 }, (_, i) => ({
-      value: `${currentYear}-${String(i + 1).padStart(2, '0')}`,
-      label: `${currentYear} - ${new Date(currentYear, i).toLocaleDateString('fr-FR', { month: 'long' })}`,
-    })),
-  ];
+  // Allow any year from 2020 to currentYear + 5
+  const yearRange = Array.from({ length: currentYear - 2020 + 6 }, (_, i) => 2020 + i);
+  const [periodType, setPeriodType] = useState<"annual" | "quarterly" | "monthly">("annual");
+  const [periodYear, setPeriodYear] = useState(String(currentYear));
+  const [periodQuarter, setPeriodQuarter] = useState("1");
+  const [periodMonth, setPeriodMonth] = useState("01");
+
+  // Compute the fiscalPeriod value from the selectors
+  const computedFiscalPeriod =
+    periodType === "annual" ? periodYear :
+    periodType === "quarterly" ? `${periodYear}-Q${periodQuarter}` :
+    `${periodYear}-${periodMonth.padStart(2, "0")}`;
 
   return (
     <div className="space-y-6">
@@ -175,19 +169,39 @@ export default function BudgetForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="fiscalPeriod">Période fiscale *</Label>
-                <Select value={fiscalPeriod} onValueChange={setFiscalPeriod}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une période" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fiscalPeriodOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Période fiscale *</Label>
+                <div className="flex gap-2">
+                  <select value={periodType} onChange={e => setPeriodType(e.target.value as any)}
+                    className="h-10 px-3 rounded-md border border-input bg-background text-sm flex-1">
+                    <option value="annual">Annuelle</option>
+                    <option value="quarterly">Trimestrielle</option>
+                    <option value="monthly">Mensuelle</option>
+                  </select>
+                  <select value={periodYear} onChange={e => setPeriodYear(e.target.value)}
+                    className="h-10 px-3 rounded-md border border-input bg-background text-sm w-24">
+                    {yearRange.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                  </select>
+                  {periodType === "quarterly" && (
+                    <select value={periodQuarter} onChange={e => setPeriodQuarter(e.target.value)}
+                      className="h-10 px-3 rounded-md border border-input bg-background text-sm w-28">
+                      <option value="1">T1 (Jan-Mar)</option>
+                      <option value="2">T2 (Avr-Jun)</option>
+                      <option value="3">T3 (Jul-Sep)</option>
+                      <option value="4">T4 (Oct-Déc)</option>
+                    </select>
+                  )}
+                  {periodType === "monthly" && (
+                    <select value={periodMonth} onChange={e => setPeriodMonth(e.target.value)}
+                      className="h-10 px-3 rounded-md border border-input bg-background text-sm w-32">
+                      {["01","02","03","04","05","06","07","08","09","10","11","12"].map((m, i) => (
+                        <option key={m} value={m}>
+                          {new Date(2000, i).toLocaleDateString("fr-FR", { month: "long" })}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">Valeur : <span className="font-mono font-medium">{computedFiscalPeriod}</span></p>
               </div>
 
               <div className="space-y-2">
@@ -222,12 +236,13 @@ export default function BudgetForm() {
               >
                 Annuler
               </Button>
-              <Button
+              <button
                 type="submit"
                 disabled={createMutation.isPending}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold btn-primary text-white disabled:opacity-50"
               >
-                {createMutation.isPending ? "Création..." : "Créer le budget"}
-              </Button>
+                {createMutation.isPending ? "Création en cours..." : "Créer le budget"}
+              </button>
             </div>
           </form>
         </CardContent>
