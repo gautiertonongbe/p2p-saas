@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import { EntityHistory } from "@/components/EntityHistory";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Shield, ThumbsUp, ThumbsDown, ArrowLeft, CreditCard, Smartphone, Building2, Banknote, CheckCircle2, AlertCircle, Clock} from "lucide-react";
+import { Shield, ThumbsUp, ThumbsDown, ArrowLeft, CreditCard, Smartphone, Building2, Banknote, CheckCircle2, AlertCircle, Clock, Send, XCircle, ShieldCheck, FileText, AlertTriangle} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -561,7 +561,12 @@ export default function InvoiceDetail() {
     onError: (error) => {
       toast.error(error.message || "Erreur lors de l'approbation");
     },
-  });
+  })
+
+  const markAsPaidMutation = trpc.invoices.markAsPaid.useMutation({
+    onSuccess: () => { toast.success("Facture marquée comme payée"); utils.invoices.getById.invalidate(); setMarkPaidDialogOpen(false); },
+    onError: (e: any) => toast.error(e.message),
+  });;
 
   if (isLoading) {
     return <div className="text-center py-8">Chargement...</div>;
@@ -622,6 +627,21 @@ export default function InvoiceDetail() {
             </div>
           </CardContent>
         </Card>
+      {/* Approval pending indicator */}
+      {invoice.status === 'pending' && (
+        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="h-8 w-8 rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center shrink-0">
+            <Shield className="h-4 w-4 text-blue-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-blue-900">En attente d'approbation</p>
+            <p className="text-xs text-blue-700 mt-0.5">
+              Les approbateurs désignés ont été notifiés. Vous recevrez une notification dès qu'une décision est prise.
+            </p>
+          </div>
+        </div>
+      )}
+
 
         <Card>
           <CardContent className="pt-6">
@@ -690,156 +710,73 @@ export default function InvoiceDetail() {
           canManage={user?.role === 'admin' || user?.role === 'procurement_manager'}
           onMatchComplete={() => utils.invoices.getById.invalidate()}
         />
-      )}
+      )}}
 
-      {/* Approval Actions */}
-      {invoice.status === 'pending' && user?.role === 'admin' && (
-        <>
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                <Shield className="h-5 w-5 text-amber-600 mt-1 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-semibold text-amber-900">Privilege administrateur</p>
-                  <p className="text-sm text-amber-800 mt-1">
-                    Vous pouvez approuver ou rejeter cette facture directement
-                  </p>
+      
+      {/* ── Invoice Action Bar — sticky, role-aware ── */}
+      {(() => {
+        const isAdmin = user?.role === 'admin' || user?.role === 'procurement_manager';
+        const isApproverRole = user?.role === 'approver';
+        const STATUS_LABEL: Record<string, string> = {
+          pending: "En attente — facture soumise pour approbation",
+          approved: "Approuvée — en attente de paiement",
+          paid: "Payée", rejected: "Refusée",
+          disputed: "Contestée", revised: "Révision demandée", cancelled: "Annulée",
+        };
+        const isTerminal = ['paid','cancelled','rejected'].includes(invoice.status);
+        return (
+          <Card className="sticky bottom-4 shadow-md border-2">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-sm text-muted-foreground">{STATUS_LABEL[invoice.status] || invoice.status}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Pending: approve/reject */}
+                  {invoice.status === 'pending' && (isAdmin || isApproverRole) && (
+                    <>
+                      <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => setRejectDialogOpen(true)} disabled={rejectMutation?.isPending}>
+                        <ThumbsDown className="mr-2 h-4 w-4" />Rejeter
+                      </Button>
+                      <Button variant="outline" className="border-green-200 text-green-700 hover:bg-green-50"
+                        onClick={() => setApproveDialogOpen(true)} disabled={approveMutation?.isPending}>
+                        <ThumbsUp className="mr-2 h-4 w-4" />Approuver
+                      </Button>
+                    </>
+                  )}
+                  {/* Admin bypass */}
+                  {invoice.status === 'pending' && isAdmin && (
+                    <Button className="bg-amber-500 hover:bg-amber-600 text-white"
+                      onClick={() => setBypassDialogOpen(true)} disabled={bypassMutation?.isPending}>
+                      <ShieldCheck className="mr-2 h-4 w-4" />Approuver directement
+                    </Button>
+                  )}
+                  {/* Approved: mark as paid */}
+                  {invoice.status === 'approved' && isAdmin && (
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => markAsPaidMutation.mutate({ id: invoice.id, paymentDate: new Date().toISOString(), paymentMethod: "bank_transfer" })} disabled={markAsPaidMutation?.isPending}>
+                      <Banknote className="mr-2 h-4 w-4" />Marquer comme payée
+                    </Button>
+                  )}
+                  {/* Dispute */}
+                  {['pending','approved'].includes(invoice.status) && isAdmin && (
+                    <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                      onClick={() => setDisputeDialogOpen(true)}>
+                      <AlertTriangle className="mr-2 h-4 w-4" />Contester
+                    </Button>
+                  )}
+                  {/* Request revision */}
+                  {invoice.status === 'pending' && isAdmin && (
+                    <Button variant="outline"
+                      onClick={() => setRevisionDialogOpen(true)}>
+                      <FileText className="mr-2 h-4 w-4" />Demander révision
+                    </Button>
+                  )}
                 </div>
-              </div>
-              <div className="flex gap-3 mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setApproveDialogOpen(true)}
-                  disabled={approveMutation.isPending}
-                  className="border-green-200 text-green-700 hover:bg-green-50"
-                >
-                  <ThumbsUp className="mr-2 h-4 w-4" />
-                  Approuver
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setRejectDialogOpen(true)}
-                  disabled={rejectMutation.isPending}
-                  className="border-red-200 text-red-700 hover:bg-red-50"
-                >
-                  <ThumbsDown className="mr-2 h-4 w-4" />
-                  Rejeter
-                </Button>
-                <Button
-                  onClick={() => setBypassDialogOpen(true)}
-                  disabled={bypassMutation.isPending}
-                  className="bg-amber-600 hover:bg-amber-700"
-                >
-                  <Shield className="mr-2 h-4 w-4" />
-                  Approuver directement
-                </Button>
               </div>
             </CardContent>
           </Card>
-
-          {/* Approve Dialog */}
-          <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Approuver la facture?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cette action approuvera la facture {invoice.invoiceNumber}. Cette action est irreversible.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium">Commentaire (optionnel)</label>
-                  <textarea
-                    value={approveComment}
-                    onChange={(e) => setApproveComment(e.target.value)}
-                    placeholder="Ajouter un commentaire..."
-                    className="w-full mt-2 p-2 border rounded text-sm"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 justify-end">
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => approveMutation.mutate({ invoiceId: parseInt(id!), comment: approveComment })}
-                  disabled={approveMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  Approuver
-                </AlertDialogAction>
-              </div>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {/* Reject Dialog */}
-          <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Rejeter la facture?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cette action rejettera la facture {invoice.invoiceNumber}. Veuillez fournir une raison.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium">Raison du rejet *</label>
-                  <textarea
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="Expliquer pourquoi cette facture est rejetee..."
-                    className="w-full mt-2 p-2 border rounded text-sm"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 justify-end">
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => rejectMutation.mutate({ invoiceId: parseInt(id!), reason: rejectReason })}
-                  disabled={rejectMutation.isPending || !rejectReason.trim()}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Rejeter
-                </AlertDialogAction>
-              </div>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {/* Bypass Dialog */}
-          <AlertDialog open={bypassDialogOpen} onOpenChange={setBypassDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Approuver directement en tant qu'administrateur</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cette action approuvera la facture immediatement en contournant toutes les etapes d'approbation restantes. Cette action sera enregistree dans l'historique.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium">Commentaire (optionnel)</label>
-                  <textarea
-                    value={bypassComment}
-                    onChange={(e) => setBypassComment(e.target.value)}
-                    placeholder="Raison de l'approbation directe..."
-                    className="w-full mt-2 p-2 border rounded text-sm"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 justify-end">
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => bypassMutation.mutate({ invoiceId: parseInt(id!), comment: bypassComment })}
-                  disabled={bypassMutation.isPending}
-                  className="bg-amber-600 hover:bg-amber-700"
-                >
-                  Approuver directement
-                </AlertDialogAction>
-              </div>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
-      )}
+        );
+      })()}
 
       {/* History */}
       <div className="rounded-xl border bg-card">

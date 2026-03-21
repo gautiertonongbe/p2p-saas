@@ -105,7 +105,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Package, CheckCircle, XCircle, Download, FileText, Plus, Clock} from "lucide-react";
+import { ArrowLeft, Package, CheckCircle, XCircle, Download, FileText, Plus, Clock, Send, ShieldCheck, Banknote, ThumbsUp, ThumbsDown} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -154,6 +154,7 @@ export default function PurchaseOrderDetail() {
 
   const { user } = useAuth();
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [receiptNotes, setReceiptNotes] = useState("");
   const [selectedItemReceipts, setSelectedItemReceipts] = useState<Record<number, { quantity: number; condition: string }>>({});
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -249,7 +250,16 @@ export default function PurchaseOrderDetail() {
     onError: (error: any) => {
       toast.error(error.message);
     }
+  })
+  const issueMutation = trpc.purchaseOrders.issue.useMutation({
+    onSuccess: () => { toast.success("Bon de commande émis"); utils.purchaseOrders.getById.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
   });
+  const cancelMutation = trpc.purchaseOrders.cancel.useMutation({
+    onSuccess: () => { toast.success("Bon de commande annulé"); utils.purchaseOrders.getById.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const closeMutation = { mutate: (_: any) => toast.info("Clôture non disponible") };;
 
   const handleRecordReceipt = async () => {
     const items = Object.entries(selectedItemReceipts)
@@ -355,6 +365,21 @@ export default function PurchaseOrderDetail() {
             </div>
           </CardContent>
         </Card>
+      {/* Approval pending indicator */}
+      {po.status === 'issued' && (
+        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="h-8 w-8 rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center shrink-0">
+            <Shield className="h-4 w-4 text-blue-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-blue-900">En attente d'approbation</p>
+            <p className="text-xs text-blue-700 mt-0.5">
+              Les approbateurs désignés ont été notifiés. Vous recevrez une notification dès qu'une décision est prise.
+            </p>
+          </div>
+        </div>
+      )}
+
 
         <Card>
           <CardContent className="pt-6">
@@ -516,156 +541,83 @@ export default function PurchaseOrderDetail() {
             <p className="text-muted-foreground">{po.notes}</p>
           </CardContent>
         </Card>
-      )}
+      )}}
 
-      {/* Approval Actions */}
-      {po.status === 'issued' && user?.role === 'admin' && (
-        <>
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                <Shield className="h-5 w-5 text-amber-600 mt-1 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-semibold text-amber-900">Privilege administrateur</p>
-                  <p className="text-sm text-amber-800 mt-1">
-                    Vous pouvez approuver ou rejeter ce bon de commande directement
-                  </p>
+      
+      {/* ── Action Bar — sticky, role-aware ── */}
+      {(() => {
+        const isAdmin = user?.role === 'admin' || user?.role === 'procurement_manager';
+        const isApproverRole = user?.role === 'approver';
+        const STATUS_LABEL: Record<string, string> = {
+          draft: "Brouillon — bon non encore émis",
+          issued: "Émis — en attente d'approbation",
+          approved: "Approuvé — en attente de réception",
+          confirmed: "Confirmé — en attente de réception",
+          partially_received: "Partiellement reçu",
+          received: "Totalement reçu — prêt pour facturation",
+          closed: "Clôturé", cancelled: "Annulé", rejected: "Refusé",
+        };
+        const isTerminal = ['closed','cancelled','rejected'].includes(po.status);
+        return (
+          <Card className="sticky bottom-4 shadow-md border-2">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-sm text-muted-foreground">{STATUS_LABEL[po.status] || po.status}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Draft: issue */}
+                  {po.status === 'draft' && isAdmin && (
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => issueMutation.mutate({ id: po.id })} disabled={issueMutation.isPending}>
+                      <Send className="mr-2 h-4 w-4" />Émettre le bon
+                    </Button>
+                  )}
+                  {/* Issued: approve/reject */}
+                  {po.status === 'issued' && (isAdmin || isApproverRole) && (
+                    <>
+                      <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => setRejectDialogOpen(true)} disabled={rejectMutation.isPending}>
+                        <ThumbsDown className="mr-2 h-4 w-4" />Rejeter
+                      </Button>
+                      <Button variant="outline" className="border-green-200 text-green-700 hover:bg-green-50"
+                        onClick={() => setApproveDialogOpen(true)} disabled={approveMutation.isPending}>
+                        <ThumbsUp className="mr-2 h-4 w-4" />Approuver
+                      </Button>
+                    </>
+                  )}
+                  {/* Admin bypass */}
+                  {po.status === 'issued' && isAdmin && (
+                    <Button className="bg-amber-500 hover:bg-amber-600 text-white"
+                      onClick={() => setBypassDialogOpen(true)} disabled={bypassMutation.isPending}>
+                      <ShieldCheck className="mr-2 h-4 w-4" />Approuver directement
+                    </Button>
+                  )}
+                  {/* Receive goods */}
+                  {['approved','confirmed','partially_received'].includes(po.status) && (
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => setReceiptDialogOpen(true)}>
+                      <Package className="mr-2 h-4 w-4" />Enregistrer réception
+                    </Button>
+                  )}
+                  {/* Create invoice */}
+                  {['confirmed','partially_received','received'].includes(po.status) && isAdmin && (
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => setLocation(`/invoices/new?poId=${po.id}`)}>
+                      <FileText className="mr-2 h-4 w-4" />Créer une facture
+                    </Button>
+                  )}
+                  {/* Cancel */}
+                  {!isTerminal && isAdmin && (
+                    <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50"
+                      onClick={() => cancelMutation.mutate({ id: po.id })}>
+                      <XCircle className="mr-2 h-4 w-4" />Annuler
+                    </Button>
+                  )}
                 </div>
-              </div>
-              <div className="flex gap-3 mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setApproveDialogOpen(true)}
-                  disabled={approveMutation.isPending}
-                  className="border-green-200 text-green-700 hover:bg-green-50"
-                >
-                  <ThumbsUp className="mr-2 h-4 w-4" />
-                  Approuver
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setRejectDialogOpen(true)}
-                  disabled={rejectMutation.isPending}
-                  className="border-red-200 text-red-700 hover:bg-red-50"
-                >
-                  <ThumbsDown className="mr-2 h-4 w-4" />
-                  Rejeter
-                </Button>
-                <Button
-                  onClick={() => setBypassDialogOpen(true)}
-                  disabled={bypassMutation.isPending}
-                  className="bg-amber-600 hover:bg-amber-700"
-                >
-                  <Shield className="mr-2 h-4 w-4" />
-                  Approuver directement
-                </Button>
               </div>
             </CardContent>
           </Card>
-
-          {/* Approve Dialog */}
-          <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Approuver le bon de commande?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cette action approuvera le bon de commande {po.poNumber}. Cette action est irreversible.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium">Commentaire (optionnel)</label>
-                  <textarea
-                    value={approveComment}
-                    onChange={(e) => setApproveComment(e.target.value)}
-                    placeholder="Ajouter un commentaire..."
-                    className="w-full mt-2 p-2 border rounded text-sm"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 justify-end">
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => approveMutation.mutate({ poId: parseInt(id!), comment: approveComment })}
-                  disabled={approveMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  Approuver
-                </AlertDialogAction>
-              </div>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {/* Reject Dialog */}
-          <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Rejeter le bon de commande?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cette action rejettera le bon de commande {po.poNumber}. Veuillez fournir une raison.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium">Raison du rejet *</label>
-                  <textarea
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="Expliquer pourquoi ce bon de commande est rejet..."
-                    className="w-full mt-2 p-2 border rounded text-sm"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 justify-end">
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => rejectMutation.mutate({ poId: parseInt(id!), reason: rejectReason })}
-                  disabled={rejectMutation.isPending || !rejectReason.trim()}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Rejeter
-                </AlertDialogAction>
-              </div>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {/* Bypass Dialog */}
-          <AlertDialog open={bypassDialogOpen} onOpenChange={setBypassDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Approuver directement en tant qu'administrateur</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cette action approuvera le bon de commande immediatement en contournant toutes les etapes d'approbation restantes. Cette action sera enregistree dans l'historique.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium">Commentaire (optionnel)</label>
-                  <textarea
-                    value={bypassComment}
-                    onChange={(e) => setBypassComment(e.target.value)}
-                    placeholder="Raison de l'approbation directe..."
-                    className="w-full mt-2 p-2 border rounded text-sm"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 justify-end">
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => bypassMutation.mutate({ poId: parseInt(id!), comment: bypassComment })}
-                  disabled={bypassMutation.isPending}
-                  className="bg-amber-600 hover:bg-amber-700"
-                >
-                  Approuver directement
-                </AlertDialogAction>
-              </div>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
-      )}
+        );
+      })()}
 
       {/* History */}
       <div className="rounded-xl border bg-card">
