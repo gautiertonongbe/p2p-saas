@@ -1155,7 +1155,7 @@ function ToleranceSection({ isAdmin }: { isAdmin: boolean }) {
                 <div className="flex items-center justify-between">
                   <div><p className="font-medium text-sm">{label}</p><p className="text-xs text-muted-foreground">{desc}</p></div>
                   <div className="flex items-center gap-2">
-                    <Input type="number" value={cfg[key]} onChange={e => setCfg(c => ({...c, [key]: parseFloat(e.target.value) || 0}))} onFocus={e => e.target.select()} disabled={!isAdmin} className="w-20 text-center" min={0} max={100} step={0.5} />
+                    <Input type="text" inputMode="decimal" value={cfg[key] === 0 ? "" : String(cfg[key])} onChange={e => { const v = parseFloat(e.target.value.replace(",",".")); setCfg(c => ({...c, [key]: isNaN(v) ? 0 : v})); }} onFocus={e => { if (cfg[key] === 0) setCfg(c => ({...c, [key]: 0})); e.target.select(); }} onBlur={e => { if (e.target.value === "") setCfg(c => ({...c, [key]: 0})); }} placeholder="0" disabled={!isAdmin} className="w-20 text-center" />
                     <span className="text-sm text-muted-foreground">%</span>
                   </div>
                 </div>
@@ -1171,7 +1171,7 @@ function ToleranceSection({ isAdmin }: { isAdmin: boolean }) {
           <CardHeader><CardTitle>Auto-approbation facture</CardTitle><CardDescription>Approuver automatiquement les factures sous ce montant si le rapprochement réussit</CardDescription></CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              <Input type="number" value={cfg.autoApproveBelow} onChange={e => setCfg(c => ({...c, autoApproveBelow: parseFloat(e.target.value) || 0}))} onFocus={e => e.target.select()} disabled={!isAdmin} className="w-48" placeholder="0 = désactivé" />
+              <Input type="text" inputMode="decimal" value={cfg.autoApproveBelow === 0 ? "" : String(cfg.autoApproveBelow)} onChange={e => { const v = parseFloat(e.target.value.replace(/\s/g,"").replace(",",".")); setCfg(c => ({...c, autoApproveBelow: isNaN(v) ? 0 : v})); }} onBlur={e => { if (e.target.value === "") setCfg(c => ({...c, autoApproveBelow: 0})); }} placeholder="0 = désactivé" disabled={!isAdmin} className="w-48" />
               <span className="text-sm text-muted-foreground">XOF (0 = désactivé)</span>
             </div>
           </CardContent>
