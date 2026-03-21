@@ -87,19 +87,17 @@ export default function PurchaseRequestsList() {
     <div className="space-y-6">
       <PageHeader
         icon={<FileText className="h-5 w-5" />}
-        title="Demandes d'achat"
-        description="Gérez vos demandes d'achat"
-      />
-title={t('purchaseRequests.title')}
+        title={t('purchaseRequests.title')}
         description={t('purchaseRequests.list')}
         action={
           <Link href="/purchase-requests/new">
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors">
+            <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold btn-primary">
               <Plus className="h-4 w-4" />{t('purchaseRequests.new')}
             </button>
           </Link>
         }
       />
+
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
