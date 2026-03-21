@@ -179,6 +179,8 @@ function DashboardLayoutContent({
   const isMobile = useIsMobile();
   const { isAdmin, canAccessExpenses, canAccessCommunity, canAccessAnalytics, canAccessReports } = usePermissions();
   const { colorPreset } = useTheme();
+  const activeColor = COLOR_PRESETS.find(p => p.id === colorPreset)?.primary || "221 83% 53%";
+  const activeColor = COLOR_PRESETS.find(p => p.id === colorPreset)?.primary || "221 83% 53%";
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["Accueil","Achats","Finance","Opérations","Approbations","Insights","Communauté"]);
   const toggleGroup = (label: string) => setExpandedGroups(g => g.includes(label) ? g.filter(x => x !== label) : [...g, label]);
   const { data: impStatus } = trpc.impersonate.status.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -279,9 +281,9 @@ function DashboardLayoutContent({
                       className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-muted/50 transition-colors group"
                     >
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: group.color }} />
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary rounded-full" />
                         <span className={`text-xs font-semibold uppercase tracking-wider ${hasActive ? "" : "text-muted-foreground"}`}
-                          style={hasActive ? { color: group.color } : {}}>
+                          style={hasActive ? { color: `hsl(${activeColor})` } : {}}>
                           {group.label}
                         </span>
                       </div>
@@ -289,7 +291,7 @@ function DashboardLayoutContent({
                     </button>
                     {/* Group items */}
                     {isExpanded && (
-                      <div className="ml-2 pl-3 border-l border-muted space-y-0.5 mb-1" style={{ borderColor: `${group.color}30` }}>
+                      <div className="ml-2 pl-3 border-l border-muted space-y-0.5 mb-1" style={{ borderColor: `hsl(${activeColor} / 0.25)` }}>
                         {filteredItems.map(item => {
                           const isActive = location === item.path;
                           return (
@@ -297,11 +299,11 @@ function DashboardLayoutContent({
                               key={item.path}
                               onClick={() => setLocation(item.path)}
                               className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition-all text-left ${isActive ? "font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}
-                              style={isActive ? { backgroundColor: `${group.color}15`, color: group.color } : {}}
+                              style={isActive ? { backgroundColor: `hsl(${activeColor} / 0.12)`, color: `hsl(${activeColor})` } : {}}
                             >
-                              <item.icon className="h-3.5 w-3.5 shrink-0" style={isActive ? { color: group.color } : {}} />
+                              <item.icon className="h-3.5 w-3.5 shrink-0" style={isActive ? { color: `hsl(${activeColor})` } : {}} />
                               <span className="truncate">{item.label}</span>
-                              {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: group.color }} />}
+                              {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: `hsl(${activeColor})` }} />}
                             </button>
                           );
                         })}
