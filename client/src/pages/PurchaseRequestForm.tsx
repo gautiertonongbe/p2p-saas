@@ -80,10 +80,9 @@ export default function PurchaseRequestForm() {
     justification: justification.trim() || undefined,
     departmentId: departmentId ? parseInt(departmentId) : undefined,
     categoryId: categoryId ? parseInt(categoryId) : undefined,
-    costCenterId: costCenterId ? parseInt(costCenterId) : undefined,
     billingStringId: billingStringId ? parseInt(billingStringId) : undefined,
+    costCenterId: coding.costCenterId ? parseInt(coding.costCenterId) : (costCenterId ? parseInt(costCenterId) : undefined),
     glAccountId: coding.glAccountId ? parseInt(coding.glAccountId) : undefined,
-    costCenterId: coding.costCenterId ? parseInt(coding.costCenterId) : undefined,
     projectId: coding.projectId ? parseInt(coding.projectId) : undefined,
     amountEstimate: total,
     items: items.filter(it => it.itemName.trim()).map(it => ({
