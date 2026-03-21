@@ -50,7 +50,7 @@ export default function ContractsList() {
   return (
     <div className="space-y-6">
       <PageHeader
-        icon={FileText}
+        icon={<FileText className="h-5 w-5" />}
         title="Contrats"
         description="Gérez vos contrats fournisseurs et suivez les renouvellements"
         action={{ label: "Nouveau contrat", onClick: () => setLocation("/contracts/new") }}

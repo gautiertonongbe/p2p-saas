@@ -72,7 +72,7 @@ export default function SavingsTracker() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={TrendingDown} title="Suivi des économies" description={`Économies réalisées en ${year} — démontrez la valeur des achats`}
+      <PageHeader icon={<TrendingDown className="h-5 w-5" />} title="Suivi des économies" description={`Économies réalisées en ${year} — démontrez la valeur des achats`}
         action={{ label: "Enregistrer une économie", onClick: () => setShowForm(true) }} />
 
       {/* KPI cards */}

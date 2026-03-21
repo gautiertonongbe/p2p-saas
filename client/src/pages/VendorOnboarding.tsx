@@ -126,7 +126,7 @@ export default function VendorOnboardingPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={Users} title="Qualification fournisseurs"
+      <PageHeader icon={<Users className="h-5 w-5" />} title="Qualification fournisseurs"
         description="Processus structuré d'onboarding et de qualification des nouveaux fournisseurs" />
 
       {/* Stats */}
