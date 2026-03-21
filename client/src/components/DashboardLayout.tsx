@@ -73,7 +73,6 @@ const getNavGroups = (t: (key: string) => string): NavGroup[] => [
       { icon: Users, label: t("vendors.title"), path: "/vendors" },
       { icon: Users, label: t("navigation.supplierPortal"), path: "/supplier-portal" },
       { icon: ClipboardCheck, label: "Qualification", path: "/vendor-onboarding" },
-      { icon: ShieldCheck, label: "Risques fournisseurs", path: "/vendor-risk" },
       { icon: Package, label: t("inventory.title"), path: "/inventory" },
     ],
   },

@@ -1,4 +1,6 @@
+import React from "react";
 import { trpc } from "@/lib/trpc";
+import { CheckCircle, XCircle as XCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +55,141 @@ const formatDate = (date: string | Date | null) => {
   if (!date) return "-";
   return new Date(date).toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" });
 };
+
+
+// ── Risk Scoring Panel ────────────────────────────────────────────────────────
+const RISK_CRITERIA = [
+  { id: "ifu",               label: "IFU / Numéro fiscal vérifié",              blocking: true,  weight: 20, hint: "Vérifier sur le portail DGI" },
+  { id: "rccm",              label: "RCCM en cours de validité",                blocking: true,  weight: 15, hint: "Registre du commerce — vérifier la date d'expiration" },
+  { id: "conflict",          label: "Déclaration de non-conflit d'intérêt",     blocking: true,  weight: 10, hint: "Document signé par le représentant légal" },
+  { id: "rib",               label: "Coordonnées bancaires vérifiées (RIB)",    blocking: true,  weight: 15, hint: "Confirmation par téléphone avec la banque" },
+  { id: "financial",         label: "Capacité financière suffisante",           blocking: false, weight: 10, hint: "CA annuel ≥ 2× la valeur du marché envisagé" },
+  { id: "insurance",         label: "Assurance RC professionnelle valide",      blocking: false, weight: 10, hint: "Vérifier la date d'expiration" },
+  { id: "tax",               label: "Attestation de régularité fiscale (DGI)",  blocking: false, weight: 10, hint: "Quitus fiscal de moins de 3 mois" },
+  { id: "references",        label: "Références clients vérifiées",             blocking: false, weight: 5,  hint: "Au moins 2 références confirmées" },
+  { id: "no_litigation",     label: "Absence de litige connu",                  blocking: false, weight: 5,  hint: "Déclaration sur l'honneur + recherche presse" },
+];
+
+function RiskScoringPanel({ vendorId }: { vendorId: number }) {
+  const { user } = useAuth();
+  const utils = trpc.useUtils();
+  const canManage = user?.role === "admin" || user?.role === "procurement_manager";
+
+  const { data: existing } = trpc.vendorRisk.getScore.useQuery({ vendorId });
+  const [checks, setChecks] = React.useState<Record<string, boolean>>({});
+  const [notes, setNotes] = React.useState("");
+  const [initialized, setInitialized] = React.useState(false);
+
+  React.useEffect(() => {
+    if (existing && !initialized) {
+      const mapped: Record<string, boolean> = {};
+      if (existing.checks) {
+        Object.entries(existing.checks).forEach(([k, v]: [string, any]) => { mapped[k] = v?.passed || false; });
+      }
+      setChecks(mapped);
+      setNotes(existing.reviewNotes || "");
+      setInitialized(true);
+    }
+  }, [existing]);
+
+  const saveMut = trpc.vendorRisk.saveScore.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Score enregistré : ${data.score}/100`);
+      utils.vendorRisk.getScore.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const score = RISK_CRITERIA.reduce((s, c) => s + (checks[c.id] ? c.weight : 0), 0);
+  const blocked = RISK_CRITERIA.some(c => c.blocking && !checks[c.id]);
+  const riskLevel = blocked ? "blocked" : score >= 80 ? "low" : score >= 60 ? "medium" : "high";
+
+  const handleSave = () => {
+    const checksPayload: Record<string, { passed: boolean; notes: string }> = {};
+    RISK_CRITERIA.forEach(c => { checksPayload[c.id] = { passed: checks[c.id] || false, notes: "" }; });
+    saveMut.mutate({ vendorId, checks: checksPayload, reviewNotes: notes || undefined });
+  };
+
+  const toggle = (id: string) => {
+    if (!canManage) return;
+    setChecks(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const scoreColor = riskLevel === "low" ? "text-emerald-700" : riskLevel === "medium" ? "text-amber-700" : "text-red-700";
+  const scoreBg = riskLevel === "low" ? "bg-emerald-50 border-emerald-200" : riskLevel === "medium" ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200";
+  const scoreLabel = riskLevel === "blocked" ? "Bloqué — documents obligatoires manquants" : riskLevel === "low" ? "Risque faible" : riskLevel === "medium" ? "Risque modéré" : "Risque élevé";
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Shield className="h-4 w-4 text-blue-600" />Évaluation des risques fournisseur
+          </CardTitle>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-semibold ${scoreBg} ${scoreColor}`}>
+            <span>{score}/100</span>
+            <span className="font-medium">{scoreLabel}</span>
+          </div>
+        </div>
+        {existing?.reviewedAt && (
+          <p className="text-xs text-muted-foreground">Dernière évaluation : {new Date(existing.reviewedAt).toLocaleDateString("fr-FR")}</p>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {/* Progress bar */}
+        <div className="h-2 bg-muted rounded-full mb-4">
+          <div className={`h-full rounded-full transition-all ${riskLevel === "low" ? "bg-emerald-500" : riskLevel === "medium" ? "bg-amber-500" : "bg-red-500"}`}
+            style={{ width: `${score}%` }} />
+        </div>
+
+        {/* Checklist */}
+        {RISK_CRITERIA.map(criterion => {
+          const checked = checks[criterion.id] || false;
+          return (
+            <div key={criterion.id}
+              onClick={() => toggle(criterion.id)}
+              className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${canManage ? "cursor-pointer" : "cursor-default"} ${checked ? "bg-emerald-50/60 border-emerald-200" : criterion.blocking ? "bg-red-50/30 border-red-100" : "border-muted hover:bg-muted/30"}`}>
+              <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${checked ? "bg-emerald-500 border-emerald-500" : criterion.blocking ? "border-red-300" : "border-gray-300"}`}>
+                {checked && <CheckCircle className="h-3.5 w-3.5 text-white" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-sm font-medium ${checked ? "text-emerald-800" : ""}`}>{criterion.label}</span>
+                  {criterion.blocking && !checked && (
+                    <span className="text-[11px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">Obligatoire</span>
+                  )}
+                  <span className="text-xs text-muted-foreground ml-auto">{criterion.weight} pts</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">{criterion.hint}</p>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Notes */}
+        {canManage && (
+          <div className="pt-2 space-y-1.5">
+            <label className="text-sm font-medium text-muted-foreground">Notes de l'évaluateur</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+              className="w-full text-sm px-3 py-2 rounded-lg border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Observations sur le fournisseur..." />
+          </div>
+        )}
+
+        {/* Save */}
+        {canManage && (
+          <button onClick={handleSave} disabled={saveMut.isPending}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold btn-primary text-white disabled:opacity-50 mt-2">
+            {saveMut.isPending ? "Enregistrement..." : "Enregistrer l'évaluation"}
+          </button>
+        )}
+        {!canManage && existing && (
+          <p className="text-xs text-muted-foreground text-center pt-2">Seuls les responsables achats peuvent modifier cette évaluation.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function VendorDetail() {
   const { t } = useTranslation();
@@ -312,6 +449,7 @@ export default function VendorDetail() {
             )}
           </TabsTrigger>
           <TabsTrigger value="history">Historique</TabsTrigger>
+          <TabsTrigger value="risk">Évaluation risque</TabsTrigger>
         </TabsList>
 
         {/* Info Tab */}
