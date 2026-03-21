@@ -84,7 +84,7 @@ function ConditionRow({ cond, onChange, onDelete }: { cond: Condition; onChange:
 function StepCard({ step, index, total, users, onChange, onDelete, onMoveUp, onMoveDown }: any) {
   const [expanded, setExpanded] = useState(false);
   const typeInfo = STEP_TYPES.find(t => t.type === step.approverType) || STEP_TYPES[0];
-  const colors: Record<string, string> = {
+  const iconBg: Record<string, string> = {
     blue: "bg-blue-50 border-blue-200 text-blue-700",
     purple: "bg-purple-50 border-purple-200 text-purple-700",
     cyan: "bg-cyan-50 border-cyan-200 text-cyan-700",
@@ -94,30 +94,52 @@ function StepCard({ step, index, total, users, onChange, onDelete, onMoveUp, onM
 
   return (
     <div className="relative">
-      <div className="border rounded-xl bg-card overflow-hidden">
+      <div className={`border-2 rounded-xl bg-card overflow-hidden transition-colors ${expanded ? "border-blue-300" : "border-border"}`}>
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className="flex flex-col gap-0.5">
-            <button onClick={onMoveUp} disabled={index === 0} className="h-4 w-4 flex items-center justify-center disabled:opacity-30 hover:text-foreground text-muted-foreground transition-colors">
-              <ChevronUp className="h-3 w-3" />
+          {/* Step number + reorder */}
+          <div className="flex flex-col items-center gap-0.5 shrink-0">
+            <button onClick={onMoveUp} disabled={index === 0}
+              className="h-5 w-5 flex items-center justify-center disabled:opacity-20 hover:bg-muted rounded transition-colors text-muted-foreground">
+              <ChevronUp className="h-3.5 w-3.5" />
             </button>
-            <button onClick={onMoveDown} disabled={index === total - 1} className="h-4 w-4 flex items-center justify-center disabled:opacity-30 hover:text-foreground text-muted-foreground transition-colors">
-              <ChevronDown className="h-3 w-3" />
+            <span className="text-xs font-bold text-muted-foreground w-5 text-center">{index + 1}</span>
+            <button onClick={onMoveDown} disabled={index === total - 1}
+              className="h-5 w-5 flex items-center justify-center disabled:opacity-20 hover:bg-muted rounded transition-colors text-muted-foreground">
+              <ChevronDown className="h-3.5 w-3.5" />
             </button>
           </div>
-          <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border ${colors[typeInfo.color]}`}>
+          {/* Type icon */}
+          <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border-2 ${iconBg[typeInfo.color]}`}>
             <typeInfo.icon className="h-4 w-4" />
           </div>
+          {/* Label + type */}
           <div className="flex-1 min-w-0">
-            <input value={step.label} onChange={e => onChange({ ...step, label: e.target.value })}
-              className="text-sm font-semibold bg-transparent border-none outline-none focus:bg-muted/50 rounded px-1 w-full" />
-            <p className="text-xs text-muted-foreground">{typeInfo.label}{step.isParallel ? " · Parallèle" : " · Séquentielle"}</p>
+            <div className="flex items-center gap-1 mb-0.5">
+              <input
+                value={step.label}
+                onChange={e => onChange({ ...step, label: e.target.value })}
+                className="text-sm font-semibold bg-transparent border-b border-dashed border-muted-foreground/40 outline-none hover:border-foreground focus:border-blue-500 focus:bg-blue-50/30 rounded-sm px-1 w-full transition-colors"
+                placeholder="Nom de l'étape..." title="Cliquez pour renommer"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs px-1.5 py-0.5 rounded font-medium border ${iconBg[typeInfo.color]}`}>{typeInfo.label}</span>
+              <span className="text-xs text-muted-foreground">{step.isParallel ? "Parallèle" : "Séquentielle"}</span>
+              {step.timeoutHours && <span className="text-xs text-muted-foreground">· {step.timeoutHours}h max</span>}
+            </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => setExpanded(!expanded)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
+          {/* Actions */}
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => setExpanded(!expanded)}
+              title={expanded ? "Fermer les paramètres" : "Configurer cette étape"}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${expanded ? "bg-blue-100 text-blue-700 border border-blue-200" : "hover:bg-muted text-muted-foreground border border-transparent"}`}>
               <Settings className="h-3.5 w-3.5" />
+              {expanded ? "Fermer" : "Configurer"}
             </button>
-            <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors text-muted-foreground">
+            <button onClick={onDelete}
+              className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors text-muted-foreground border border-transparent">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -351,7 +373,11 @@ export default function WorkflowBuilder() {
               </CardHeader>
               <CardContent>
                 {/* Step type palette */}
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="mb-4">
+                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                    <Plus className="h-3 w-3" />Ajouter une étape d'approbation :
+                  </p>
+                  <div className="flex flex-wrap gap-2">
                   {STEP_TYPES.map(type => {
                     const colorClasses: Record<string, string> = {
                       blue: "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100",
@@ -367,13 +393,14 @@ export default function WorkflowBuilder() {
                       </button>
                     );
                   })}
+                  </div>
                 </div>
 
                 {workflow.steps.length === 0 ? (
                   <div className="text-center py-10 border-2 border-dashed rounded-xl">
                     <GitBranch className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Ajoutez des étapes en cliquant sur les boutons ci-dessus</p>
-                    <p className="text-xs text-muted-foreground mt-1">Chaque étape correspond à un niveau d'approbation</p>
+                    <p className="text-sm text-muted-foreground">Cliquez sur un type d'approbateur ci-dessus pour ajouter une étape</p>
+                  <p className="text-xs text-muted-foreground mt-1">Ex : Manager → Directeur Financier → DG</p>
                   </div>
                 ) : (
                   <div>
