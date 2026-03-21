@@ -133,6 +133,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { ApprovalChainVisualization } from "@/components/ApprovalChainVisualization";
 import { EntityHistory } from "@/components/EntityHistory";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Shield, AlertCircle, ThumbsUp, ThumbsDown } from "lucide-react";
@@ -196,6 +197,10 @@ export default function PurchaseOrderDetail() {
 
   const { data: po, isLoading } = trpc.purchaseOrders.getById.useQuery(
     { id: parseInt(id!) },
+    { enabled: !!id }
+  );
+  const { data: approvals = [] } = trpc.approvals.getByEntity.useQuery(
+    { entityType: "purchaseOrder", entityId: parseInt(id!) },
     { enabled: !!id }
   );
 
@@ -365,6 +370,12 @@ export default function PurchaseOrderDetail() {
             </div>
           </CardContent>
         </Card>
+
+      {/* Approval chain - Coupa style */}
+      {approvals && approvals.length > 0 && (
+        <ApprovalChainVisualization approvals={approvals} />
+      )}
+
       {/* Approval pending indicator */}
       {po.status === 'issued' && (
         <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">

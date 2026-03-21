@@ -60,6 +60,39 @@ export const approvalsRouter = router({
     }),
 
   // Get approval history for a request
+
+  // Get approvals for any entity type (PR, PO, Invoice)
+  getByEntity: protectedProcedure
+    .input(z.object({ 
+      entityType: z.enum(["purchaseRequest", "purchaseOrder", "invoice"]),
+      entityId: z.number() 
+    }))
+    .query(async ({ ctx, input }) => {
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return [];
+      try {
+        // For PO/Invoice, find linked PR and return its approvals
+        let requestId = input.entityId;
+        if (input.entityType === "purchaseOrder") {
+          const res = await dbInstance.execute(`SELECT requestId FROM purchaseOrders WHERE id = ${input.entityId} AND organizationId = ${ctx.user.organizationId} LIMIT 1`);
+          const row = (res as any)[0]?.[0];
+          if (!row?.requestId) return [];
+          requestId = row.requestId;
+        } else if (input.entityType === "invoice") {
+          const res = await dbInstance.execute(`SELECT po.requestId FROM invoices inv LEFT JOIN purchaseOrders po ON inv.poId = po.id WHERE inv.id = ${input.entityId} AND inv.organizationId = ${ctx.user.organizationId} LIMIT 1`);
+          const row = (res as any)[0]?.[0];
+          if (!row?.requestId) return [];
+          requestId = row.requestId;
+        }
+        const approvals = await db.getApprovalsByRequest(requestId);
+        const enriched = await Promise.all(approvals.map(async (approval) => {
+          const approver = await db.getUserById(approval.approverId);
+          return { ...approval, approver: approver ? { id: approver.id, name: approver.name, email: approver.email, role: approver.role } : null };
+        }));
+        return enriched;
+      } catch { return []; }
+    }),
+
   getByRequest: protectedProcedure
     .input(z.object({ requestId: z.number() }))
     .query(async ({ ctx, input }) => {

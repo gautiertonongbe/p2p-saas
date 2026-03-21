@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { useTranslation } from "react-i18next";
 import React, { useState } from "react";
 import { toast } from "sonner";
+import { ApprovalChainVisualization } from "@/components/ApprovalChainVisualization";
 import { EntityHistory } from "@/components/EntityHistory";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Shield, ThumbsUp, ThumbsDown, ArrowLeft, CreditCard, Smartphone, Building2, Banknote, CheckCircle2, AlertCircle, Clock, Send, XCircle, ShieldCheck, FileText, AlertTriangle} from "lucide-react";
@@ -121,6 +122,12 @@ function ThreeWayMatchPanel({
         </CardContent>
       )}
     </Card>
+
+      {/* Approval chain - Coupa style */}
+      {approvals && approvals.length > 0 && (
+        <ApprovalChainVisualization approvals={approvals} />
+      )}
+
   );
 }
 
@@ -524,6 +531,10 @@ export default function InvoiceDetail() {
 
   const { data: invoice, isLoading } = trpc.invoices.getById.useQuery(
     { id: parseInt(id!) },
+    { enabled: !!id }
+  );
+  const { data: approvals = [] } = trpc.approvals.getByEntity.useQuery(
+    { entityType: "invoice", entityId: parseInt(id!) },
     { enabled: !!id }
   );
 
