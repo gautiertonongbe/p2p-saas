@@ -90,16 +90,6 @@ export default function BudgetsList() {
     <div className="space-y-6">
       <PageHeader icon={<DollarSign className="h-5 w-5" />} title="Budgets" description="Contrôle budgétaire" />
 
-        title={t('budgets.title')}
-        description={t('budgets.description')}
-        action={
-          <button onClick={() => setLocation("/budgets/new")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors">
-            <Plus className="h-4 w-4" />{t('budgets.newBudget')}
-          </button>
-        }
-      />
-
       {summary && (
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="border-0 shadow-sm" style={{ background: "linear-gradient(135deg, #eff6ff, #dbeafe)" }}>
