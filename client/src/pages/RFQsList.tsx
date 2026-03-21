@@ -1,12 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { ActionMenu } from "@/components/ActionMenu";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
-import { Plus, Search, FileText, Users, Clock, CheckCircle2 , ClipboardList} from "lucide-react";
+import { Plus, Search, FileText, Users, Clock, CheckCircle2 , ClipboardList, Eye, Edit2, ChevronRight, Send, XCircle} from "lucide-react";
 import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import {
@@ -110,7 +111,7 @@ export default function RFQsList() {
                   const s = STATUS_MAP[rfq.status] ?? STATUS_MAP.draft;
                   const isOverdue = rfq.status === "sent" && new Date(rfq.deadline) < new Date();
                   return (
-                    <TableRow key={rfq.id} className="cursor-pointer hover:bg-muted/50"
+                    <TableRow key={rfq.id} className="cursor-pointer hover:bg-muted/50 group"
                       onClick={() => setLocation(`/rfqs/${rfq.id}`)}>
                       <TableCell className="font-mono text-sm">{rfq.rfqNumber}</TableCell>
                       <TableCell className="font-medium">{rfq.title}</TableCell>
@@ -131,9 +132,13 @@ export default function RFQsList() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={e => { e.stopPropagation(); setLocation(`/rfqs/${rfq.id}`); }}>
-                          Voir
-                        </Button>
+                        <ActionMenu actions={[
+                          { icon: <Eye className="h-4 w-4" />, label: "Voir le detail", href: `/rfqs/${rfq.id}` },
+                          { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/rfqs/${rfq.id}/edit`, hidden: rfq.status !== "draft" || !canManage },
+                          { icon: <Send className="h-4 w-4" />, label: "Envoyer aux fournisseurs", hidden: rfq.status !== "draft" || !canManage, variant: "success", onClick: () => {} },
+                          { icon: <CheckCircle className="h-4 w-4" />, label: "Attribuer le marche", hidden: rfq.status !== "responses_received" || !canManage, variant: "success", onClick: () => {} },
+                          { icon: <XCircle className="h-4 w-4" />, label: "Annuler l'AO", hidden: !["draft","sent"].includes(rfq.status) || !canManage, variant: "danger", onClick: () => {} },
+                        ]} />
                       </TableCell>
                     </TableRow>
                   );

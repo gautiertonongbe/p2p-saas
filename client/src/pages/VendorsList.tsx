@@ -1,3 +1,4 @@
+import { ActionMenu } from "@/components/ActionMenu";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, Users, Building2 } from "lucide-react";
+import { Plus, Search, Users, Building2, Eye, Edit2, ChevronRight, XCircle, ShieldCheck, UserCheck} from "lucide-react";
 import { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
@@ -144,7 +145,7 @@ export default function VendorsList() {
               </TableHeader>
               <TableBody>
                 {filteredVendors.map((vendor) => (
-                  <TableRow key={vendor.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableRow key={vendor.id} className="cursor-pointer hover:bg-muted/50 group">
                     <TableCell className="font-medium">V-{vendor.id}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -167,11 +168,13 @@ export default function VendorsList() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/vendors/${vendor.id}`}>
-                        <Button variant="ghost" size="sm">
-                          {t('common.view')}
-                        </Button>
-                      </Link>
+                      <ActionMenu actions={[
+                        { icon: <Eye className="h-4 w-4" />, label: "Voir le profil", href: `/vendors/${vendor.id}` },
+                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/vendors/${vendor.id}/edit`, hidden: !canManage },
+                        { icon: <ShieldCheck className="h-4 w-4" />, label: "Evaluer le risque", href: `/vendors/${vendor.id}`, hidden: !canManage, variant: "warning" },
+                        { icon: <UserCheck className="h-4 w-4" />, label: "Qualifier le fournisseur", href: `/vendor-onboarding?vendorId=${vendor.id}`, hidden: !canManage, variant: "success" },
+                        { icon: <XCircle className="h-4 w-4" />, label: vendor.status === "inactive" ? "Reactivate" : "Desactiver", hidden: !canManage, variant: "danger", onClick: () => {} },
+                      ]} />
                     </TableCell>
                   </TableRow>
                 ))}

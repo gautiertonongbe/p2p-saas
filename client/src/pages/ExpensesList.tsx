@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
+import { ActionMenu } from "@/components/ActionMenu";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, FileText, Clock, CheckCircle, XCircle, DollarSign, TrendingUp, Loader2, Filter , Receipt} from "lucide-react";
+import { Plus, FileText, Clock, CheckCircle, XCircle, DollarSign, TrendingUp, Loader2, Filter , Receipt, Eye, Edit2, ChevronRight} from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 
 function fmt(n: number) { return new Intl.NumberFormat("fr-FR").format(Number(n) || 0); }
@@ -22,6 +23,8 @@ const STATUS = {
 
 export default function ExpensesList() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "procurement_manager" || user?.role === "approver";
@@ -94,7 +97,7 @@ export default function ExpensesList() {
                 </span>
               </div>
               <button onClick={() => setStatusFilter("submitted")} className="text-xs text-amber-700 hover:underline">
-                Voir →
+                
               </button>
             </div>
           </CardContent>
@@ -169,15 +172,11 @@ export default function ExpensesList() {
                       <p className="text-lg font-bold text-blue-700">{fmt(report.totalAmount)} XOF</p>
                       {report.status === "submitted" && isAdmin && (
                         <div className="flex gap-1 mt-2" onClick={e => e.stopPropagation()}>
-                          <button onClick={() => approveMut.mutate({ id: report.id })}
-                            disabled={approveMut.isPending}
-                            className="px-2 py-1 rounded text-xs bg-emerald-600 text-white hover:bg-emerald-700 font-medium">
-                            ✓ Approuver
-                          </button>
-                          <button onClick={() => setLocation(`/expenses/${report.id}`)}
-                            className="px-2 py-1 rounded text-xs border text-gray-600 hover:bg-gray-50">
-                            Voir
-                          </button>
+                          <ActionMenu actions={[
+                            { icon: <Eye className="h-4 w-4" />, label: "Voir le detail", onClick: () => setLocation(`/expenses/${report.id}`) },
+                            { icon: <CheckCircle className="h-4 w-4" />, label: "Approuver", hidden: !canManage || approveMut.isPending, variant: "success", onClick: () => approveMut.mutate({ id: report.id }) },
+                            { icon: <XCircle className="h-4 w-4" />, label: "Rejeter", hidden: !canManage, variant: "danger", onClick: () => {} },
+                          ]} />
                         </div>
                       )}
                       {report.status === "draft" && report.submitterId === user?.id && (

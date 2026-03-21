@@ -1,4 +1,6 @@
 import { useTranslation } from "react-i18next";
+import { ActionMenu } from "@/components/ActionMenu";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
 import {
   Building2, Smartphone, CreditCard, Banknote,
-  DollarSign, CheckCircle2, Clock, XCircle, Search,
-} from "lucide-react";
+  DollarSign, CheckCircle2, Clock, XCircle, Search,, Eye, Edit2, ChevronRight, FileText, Download} from "lucide-react";
 import React, { useState } from "react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -48,6 +49,8 @@ const STATUS_MAP: Record<string, { label: string; icon: React.FC<any>; cls: stri
 
 export default function PaymentsList() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -190,11 +193,11 @@ export default function PaymentsList() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        {p.invoiceId && (
-                          <Button variant="ghost" size="sm" onClick={() => setLocation(`/invoices/${p.invoiceId}`)}>
-                            Voir facture
-                          </Button>
-                        )}
+                        <ActionMenu actions={[
+                          { icon: <Eye className="h-4 w-4" />, label: "Voir le paiement", onClick: () => {} },
+                          { icon: <FileText className="h-4 w-4" />, label: "Voir la facture associee", href: p.invoiceId ? `/invoices/${p.invoiceId}` : undefined, hidden: !p.invoiceId, variant: "default" },
+                          { icon: <Download className="h-4 w-4" />, label: "Telecharger le recu", onClick: () => {}, hidden: !canManage },
+                        ]} />
                       </TableCell>
                     </TableRow>
                   );

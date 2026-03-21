@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ActionMenu } from "@/components/ActionMenu";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -7,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FileText, Plus, Search, AlertTriangle, CheckCircle, Clock, XCircle, Calendar, DollarSign, Building, PowerOff, Power, MoreHorizontal } from "lucide-react";
+import { FileText, Plus, Search, AlertTriangle, CheckCircle, Clock, XCircle, Calendar, DollarSign, Building, PowerOff, Power, MoreHorizontal, Eye, Edit2, ChevronRight, RefreshCw} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 
