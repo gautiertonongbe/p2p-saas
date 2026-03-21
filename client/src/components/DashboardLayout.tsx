@@ -352,7 +352,6 @@ function DashboardLayoutContent({
 
           {/* Settings - pinned above footer like Linear/Stripe */}
           <div className="px-3 py-2 border-t">
-            {isAdmin && (
             <button
               onClick={() => setLocation("/settings")}
               className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition-all ${
@@ -369,9 +368,8 @@ function DashboardLayoutContent({
                 style={{ backgroundColor: location === "/settings" ? `hsl(${activeColor})` : `hsl(${activeColor} / 0.12)` }}>
                 <Settings className="h-3.5 w-3.5" style={{ color: location === "/settings" ? "#fff" : `hsl(${activeColor})` }} />
               </div>
-              <span>{t("navigation.settings")}</span>
+              <span>{isAdmin ? t("navigation.settings") : "Mon compte"}</span>
             </button>
-            )}
           </div>
 
           <SidebarFooter className="p-2">

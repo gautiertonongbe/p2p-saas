@@ -81,8 +81,8 @@ const SECTION_LABELS: Record<string, string> = {
 export default function Settings() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [section, setSection] = useState("organization");
   const isAdmin = user?.role === "admin";
+  const [section, setSection] = useState(isAdmin ? "organization" : "profile");
   const { colorPreset } = useTheme();
   const activeColor = COLOR_PRESETS.find(p => p.id === colorPreset)?.primary || "221 83% 53%";
 
@@ -100,18 +100,18 @@ export default function Settings() {
               <Gear className="h-4 w-4" style={{ color: `hsl(${activeColor})` }} />
             </div>
             <div>
-              <h1 className="text-sm font-semibold">Paramètres</h1>
-              <p className="text-xs text-muted-foreground">Configuration</p>
+              <h1 className="text-sm font-semibold">{isAdmin ? "Paramètres" : "Mon compte"}</h1>
+              <p className="text-xs text-muted-foreground">{isAdmin ? "Configuration" : "Profil et préférences"}</p>
             </div>
           </div>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-2">
-          {groups.map(group => (
+          {groups.filter(g => isAdmin || g === "Mon Compte").map(group => (
             <div key={group} className="mb-1">
               <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest px-4 py-2">{group}</p>
-              {SECTION_DEFS.filter(s => s.group === group).map(s => {
+              {SECTION_DEFS.filter(s => s.group === group).filter(s => isAdmin || ['profile', 'notifications', 'security'].includes(s.id)).map(s => {
                 const Icon = SECTION_ICONS[s.id] ?? Gear;
                 const active = section === s.id;
                 return (
@@ -138,15 +138,7 @@ export default function Settings() {
           ))}
         </nav>
 
-        {/* Footer */}
-        {!isAdmin && (
-          <div className="p-3 border-t bg-white">
-            <div className="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg border border-amber-200">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-              <p className="text-xs text-amber-700 font-medium">Accès admin requis</p>
-            </div>
-          </div>
-        )}
+
       </aside>
 
       {/* Content */}
@@ -1360,6 +1352,32 @@ function ProfileSection() {
 }
 
 function NotificationsSection({ isAdmin }: { isAdmin: boolean }) {
+  if (!isAdmin) {
+    return (
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Mes notifications</CardTitle>
+            <CardDescription>Préférences de notification pour votre compte</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[
+              { label: "Ma demande est approuvée ou rejetée", enabled: true },
+              { label: "Une action est requise de ma part", enabled: true },
+              { label: "Mon bon de commande est émis", enabled: true },
+              { label: "Ma facture est traitée", enabled: true },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
+                <span className="text-sm">{item.label}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Activé</span>
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground pt-2">Les préférences de notification personnalisées seront disponibles prochainement.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   const { data: org } = trpc.settings.getOrganization.useQuery();
   const utils = trpc.useUtils();
   const defaultEvents = { newPurchaseRequest: true, approvalRequired: true, approvalApproved: true, approvalRejected: true, approvalOverdue: true, budgetAlert: true, invoiceReceived: true, invoiceOverdue: true, poIssued: false, contractExpiring: true, lowStock: true, rfqResponse: true };
