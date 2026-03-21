@@ -247,8 +247,8 @@ function ResolveDisputePanel({ invoiceId, disputeReason, onSuccess }: { invoiceI
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
             <Button
-              className={resolution === "approve" ? "bg-green-600 hover:bg-green-700 text-white" : resolution === "reject" ? "bg-red-600 hover:bg-red-700 text-white" : "btn-primary text-white"}
-              disabled={notes.length < 5 || mut.isPending}
+              className={`${resolution === "approve" ? "bg-green-600 hover:bg-green-700" : resolution === "reject" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"} text-white disabled:opacity-40 disabled:cursor-not-allowed`}
+              disabled={notes.length < 3 || mut.isPending}
               onClick={() => mut.mutate({ invoiceId, resolution, notes })}>
               {mut.isPending ? "Enregistrement..." : "Confirmer"}
             </Button>
