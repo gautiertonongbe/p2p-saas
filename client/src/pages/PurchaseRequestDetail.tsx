@@ -620,7 +620,7 @@ export default function PurchaseRequestDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+
       {/* Justification required dialog */}
       <Dialog open={justifDialogOpen} onOpenChange={setJustifDialogOpen}>
         <DialogContent className="max-w-md">
@@ -651,5 +651,6 @@ export default function PurchaseRequestDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
   );
 }
