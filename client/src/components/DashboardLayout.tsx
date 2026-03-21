@@ -56,8 +56,14 @@ const getNavGroups = (t: (key: string) => string): NavGroup[] => [
       { icon: FileCheck, label: t("invoices.title"), path: "/invoices" },
       { icon: CreditCard, label: t("payments.title"), path: "/payments" },
       { icon: Receipt, label: t("expenses.title"), path: "/expenses" },
-      { icon: FileText, label: "Contrats", path: "/contracts" },
+      { icon: DollarSign, label: t("budgets.title"), path: "/budgets" },
       { icon: TrendingDown, label: "Économies", path: "/savings" },
+    ],
+  },
+  {
+    label: "Contrats", color: "#0e7490", bgColor: "#ecfeff",
+    items: [
+      { icon: FileText, label: "Contrats", path: "/contracts" },
       { icon: CalendarDays, label: "Renouvellements", path: "/renewal-calendar" },
     ],
   },
@@ -65,17 +71,17 @@ const getNavGroups = (t: (key: string) => string): NavGroup[] => [
     label: t("common.operations"), color: "#d97706", bgColor: "#fffbeb",
     items: [
       { icon: Users, label: t("vendors.title"), path: "/vendors" },
-      { icon: ClipboardCheck, label: "Qualification fournisseurs", path: "/vendor-onboarding" },
+      { icon: Users, label: t("navigation.supplierPortal"), path: "/supplier-portal" },
+      { icon: ClipboardCheck, label: "Qualification", path: "/vendor-onboarding" },
       { icon: ShieldCheck, label: "Risques fournisseurs", path: "/vendor-risk" },
       { icon: Package, label: t("inventory.title"), path: "/inventory" },
-      { icon: DollarSign, label: t("budgets.title"), path: "/budgets" },
     ],
   },
   {
     label: t("approvals.title"), color: "#dc2626", bgColor: "#fff1f2",
     items: [
       { icon: CheckCircle, label: t("approvals.queue"), path: "/approvals" },
-      { icon: GitBranch, label: "Constructeur de workflows", path: "/workflow-builder" },
+      { icon: GitBranch, label: "Workflows", path: "/workflow-builder" },
     ],
   },
   {
@@ -90,7 +96,6 @@ const getNavGroups = (t: (key: string) => string): NavGroup[] => [
     items: [
       { icon: Users, label: t("navigation.community"), path: "/community" },
       { icon: Lock, label: t("groups.title"), path: "/groups" },
-      { icon: Users, label: t("navigation.supplierPortal"), path: "/supplier-portal" },
       { icon: HelpCircle, label: "Centre d'aide", path: "/help" },
     ],
   },
