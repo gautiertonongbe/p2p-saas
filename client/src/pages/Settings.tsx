@@ -79,6 +79,7 @@ const SECTION_LABELS: Record<string, string> = {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Settings() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [section, setSection] = useState("organization");
   const isAdmin = user?.role === "admin";

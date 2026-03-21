@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useSearch } from "wouter";
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import CodingWidget, { type CodingValues } from "@/components/CodingWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ function parseNum(s: string) { return parseFloat(s.replace(/\s/g, "").replace(",
 type LineItem = { description: string; quantity: string; unitPrice: string };
 
 export default function InvoiceForm() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const urlPoId = searchString ? new URLSearchParams(searchString).get("poId") : null;
