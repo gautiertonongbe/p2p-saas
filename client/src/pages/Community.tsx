@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import {
 import { PageHeader } from "@/components/PageHeader";
+import {
   MessageSquare, Lightbulb, Megaphone, Users, ThumbsUp,
   CheckCircle, Pin, Search, Plus, X, Send, Eye, Loader2,
   HelpCircle, ArrowLeft, ChevronRight
