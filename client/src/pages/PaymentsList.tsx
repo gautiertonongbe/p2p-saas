@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
+import { PageHeader } from "@/components/PageHeader";
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
@@ -71,11 +71,7 @@ export default function PaymentsList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        icon={<CreditCard className="h-5 w-5" />}
-        title="Paiements"
-        description="Suivi des paiements fournisseurs"
-      />
+      <PageHeader icon={<CreditCard className="h-5 w-5" />} title="Paiements" description="Suivi des paiements" />
 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Paiements</h1>

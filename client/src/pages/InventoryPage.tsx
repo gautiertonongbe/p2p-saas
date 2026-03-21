@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +19,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageHeader } from "@/components/PageHeader";
 
 const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
 
@@ -76,11 +76,7 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        icon={<Package className="h-5 w-5" />}
-        title="Inventaire"
-        description="Gestion des stocks et articles"
-      />
+      <PageHeader icon={<Package className="h-5 w-5" />} title="Inventaire" description="Gestion des stocks" />
 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Inventaire</h1>

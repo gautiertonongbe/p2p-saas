@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import {
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/PageHeader";
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
@@ -97,11 +97,7 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        icon={<TrendingUp className="h-5 w-5" />}
-        title="Analyses"
-        description="Tableau de bord analytique"
-      />
+      <PageHeader icon={<TrendingUp className="h-5 w-5" />} title="Analyses" description="Tableau de bord analytique" />
 <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t("analytics.title")}</h1>

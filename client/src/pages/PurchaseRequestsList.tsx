@@ -1,4 +1,3 @@
-import { PageHeader, HeaderAction } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+import { PageHeader } from "@/components/PageHeader";
   Select,
   SelectContent,
   SelectItem,
@@ -85,18 +85,7 @@ export default function PurchaseRequestsList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        icon={<FileText className="h-5 w-5" />}
-        title={t('purchaseRequests.title')}
-        description={t('purchaseRequests.list')}
-        action={
-          <Link href="/purchase-requests/new">
-            <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold btn-primary">
-              <Plus className="h-4 w-4" />{t('purchaseRequests.new')}
-            </button>
-          </Link>
-        }
-      />
+      <PageHeader icon={<FileText className="h-5 w-5" />} title="Demandes d'achat" description="Gérez vos demandes d'achat" />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

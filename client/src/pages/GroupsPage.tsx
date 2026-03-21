@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
+import { PageHeader } from "@/components/PageHeader";
   Users, Plus, Shield, Eye, CheckCircle, BarChart2,
   MessageSquare, Receipt, FileText, X, Loader2,
   UserPlus, UserMinus, Settings, ChevronRight, Lock,
@@ -119,9 +119,7 @@ function GroupDetail({ groupId, onBack }: { groupId: number; onBack: () => void 
 
   return (
     <div className="space-y-4">
-title="Groupes & Accès"
-        description="Contrôlez les accès par groupe"
-      /><button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+      <PageHeader icon={<Lock className="h-5 w-5" />} title="Groupes & Accès" description="Permissions utilisateurs" /><button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <X className="h-4 w-4" />Fermer
       </button>
 
@@ -274,11 +272,6 @@ export default function GroupsPage() {
 
   return (
     <div className="space-y-5 pb-8">
-      <PageHeader
-        icon={<Lock className="h-5 w-5" />}
-        title="Groupes & Accès"
-        description="Contrôlez les permissions utilisateurs"
-      />
 
       <div className="flex items-center justify-between">
         <div>

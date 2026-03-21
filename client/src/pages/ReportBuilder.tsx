@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/PageHeader";
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -23,6 +22,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import {
+import { PageHeader } from "@/components/PageHeader";
   BarChart2, Download, Save, Play, Plus, Trash2, X,
   FileText, ChevronRight, LayoutGrid, Table2, LineChartIcon,
   BookOpen, RefreshCw, ChevronDown, ChevronUp, Share2,
@@ -192,11 +192,7 @@ export default function ReportBuilder() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        icon={<BarChart2 className="h-5 w-5" />}
-        title="Rapports"
-        description="Créez des rapports personnalisés"
-      />
+      <PageHeader icon={<BarChart2 className="h-5 w-5" />} title="Rapports" description="Rapports personnalisés" />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

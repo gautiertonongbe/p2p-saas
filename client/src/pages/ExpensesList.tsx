@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, FileText, Clock, CheckCircle, XCircle, DollarSign, TrendingUp, Loader2, Filter } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 function fmt(n: number) { return new Intl.NumberFormat("fr-FR").format(Number(n) || 0); }
 function fmtDate(d: string) { return d ? new Date(d).toLocaleDateString("fr-FR") : "—"; }
@@ -47,11 +47,7 @@ export default function ExpensesList() {
 
   return (
     <div className="space-y-5 pb-8">
-      <PageHeader
-        icon={<Receipt className="h-5 w-5" />}
-        title="Notes de frais"
-        description="Gérez vos remboursements de dépenses"
-      />
+      <PageHeader icon={<Receipt className="h-5 w-5" />} title="Notes de frais" description="Gérez vos remboursements" />
 <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Notes de frais</h1>
@@ -147,10 +143,6 @@ export default function ExpensesList() {
         </Card>
       ) : (
         <div className="space-y-2">
-}
-        title="Notes de frais"
-        description="Gérez vos remboursements"
-      />
 {(reports as any[]).map((report: any) => {
             const st = STATUS[report.status as keyof typeof STATUS] || STATUS.draft;
             return (

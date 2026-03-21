@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function ApprovalsList() {
   const { t } = useTranslation();
@@ -178,11 +178,6 @@ export default function ApprovalsList() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="space-y-2">
-      <PageHeader
-        icon={<CheckCircle className="h-5 w-5" />}
-        title="Approbations"
-        description="File d'attente de vos approbations"
-      />
 <label className="text-sm font-medium">Raison du rejet *</label>
                 <Textarea
                   value={rejectComments[approval.id] || ""}
@@ -267,6 +262,7 @@ export default function ApprovalsList() {
 
   return (
     <div className="space-y-6">
+      <PageHeader icon={<CheckCircle className="h-5 w-5" />} title="Approbations" description="File d'attente d'approbations" />
 <div>
         <h1 className="text-3xl font-bold tracking-tight">{t("approvals.title")}</h1>
         <p className="text-muted-foreground mt-2">{t("approvals.myApprovals")}</p>

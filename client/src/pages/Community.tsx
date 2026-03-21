@@ -1,4 +1,3 @@
-import { PageHeader, HeaderAction } from "@/components/PageHeader";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -10,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
+import { PageHeader } from "@/components/PageHeader";
   MessageSquare, Lightbulb, Megaphone, Users, ThumbsUp,
   CheckCircle, Pin, Search, Plus, X, Send, Eye, Loader2,
   HelpCircle, ArrowLeft, ChevronRight
@@ -70,6 +70,7 @@ function PostDetail({ postId, onBack }: { postId: number; onBack: () => void }) 
 
   return (
     <div className="space-y-4">
+      <PageHeader icon={<Users className="h-5 w-5" />} title="Communauté" description="Posez des questions, partagez des astuces" />
 <button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" />Retour à la communauté
       </button>
@@ -268,17 +269,6 @@ export default function Community() {
 
   return (
     <div className="space-y-5 pb-8">
-      <PageHeader
-        icon={<Users className="h-5 w-5" />}
-        title="Communauté"
-        description="Posez des questions, partagez des astuces, apprenez ensemble"
-        action={!showNewPost ? (
-          <button onClick={() => setShowNewPost(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-semibold btn-primary">
-            <Plus className="h-4 w-4" />Nouvelle publication
-          </button>
-        ) : undefined}
-      />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[

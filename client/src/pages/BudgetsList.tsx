@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function BudgetsList() {
   const { t } = useTranslation();
@@ -88,13 +88,8 @@ export default function BudgetsList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        icon={<DollarSign className="h-5 w-5" />}
-        title="Budgets"
-        description="Contrôle budgétaire et suivi des dépenses"
-      />
+      <PageHeader icon={<DollarSign className="h-5 w-5" />} title="Budgets" description="Contrôle budgétaire" />
 
-}
         title={t('budgets.title')}
         description={t('budgets.description')}
         action={
