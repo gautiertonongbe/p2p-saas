@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useLocation } from "wouter";
+import { useState, useRef, useEffect } from "react";
+import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import CodingWidget, { type CodingValues } from "@/components/CodingWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,40 +7,71 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, FileText, Plus, Trash2, Scan, Loader2, Upload } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, Scan, Loader2, CheckCircle, Package } from "lucide-react";
 import { toast } from "sonner";
 
-function fmt(n: number) {
-  return new Intl.NumberFormat("fr-FR").format(n);
-}
-
-function parseNum(s: string) {
-  return parseFloat(s.replace(/\s/g, "").replace(",", ".")) || 0;
-}
+function fmt(n: number) { return new Intl.NumberFormat("fr-FR").format(n); }
+function parseNum(s: string) { return parseFloat(s.replace(/\s/g, "").replace(",", ".")) || 0; }
 
 type LineItem = { description: string; quantity: string; unitPrice: string };
 
 export default function InvoiceForm() {
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
+  const urlPoId = searchString ? new URLSearchParams(searchString).get("poId") : null;
 
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [vendorId, setVendorId] = useState("");
-  const [poId, setPoId] = useState("");
+  const [poId, setPoId] = useState(urlPoId || "");
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState("");
   const [taxAmount, setTaxAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [coding, setCoding] = useState<CodingValues>({});
   const [scanning, setScanning] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [lines, setLines] = useState<LineItem[]>([
-    { description: "", quantity: "1", unitPrice: "" }
-  ]);
+  const [lines, setLines] = useState<LineItem[]>([{ description: "", quantity: "1", unitPrice: "" }]);
 
   const { data: vendors = [] } = trpc.vendors.list.useQuery();
   const { data: orders = [] } = trpc.purchaseOrders.list.useQuery();
 
+  // Fetch PO data when poId is from URL - prefill everything
+  const { data: linkedPO } = trpc.purchaseOrders.getById.useQuery(
+    { id: parseInt(urlPoId!) },
+    { enabled: !!urlPoId }
+  );
+
+  useEffect(() => {
+    if (linkedPO && !prefilled) {
+      const po = linkedPO as any;
+      // Prefill vendor
+      if (po.vendorId) setVendorId(String(po.vendorId));
+      // Prefill PO reference
+      setPoId(String(po.id));
+      // Prefill amount from PO items
+      if (po.items?.length > 0) {
+        setLines(po.items.map((item: any) => ({
+          description: item.itemName + (item.description ? ` — ${item.description}` : ""),
+          quantity: String(item.quantity),
+          unitPrice: String(Number(item.unitPrice)),
+        })));
+      } else if (po.totalAmount) {
+        setLines([{ description: `Bon de commande ${po.poNumber}`, quantity: "1", unitPrice: String(Number(po.totalAmount)) }]);
+      }
+      // Suggest invoice number based on PO number
+      setInvoiceNumber(`FAC-${po.poNumber}`);
+      // Set due date based on payment terms (30 days default)
+      const due = new Date();
+      due.setDate(due.getDate() + 30);
+      setDueDate(due.toISOString().split("T")[0]);
+      setPrefilled(true);
+      toast.success(`Données pré-remplies depuis le BC ${po.poNumber}`);
+    }
+  }, [linkedPO, prefilled]);
+
   const utils = trpc.useUtils();
+
   const ocrMutation = trpc.ocr.extractInvoice.useMutation({
     onSuccess: (result) => {
       const d = result.data;
@@ -57,7 +88,7 @@ export default function InvoiceForm() {
       } else if (d.subtotal) {
         setLines([{ description: "Prestation", quantity: "1", unitPrice: String(d.subtotal) }]);
       }
-      toast.success("Facture scannée avec succès ! Vérifiez les informations.");
+      toast.success("Facture scannée ! Vérifiez les informations.");
       setScanning(false);
     },
     onError: (e) => { toast.error("Échec du scan: " + e.message); setScanning(false); },
@@ -68,16 +99,16 @@ export default function InvoiceForm() {
     const reader = new FileReader();
     reader.onload = (e) => {
       const base64 = (e.target?.result as string).split(",")[1];
-      const mimeType = file.type || "image/jpeg";
-      ocrMutation.mutate({ imageBase64: base64, mimeType });
+      ocrMutation.mutate({ imageBase64: base64, mimeType: file.type || "image/jpeg" });
     };
     reader.readAsDataURL(file);
   };
+
   const createMutation = trpc.invoices.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       toast.success("Facture créée avec succès");
       utils.invoices.list.invalidate();
-      setLocation("/invoices");
+      setLocation(`/invoices/${data.id}`);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -111,10 +142,7 @@ export default function InvoiceForm() {
     } as any);
   };
 
-  // Filter POs by selected vendor
-  const vendorOrders = (orders as any[]).filter(o =>
-    !vendorId || o.vendorId === parseInt(vendorId)
-  );
+  const vendorOrders = (orders as any[]).filter(o => !vendorId || o.vendorId === parseInt(vendorId));
 
   return (
     <div className="max-w-4xl mx-auto space-y-5 pb-10">
@@ -125,18 +153,34 @@ export default function InvoiceForm() {
         </button>
         <div>
           <h1 className="text-2xl font-bold">Nouvelle facture</h1>
-          <p className="text-sm text-muted-foreground">Saisir une facture fournisseur</p>
+          {linkedPO && prefilled && (
+            <p className="text-sm text-emerald-600 flex items-center gap-1 mt-0.5">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Pré-rempli depuis BC {(linkedPO as any).poNumber}
+            </p>
+          )}
+          {!linkedPO && <p className="text-sm text-muted-foreground">Saisir une facture fournisseur</p>}
         </div>
         <div className="ml-auto">
           <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden"
             onChange={e => e.target.files?.[0] && handleScanInvoice(e.target.files[0])} />
           <button onClick={() => fileInputRef.current?.click()} disabled={scanning}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 border-dashed border-blue-300 text-blue-700 hover:bg-blue-50 text-sm font-medium disabled:opacity-50 transition-colors">
-            {scanning ? <><Loader2 className="h-4 w-4 animate-spin" />Analyse en cours...</> : <><Scan className="h-4 w-4" />Scanner une facture (OCR)</>}
+            {scanning ? <><Loader2 className="h-4 w-4 animate-spin" />Analyse...</> : <><Scan className="h-4 w-4" />Scanner (OCR)</>}
           </button>
-          {scanning && <p className="text-xs text-muted-foreground text-center mt-1">Claude analyse votre facture...</p>}
         </div>
       </div>
+
+      {/* Prefill banner */}
+      {linkedPO && prefilled && (
+        <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+          <Package className="h-5 w-5 text-emerald-600 shrink-0" />
+          <div className="flex-1 text-sm">
+            <span className="font-semibold text-emerald-900">Données importées depuis le BC {(linkedPO as any).poNumber}</span>
+            <span className="text-emerald-700 ml-2">— Vérifiez et ajustez si nécessaire</span>
+          </div>
+        </div>
+      )}
 
       {/* Step 1 - Invoice info */}
       <Card>
@@ -150,20 +194,20 @@ export default function InvoiceForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Numéro de facture *</Label>
-              <Input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)}
-                placeholder="Ex: FAC-2026-0001" />
+              <Input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} placeholder="Ex: FAC-2026-0001" />
             </div>
             <div className="space-y-1.5">
               <Label>Fournisseur *</Label>
-              <Select value={vendorId || "none"} onValueChange={v => { setVendorId(v === "none" ? "" : v); setPoId(""); }}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner un fournisseur..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Sélectionner —</SelectItem>
-                  {(vendors as any[]).filter((v: any) => v.status === "active").map((v: any) => (
-                    <SelectItem key={v.id} value={String(v.id)}>{v.legalName || v.tradeName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={vendorId || ""}
+                onChange={e => { setVendorId(e.target.value); setPoId(""); }}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Sélectionner un fournisseur...</option>
+                {(vendors as any[]).filter((v: any) => v.status === "active").map((v: any) => (
+                  <option key={v.id} value={v.id}>{v.legalName || v.tradeName}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1.5">
               <Label>Date de facture *</Label>
@@ -177,20 +221,16 @@ export default function InvoiceForm() {
 
           <div className="space-y-1.5">
             <Label>Bon de commande associé <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
-            <Select value={poId || "none"} onValueChange={v => setPoId(v === "none" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Lier à un bon de commande..." /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— Aucun (facture directe) —</SelectItem>
-                {vendorOrders.map((o: any) => (
-                  <SelectItem key={o.id} value={String(o.id)}>
-                    {o.orderNumber} — {fmt(Number(o.totalAmount))} XOF
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {!poId && (
-              <p className="text-xs text-blue-600">💡 Vous pouvez créer une facture sans bon de commande associé</p>
-            )}
+            <select
+              value={poId || ""}
+              onChange={e => setPoId(e.target.value)}
+              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">— Aucun (facture directe) —</option>
+              {vendorOrders.map((o: any) => (
+                <option key={o.id} value={o.id}>{o.poNumber} — {fmt(Number(o.totalAmount))} XOF</option>
+              ))}
+            </select>
           </div>
         </CardContent>
       </Card>
@@ -210,7 +250,6 @@ export default function InvoiceForm() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {/* Header */}
           <div className="hidden sm:grid sm:grid-cols-12 gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide px-1">
             <div className="col-span-6">Description</div>
             <div className="col-span-2 text-center">Qté</div>
@@ -223,8 +262,7 @@ export default function InvoiceForm() {
             <div key={i} className="grid grid-cols-12 gap-2 items-center p-3 rounded-xl border bg-muted/20">
               <div className="col-span-12 sm:col-span-6">
                 <Input value={line.description} onChange={e => updateLine(i, "description", e.target.value)}
-                  placeholder="Description de la prestation / article..."
-                  className="border-0 bg-transparent p-0 h-8 text-sm focus-visible:ring-0" />
+                  placeholder="Description..." className="border-0 bg-transparent p-0 h-8 text-sm focus-visible:ring-0" />
               </div>
               <div className="col-span-4 sm:col-span-2">
                 <Input type="text" inputMode="decimal" value={line.quantity}
@@ -235,8 +273,7 @@ export default function InvoiceForm() {
                 <Input type="text" inputMode="decimal" value={line.unitPrice}
                   onChange={e => updateLine(i, "unitPrice", e.target.value)}
                   onFocus={e => { if (line.unitPrice === "0") updateLine(i, "unitPrice", ""); }}
-                  placeholder="0"
-                  className="h-8 text-sm text-right bg-white/80" />
+                  placeholder="0" className="h-8 text-sm text-right bg-white/80" />
               </div>
               <div className="col-span-3 sm:col-span-1 text-right">
                 <span className="text-sm font-semibold text-blue-700">
@@ -254,7 +291,6 @@ export default function InvoiceForm() {
             </div>
           ))}
 
-          {/* Tax and totals */}
           <div className="border-t pt-4 space-y-2">
             <div className="flex justify-end items-center gap-4">
               <span className="text-sm text-muted-foreground">Sous-total HT</span>
@@ -263,8 +299,7 @@ export default function InvoiceForm() {
             <div className="flex justify-end items-center gap-4">
               <Label className="text-sm text-muted-foreground">TVA / Taxes (XOF)</Label>
               <Input type="text" inputMode="decimal" value={taxAmount}
-                onChange={e => setTaxAmount(e.target.value)}
-                placeholder="0"
+                onChange={e => setTaxAmount(e.target.value)} placeholder="0"
                 className="h-8 text-sm text-right w-36" />
             </div>
             <div className="flex justify-end items-center gap-4 pt-2 border-t">
@@ -273,14 +308,12 @@ export default function InvoiceForm() {
             </div>
           </div>
 
-          {/* Coding */}
           <div className="pt-3 border-t">
             <CodingWidget value={coding} onChange={setCoding} />
           </div>
 
-          {/* Notes */}
           <div className="space-y-1.5 pt-2">
-            <Label>Notes / Commentaires <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
+            <Label>Notes <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
             <Textarea value={notes} onChange={e => setNotes(e.target.value)}
               placeholder="Conditions de paiement, références, remarques..." rows={2} />
           </div>
@@ -288,7 +321,7 @@ export default function InvoiceForm() {
       </Card>
 
       {/* Actions */}
-      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3 pb-6">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3 pb-6 sticky bottom-4 bg-background/95 backdrop-blur py-3 px-4 rounded-xl border shadow-md">
         <button type="button" onClick={() => setLocation("/invoices")}
           className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
           <ArrowLeft className="h-4 w-4" />Annuler

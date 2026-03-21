@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ApprovalChainVisualization } from "@/components/ApprovalChainVisualization";
 import { EntityHistory } from "@/components/EntityHistory";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Shield, ThumbsUp, ThumbsDown, ArrowLeft, CreditCard, Smartphone, Building2, Banknote, CheckCircle2, AlertCircle, Clock, Send, XCircle, ShieldCheck, FileText, AlertTriangle} from "lucide-react";
+import { Shield, ThumbsUp, ThumbsDown, ArrowLeft, CreditCard, Smartphone, Building2, Banknote, CheckCircle2, AlertCircle, Clock, Send, XCircle, ShieldCheck, FileText, AlertTriangle, Download} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -509,6 +509,19 @@ export default function InvoiceDetail() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+
+  const exportPDFMutation = trpc.invoices.exportPDF.useMutation({
+    onSuccess: (data) => {
+      const bytes = atob(data.pdf);
+      const arr = new Uint8Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([arr], { type: "application/pdf" }));
+      const a = document.createElement("a"); a.href = url; a.download = data.filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      toast.success("PDF téléchargé");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
   const { user } = useAuth();
 
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -617,7 +630,11 @@ export default function InvoiceDetail() {
             </p>
           </div>
         </div>
-        <div className="text-right">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => exportPDFMutation.mutate({ id: invoice.id })} disabled={exportPDFMutation.isPending}>
+            <Download className="mr-2 h-4 w-4" />
+            {exportPDFMutation.isPending ? "Génération..." : "Télécharger PDF"}
+          </Button>
           {getStatusBadge(invoice.status)}
         </div>
       </div>

@@ -523,10 +523,11 @@ export const invoicesRouter = router({
         pdfItems,
         {
           name: organization.legalName,
-          address: undefined,
-          phone: undefined,
-          email: undefined,
-          taxId: undefined,
+          address: (organization as any).address,
+          phone: (organization as any).contactPhone,
+          email: (organization as any).email,
+          taxId: (organization as any).taxId,
+          logoUrl: (organization as any).logoUrl,
         },
         {
           legalName: vendor.legalName,
