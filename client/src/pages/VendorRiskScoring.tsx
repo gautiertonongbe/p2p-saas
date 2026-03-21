@@ -79,6 +79,7 @@ function ScoreBadge({ score, blocked }: { score: number; blocked: boolean }) {
 export default function VendorRiskScoring() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
+  const canManage = user?.role === 'admin' || user?.role === 'procurement_manager';
   const search = useSearch();
   const vendorId = parseInt(new URLSearchParams(search).get("vendorId") || "0");
   const utils = trpc.useUtils();

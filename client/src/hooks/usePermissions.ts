@@ -12,33 +12,69 @@ export type Permission =
 export function usePermissions() {
   const { user } = useAuth();
   const { data: groupPerms = [] } = trpc.groups.myPermissions.useQuery(undefined, {
-    staleTime: 60000, // Cache for 1 min
+    staleTime: 60000,
   });
 
-  // Admins and procurement managers always have all permissions
-  const isAdmin = user?.role === "admin" || user?.role === "procurement_manager";
+  const role = user?.role;
+
+  // Role hierarchy
+  const isStrictAdmin      = role === "admin";
+  const isProcurement      = role === "admin" || role === "procurement_manager";
+  const isApprover         = role === "approver";
+  const isRequester        = role === "requester" || (!isProcurement && !isApprover);
+
+  // Legacy — kept for backward compat (treats procurement as admin for most checks)
+  const isAdmin = isProcurement;
 
   const hasPermission = (permission: Permission): boolean => {
-    if (isAdmin) return true;
-    return groupPerms.includes(permission);
+    if (isProcurement) return true;
+    return (groupPerms as string[]).includes(permission);
   };
 
-  const canAccessExpenses = hasPermission("access_expenses");
-  const canAccessCommunity = hasPermission("access_community");
-  const canAccessAnalytics = hasPermission("access_analytics");
-  const canAccessReports = hasPermission("access_reports");
-  const canApproveDocuments = hasPermission("approve_documents") || user?.role === "approver";
-  const canViewDocuments = hasPermission("view_documents");
+  // Specific capabilities
+  const canManageVendors       = isProcurement;
+  const canManageBudgets       = isProcurement;
+  const canManageContracts     = isProcurement;
+  const canViewVendorRisk      = isProcurement || isApprover;   // ← approvers can VIEW
+  const canEditVendorRisk      = isProcurement;                  // ← only procurement can EDIT
+  const canManageWorkflows     = isStrictAdmin;                  // ← admin only
+  const canManageGroups        = isStrictAdmin;                  // ← admin only
+  const canAccessApprovals     = isProcurement || isApprover;
+  const canCreateRequest       = true;                           // ← everyone
+  const canAccessExpenses      = hasPermission("access_expenses");
+  const canAccessCommunity     = true;                           // ← open to all
+  const canAccessAnalytics     = isProcurement || hasPermission("access_analytics");
+  const canAccessReports       = isProcurement || hasPermission("access_reports");
+  const canApproveDocuments    = hasPermission("approve_documents") || isApprover || isProcurement;
+  const canViewDocuments       = true;
 
   return {
-    hasPermission,
+    // Role flags
+    role,
+    isStrictAdmin,
+    isProcurement,
+    isApprover,
+    isRequester,
+    isAdmin, // legacy alias for isProcurement
+
+    // Capabilities
+    canManageVendors,
+    canManageBudgets,
+    canManageContracts,
+    canViewVendorRisk,
+    canEditVendorRisk,
+    canManageWorkflows,
+    canManageGroups,
+    canAccessApprovals,
+    canCreateRequest,
     canAccessExpenses,
     canAccessCommunity,
     canAccessAnalytics,
     canAccessReports,
     canApproveDocuments,
     canViewDocuments,
-    isAdmin,
+
+    hasPermission,
     groupPerms,
   };
 }

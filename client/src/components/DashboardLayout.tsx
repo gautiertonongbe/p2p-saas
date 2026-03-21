@@ -283,23 +283,27 @@ function DashboardLayoutContent({
                   const isApprover = role === "approver";
                   const isRequester = role === "requester" || (!isAdmin && !isApprover);
 
-                  // Admin-only pages
-                  if (["/vendor-onboarding", "/vendor-risk", "/workflow-builder", "/groups", "/contracts", "/savings", "/renewal-calendar"].includes(item.path) && !isProcurement) return false;
+                  const isOnlyAdmin = user?.role === "admin"; // strict admin, not procurement
 
-                  // Finance pages — admin/procurement only
-                  if (["/payments", "/budgets", "/rfqs"].includes(item.path) && !isProcurement) return false;
+                  // Admin-only pages (not even procurement manager)
+                  if (["/workflow-builder", "/groups"].includes(item.path) && !isOnlyAdmin) return false;
+
+                  // Procurement + admin only
+                  if (["/vendor-onboarding", "/contracts", "/savings", "/renewal-calendar", "/payments", "/budgets", "/rfqs", "/supplier-portal"].includes(item.path) && !isProcurement) return false;
+
+                  // Vendor risk — procurement + approver (read-only for approver)
+                  if (item.path === "/vendor-risk" && !isProcurement && !isApprover) return false;
 
                   // Approvals — approvers and admins only
                   if (item.path === "/approvals" && !isApprover && !isAdmin) return false;
 
-                  // Supplier portal — hide for regular users
-                  if (item.path === "/supplier-portal" && !isProcurement) return false;
+                  // Analytics/Reports — procurement always sees, others need permission
+                  if (item.path === "/analytics" && !isProcurement && !canAccessAnalytics) return false;
+                  if (item.path === "/reports" && !isProcurement && !canAccessReports) return false;
 
-                  // Group-permission gated pages
-                  if (item.path === "/expenses" && !isAdmin && !canAccessExpenses) return false;
-                  if (item.path === "/community" && !isAdmin && !canAccessCommunity) return false;
-                  if (item.path === "/analytics" && !isAdmin && !canAccessAnalytics) return false;
-                  if (item.path === "/reports" && !isAdmin && !canAccessReports) return false;
+                  // Community — open to all (remove permission gate)
+                  // Expenses — permission gated
+                  if (item.path === "/expenses" && !isProcurement && !canAccessExpenses) return false;
                   return true;
                 });
                 if (filteredItems.length === 0) return null;

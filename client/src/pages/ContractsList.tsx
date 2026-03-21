@@ -27,6 +27,8 @@ function StatusBadge({ status, days }: { status: string; days: number }) {
 
 export default function ContractsList() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");

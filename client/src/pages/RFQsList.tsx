@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +26,8 @@ const formatDate = (d: Date | string) =>
 
 export default function RFQsList() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
 
