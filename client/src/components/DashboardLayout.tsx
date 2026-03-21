@@ -229,7 +229,7 @@ function DashboardLayoutContent({
           className="border-r-0"
           disableTransition={isResizing}
         >
-          <SidebarHeader className="h-16 justify-center">
+          <SidebarHeader className="h-[72px] justify-center">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
                 onClick={toggleSidebar}
@@ -244,7 +244,7 @@ function DashboardLayoutContent({
                     <img
                       src={(org as any).logoUrl}
                       alt={(org as any).legalName || "Logo"}
-                      className="h-8 max-w-[140px] object-contain"
+                      className="h-10 max-w-[160px] object-contain"
                       onError={e => {
                         (e.target as HTMLImageElement).style.display = "none";
                         (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style");
@@ -333,27 +333,39 @@ function DashboardLayoutContent({
             </button>
           </div>
 
-          <SidebarFooter className="p-3">
+          <SidebarFooter className="p-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className={`flex items-center gap-3 rounded-lg px-1 py-1 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${impStatus?.isImpersonating ? "hover:bg-amber-100 bg-amber-50" : "hover:bg-accent/50"}`}>
-                  <Avatar className="h-9 w-9 border shrink-0">
+                <button className={`flex items-center gap-3 rounded-xl px-2 py-2 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${impStatus?.isImpersonating ? "hover:bg-amber-100 bg-amber-50" : "hover:bg-muted/60"}`}>
+                  <Avatar className="h-10 w-10 border-2 border-muted shrink-0">
                     <AvatarImage src={(user as any)?.avatarUrl || undefined} alt={user?.name || ""} />
-                    <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
+                    <AvatarFallback className="text-sm font-semibold" style={{ backgroundColor: `hsl(${activeColor} / 0.15)`, color: `hsl(${activeColor})` }}>
+                      {(user?.name || "?").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0,2)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none">
+                    <p className="text-sm font-semibold truncate leading-tight">
                       {user?.name || "-"}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate mt-1.5">
-                      {user?.email || "-"}
+                    <p className="text-xs text-muted-foreground truncate mt-0.5 capitalize">
+                      {user?.role?.replace("_", " ") || user?.email || "-"}
                     </p>
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-52">
+                <div className="px-2 py-1.5 border-b mb-1">
+                  <p className="text-xs font-semibold truncate">{user?.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                </div>
+                <DropdownMenuItem
+                  onClick={() => setLocation("/settings?section=profile")}
+                  className="cursor-pointer"
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>Mon profil</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"
