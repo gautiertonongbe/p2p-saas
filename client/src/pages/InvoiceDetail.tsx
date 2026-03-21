@@ -126,8 +126,10 @@ function ThreeWayMatchPanel({
 }
 
 // ── Dispute Panel ─────────────────────────────────────────────────────────────
-function DisputePanel({ invoiceId, onSuccess }: { invoiceId: number; onSuccess: () => void }) {
-  const [open, setOpen] = useState(false);
+function DisputePanel({ invoiceId, onSuccess, externalOpen, onExternalClose }: { invoiceId: number; onSuccess: () => void; externalOpen?: boolean; onExternalClose?: () => void }) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = (v: boolean) => { setInternalOpen(v); if (!v && onExternalClose) onExternalClose(); };
   const [reason, setReason] = useState("");
   const [details, setDetails] = useState("");
 
@@ -758,7 +760,7 @@ export default function InvoiceDetail() {
                   )}
                   {invoice.status === 'approved' && isAdmin && (
                     <Button className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => markAsPaidMutation.mutate({ invoiceId: invoice.id, paymentDate: new Date().toISOString().split("T")[0], paymentMethod: "bank_transfer" })}
+                      onClick={() => markAsPaidMutation.mutate({ invoiceId: invoice.id, valueDate: new Date().toISOString().split("T")[0], paymentMethod: "bank_transfer" })}
                       disabled={markAsPaidMutation?.isPending}>
                       <Banknote className="mr-2 h-4 w-4" />Marquer comme payée
                     </Button>
@@ -848,7 +850,7 @@ export default function InvoiceDetail() {
       </div>
 
       {["pending", "approved"].includes(invoice.status) && (
-        <DisputePanel invoiceId={parseInt(id!)} onSuccess={() => utils.invoices.getById.invalidate()} />
+        <DisputePanel invoiceId={parseInt(id!)} onSuccess={() => utils.invoices.getById.invalidate()} externalOpen={disputeDialogOpen} onExternalClose={() => setDisputeDialogOpen(false)} />
       )}
 
       {/* Resolve Dispute panel — admin/manager on disputed invoices */}
