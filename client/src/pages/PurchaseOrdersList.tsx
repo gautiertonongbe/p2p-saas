@@ -79,7 +79,7 @@ export default function PurchaseOrdersList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<ShoppingCart className="h-5 w-5" />} title="Bons de commande" description="Gérez vos commandes fournisseurs" />
+      <PageHeader icon={<ShoppingCart className="h-5 w-5" />} title={t("purchaseOrders.title")} description={t("purchaseOrders.description")} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

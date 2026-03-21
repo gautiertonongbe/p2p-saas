@@ -61,7 +61,7 @@ export default function VendorsList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<Users className="h-5 w-5" />} title="Fournisseurs" description="Gérez vos fournisseurs" />
+      <PageHeader icon={<Users className="h-5 w-5" />} title={t("vendors.title")} description={t("vendors.description")} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

@@ -52,13 +52,45 @@
     "print": "Print",
     "creating": "Creating...",
     "viewAll": "View all",
-    "review": "Review"
+    "review": "Review",
+    "send": "Send",
+    "approve": "Approve",
+    "reject": "Reject",
+    "new": "New",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "country": "Country",
+    "draft": "Draft",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "cancelled": "Cancelled",
+    "title": "Title",
+    "saveDraft": "Save Draft",
+    "submitting": "Submitting...",
+    "saving": "Saving...",
+    "noDescription": "No description",
+    "period": "Period",
+    "from": "From",
+    "to": "To",
+    "reference": "Reference",
+    "type": "Type",
+    "category": "Category",
+    "project": "Project",
+    "department": "Department",
+    "purchases": "Purchases",
+    "finance": "Finance",
+    "operations": "Operations"
   },
   "auth": {
     "signIn": "Sign in",
     "signOut": "Sign out",
     "signInToContinue": "Sign in to continue",
-    "accessRequiresAuth": "Access to this dashboard requires authentication. Continue to launch the login flow.",
+    "accessRequiresAuth": "Access to this dashboard requires authentication.",
     "welcomeBack": "Welcome back"
   },
   "navigation": {
@@ -73,7 +105,12 @@
     "settings": "Settings",
     "inventory": "Inventory",
     "payments": "Payments",
-    "rfqs": "RFQs"
+    "rfqs": "RFQs",
+    "expenses": "Expenses",
+    "community": "Community",
+    "groups": "Groups & Access",
+    "supplierPortal": "Supplier Portal",
+    "reports": "Reports"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -161,6 +198,7 @@
   },
   "approvals": {
     "title": "Approvals",
+    "queue": "Approval Queue",
     "pending": "Pending",
     "completed": "Completed",
     "myApprovals": "My Approvals",
@@ -168,12 +206,10 @@
     "reject": "Reject",
     "delegate": "Delegate",
     "approver": "Approver",
-    "approvalLevel": "Approval Level",
     "approvalDate": "Approval Date",
     "comments": "Comments",
     "approvalHistory": "Approval History",
     "approvalPolicy": "Approval Policy",
-    "approvalLimit": "Approval Limit",
     "status": {
       "pending": "Pending",
       "approved": "Approved",
@@ -188,37 +224,27 @@
     "edit": "Edit PO",
     "view": "View PO",
     "list": "Purchase orders list",
+    "description": "Manage your vendor orders",
     "poNumber": "PO Number",
     "vendor": "Vendor",
     "orderDate": "Order Date",
     "deliveryDate": "Delivery Date",
     "paymentTerms": "Payment Terms",
-    "shippingAddress": "Shipping Address",
-    "billingAddress": "Billing Address",
+    "totalAmount": "Total Amount",
+    "issueOrder": "Issue Order",
+    "closeOrder": "Close Order",
+    "expectedDelivery": "Expected delivery date",
     "status": {
       "draft": "Draft",
       "issued": "Issued",
       "confirmed": "Confirmed",
       "partially_received": "Partially Received",
-      "fully_received": "Fully Received",
+      "received": "Received",
       "closed": "Closed",
       "cancelled": "Cancelled",
-      "received": "Received",
       "approved": "Approved",
       "rejected": "Rejected"
-    },
-    "items": "Order Items",
-    "totalAmount": "Total Amount",
-    "issueOrder": "Issue Order",
-    "confirmReceipt": "Confirm Receipt",
-    "closeOrder": "Close Order",
-    "threeWayMatch": "Three-Way Match",
-    "matchStatus": {
-      "pending": "Pending",
-      "matched": "Matched",
-      "discrepancy": "Discrepancy Detected"
-    },
-    "expectedDelivery": "Expected delivery date"
+    }
   },
   "vendors": {
     "title": "Vendors",
@@ -227,15 +253,12 @@
     "edit": "Edit Vendor",
     "view": "View Vendor",
     "list": "Vendor List",
+    "description": "Manage your vendors and partners",
     "legalName": "Legal Name",
     "tradeName": "Trade Name",
     "vendorCode": "Vendor Code",
     "category": "Category",
     "contactPerson": "Contact Person",
-    "email": "Email",
-    "phone": "Phone",
-    "address": "Address",
-    "country": "Country",
     "taxId": "Tax ID",
     "paymentMethod": "Payment Method",
     "paymentMethods": {
@@ -255,9 +278,7 @@
       "pending": "Pending"
     },
     "performance": "Performance",
-    "contracts": "Contracts",
-    "onboarding": "Onboarding",
-    "approvedSupplierList": "Approved Supplier List"
+    "contracts": "Contracts"
   },
   "invoices": {
     "title": "Invoices",
@@ -266,14 +287,14 @@
     "edit": "Edit Invoice",
     "view": "View Invoice",
     "list": "Invoice List",
+    "description": "Manage your vendor invoices",
     "invoiceNumber": "Invoice Number",
     "invoiceDate": "Invoice Date",
     "dueDate": "Due Date",
-    "vendor": "Vendor",
-    "purchaseOrder": "Purchase Order",
     "amount": "Amount",
     "taxAmount": "Tax Amount",
-    "totalAmount": "Total Amount",
+    "uploadInvoice": "Upload Invoice",
+    "markAsPaid": "Mark as Paid",
     "status": {
       "draft": "Draft",
       "pending": "Pending",
@@ -284,31 +305,12 @@
       "disputed": "Disputed",
       "revised": "Revision requested"
     },
-    "uploadInvoice": "Upload Invoice",
-    "ocrExtraction": "OCR Extraction",
-    "extractData": "Extract Data",
-    "threeWayMatch": "Three-Way Match",
-    "matchWithPO": "Match with PO",
-    "matchWithReceipt": "Match with Receipt",
-    "duplicateCheck": "Duplicate Check",
-    "paymentTracking": "Payment Tracking",
-    "paymentDate": "Payment Date",
-    "paymentReference": "Payment Reference",
-    "markAsPaid": "Mark as Paid",
-    "upload": "Upload invoice",
     "matchStatus": {
       "matched": "Matched",
-      "partial_match": "Partial match",
       "unmatched": "Unmatched",
       "exception": "Exception",
       "manual_review": "Manual review"
-    },
-    "matchStatusLabel": "Match status",
-    "dispute": "Raise dispute",
-    "resolveDispute": "Resolve dispute",
-    "requestRevision": "Request revision",
-    "submitRevision": "Submit revision",
-    "createFromPO": "Create from PO"
+    }
   },
   "budgets": {
     "title": "Budgets",
@@ -317,77 +319,235 @@
     "edit": "Edit Budget",
     "view": "View Budget",
     "list": "Budget List",
+    "description": "Budget control and spend tracking",
     "budgetName": "Budget Name",
-    "budgetCode": "Budget Code",
-    "fiscalYear": "Fiscal Year",
-    "department": "Department",
-    "project": "Project",
-    "category": "Category",
+    "newBudget": "New budget",
     "allocatedAmount": "Allocated Amount",
     "spentAmount": "Spent Amount",
-    "committedAmount": "Committed Amount",
     "availableAmount": "Available Amount",
     "utilizationRate": "Utilization Rate",
-    "overspendingAlert": "Overspending Alert",
-    "budgetVsActual": "Budget vs Actual",
+    "totalBudget": "Total Budget",
+    "spent": "Spent",
+    "available": "Available",
     "status": {
       "active": "Active",
       "inactive": "Inactive",
-      "closed": "Closed"
-    },
-    "alerts": {
-      "nearLimit": "Near Limit",
       "exceeded": "Exceeded",
-      "available": "Available"
+      "depleted": "Depleted"
+    }
+  },
+  "payments": {
+    "title": "Payments",
+    "new": "New Payment",
+    "list": "Payment List",
+    "description": "Vendor payment tracking",
+    "status": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed"
+    }
+  },
+  "inventory": {
+    "title": "Inventory",
+    "new": "New Item",
+    "list": "Inventory List",
+    "description": "Stock and inventory management",
+    "itemName": "Item Name",
+    "sku": "SKU",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "warehouse": "Warehouse",
+    "reorderLevel": "Reorder Level"
+  },
+  "rfqs": {
+    "title": "RFQs",
+    "new": "New RFQ",
+    "list": "RFQ List",
+    "description": "Request for quotation management",
+    "rfqNumber": "RFQ Number",
+    "deadline": "Deadline",
+    "status": {
+      "draft": "Draft",
+      "open": "Open",
+      "closed": "Closed",
+      "awarded": "Awarded",
+      "cancelled": "Cancelled"
+    }
+  },
+  "expenses": {
+    "title": "Expenses",
+    "new": "New Expense Report",
+    "description": "Manage your expense reimbursements",
+    "reportNumber": "Report Number",
+    "totalAmount": "Total Amount",
+    "submittedBy": "Submitted by",
+    "submitForApproval": "Submit for Approval",
+    "saveDraft": "Save Draft",
+    "markReimbursed": "Mark as Reimbursed",
+    "noExpenses": "No expense reports",
+    "createFirst": "Create your first expense report",
+    "pendingCount": "report(s) pending approval",
+    "categories": {
+      "transport": "Transport / Travel",
+      "accommodation": "Accommodation / Hotel",
+      "meals": "Meals / Catering",
+      "fuel": "Fuel",
+      "supplies": "Office Supplies",
+      "communication": "Communication / Phone",
+      "training": "Training / Conference",
+      "entertainment": "Client Entertainment",
+      "medical": "Medical Expenses",
+      "other": "Other"
     },
-    "description": "Manage budget allocations by department",
-    "newBudget": "New budget"
+    "status": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "reimbursed": "Reimbursed"
+    },
+    "reimbursement": {
+      "method": "Reimbursement Method",
+      "reference": "Reference (optional)",
+      "bank_transfer": "Bank Transfer",
+      "mobile_money": "Mobile Money (MTN/Moov)",
+      "cash": "Cash",
+      "confirmed": "Reimbursement confirmed",
+      "info": "Reimbursement info"
+    },
+    "score": {
+      "title": "Compliance Score",
+      "gradeA": "Excellent — ready to submit",
+      "gradeB": "Good — minor improvements possible",
+      "gradeC": "Acceptable — corrections recommended",
+      "gradeD": "Insufficient — corrections required",
+      "gradeF": "Non-compliant — mandatory corrections"
+    },
+    "line": {
+      "date": "Date",
+      "category": "Category",
+      "description": "Description",
+      "vendor": "Vendor (opt.)",
+      "amount": "Amount (XOF)",
+      "billable": "Bill."
+    },
+    "addLine": "Add line",
+    "billableHint": "Bill. = Billable to client",
+    "rejectionReason": "Rejection reason",
+    "deleteReport": "Report deleted",
+    "approved": "Expense report approved",
+    "submitted": "Submitted for approval!"
+  },
+  "community": {
+    "title": "Community",
+    "description": "Ask questions, share tips, learn together",
+    "newPost": "New Post",
+    "noPostsYet": "No posts yet",
+    "beFirst": "Be the first to ask a question or share a tip!",
+    "createFirst": "Create the first post",
+    "openQuestions": "Open questions",
+    "tipsShared": "Tips shared",
+    "announcements": "Announcements",
+    "totalPosts": "Total posts",
+    "postTypes": {
+      "question": "Question",
+      "tip": "Tip",
+      "announcement": "Announcement",
+      "discussion": "Discussion"
+    },
+    "post": {
+      "newTitle": "New Post",
+      "title": "Title",
+      "content": "Content",
+      "tags": "Tags (comma separated)",
+      "publish": "Publish",
+      "reply": "Reply",
+      "replies": "reply(ies)",
+      "views": "views",
+      "helpful": "helpful",
+      "bestAnswer": "Best answer",
+      "resolved": "Resolved",
+      "pinned": "Pinned",
+      "markBestAnswer": "Mark as best answer",
+      "yourReply": "Your reply",
+      "replyPlaceholder": "Share your experience or solution...",
+      "replyPublished": "Reply published",
+      "backToCommunity": "Back to community"
+    },
+    "filters": {
+      "all": "All",
+      "questions": "Questions",
+      "tips": "Tips",
+      "announcements": "Announcements",
+      "discussions": "Discussions"
+    },
+    "adminOnly": "Only admins can create announcements"
+  },
+  "groups": {
+    "title": "Groups & Access",
+    "new": "New Group",
+    "description": "Control user permissions and document access",
+    "noGroups": "No groups created",
+    "noGroupsDesc": "Groups allow you to control access to modules and documents",
+    "createFirst": "Create the first group",
+    "groupName": "Group name",
+    "color": "Color",
+    "members": "member(s)",
+    "pendingRequests": "pending request(s)",
+    "isMember": "Member",
+    "pendingRequest": "Pending",
+    "join": "Join",
+    "requestSent": "Request sent!",
+    "addMember": "Add member by email...",
+    "memberAdded": "Member added",
+    "memberRemoved": "Member removed",
+    "requestReviewed": "Request processed",
+    "createGroup": "Create Group",
+    "groupCreated": "Group created!",
+    "accept": "Accept",
+    "decline": "Decline",
+    "myCurrentPermissions": "Your current permissions",
+    "permissionLabels": {
+      "view_documents": "View documents",
+      "approve_documents": "Approve",
+      "access_expenses": "Expenses",
+      "access_community": "Community",
+      "access_analytics": "Analytics",
+      "access_reports": "Reports"
+    },
+    "permissionDescs": {
+      "view_documents": "Access to confidential PRs, POs, invoices",
+      "approve_documents": "Approve documents assigned to the group",
+      "access_expenses": "Access to expenses module",
+      "access_community": "Access to community forum",
+      "access_analytics": "Access to analytics dashboards",
+      "access_reports": "Access to report builder"
+    },
+    "roles": {
+      "member": "Member",
+      "admin": "Group admin"
+    },
+    "noActiveMembers": "No active members"
   },
   "analytics": {
     "title": "Analytics",
+    "description": "Analytics dashboard",
     "spendAnalysis": "Spend Analysis",
     "categorySpend": "Category Spend",
     "vendorSpend": "Vendor Spend",
     "departmentSpend": "Department Spend",
-    "savingsTracking": "Savings Tracking",
     "totalSpend": "Total Spend",
-    "averageOrderValue": "Average Order Value",
-    "topVendors": "Top Vendors",
-    "topCategories": "Top Categories",
     "spendTrend": "Spend Trend",
-    "complianceRate": "Compliance Rate",
-    "approvalTime": "Approval Time",
-    "cycleTime": "Cycle Time",
-    "customReports": "Custom Reports",
     "exportReport": "Export Report",
     "overview": "Analytics dashboard"
   },
-  "aiInsights": {
-    "title": "AI Insights",
-    "supplierPerformance": "Supplier Performance",
-    "deliveryPerformance": "Delivery Performance",
-    "pricingTrends": "Pricing Trends",
-    "riskAssessment": "Risk Assessment",
-    "recommendations": "Recommendations",
-    "generateInsights": "Generate Insights",
-    "analyzing": "Analyzing...",
-    "rating": {
-      "excellent": "Excellent",
-      "good": "Good",
-      "fair": "Fair",
-      "poor": "Poor"
-    },
-    "trend": {
-      "stable": "Stable",
-      "increasing": "Increasing",
-      "decreasing": "Decreasing",
-      "volatile": "Volatile"
-    },
-    "risk": {
-      "low": "Low",
-      "medium": "Medium",
-      "high": "High"
-    }
+  "reports": {
+    "title": "Reports",
+    "description": "Create custom reports",
+    "new": "New Report",
+    "generate": "Generate",
+    "export": "Export"
   },
   "settings": {
     "title": "Settings",
@@ -401,17 +561,13 @@
     "language": "Language",
     "currency": "Currency",
     "timezone": "Timezone",
-    "fiscalYear": "Fiscal Year",
     "approvals": {
       "title": "Approval Policies",
       "description": "Define approval rules and steps for purchase requests",
       "createPolicy": "Create Policy",
-      "createPolicyDesc": "Define a new approval policy with its steps",
       "policyName": "Policy Name",
-      "policyNamePlaceholder": "e.g. Standard Approval",
-      "policyCreated": "Policy created successfully",
+      "policyCreated": "Policy created",
       "policyDeleted": "Policy deleted",
-      "confirmDelete": "Delete this policy?",
       "approverTypes": {
         "role": "By role",
         "user": "Specific user",
@@ -437,16 +593,17 @@
     "validationError": "Validation Error",
     "requiredField": "This field is required",
     "invalidEmail": "Invalid email",
-    "invalidAmount": "Invalid amount",
-    "insufficientBudget": "Insufficient budget"
+    "unexpectedError": "An unexpected error occurred",
+    "reloadPage": "Reload the page or return to home"
   },
   "success": {
     "created": "Created successfully",
     "updated": "Updated successfully",
     "deleted": "Deleted successfully",
     "submitted": "Submitted successfully",
-    "approved": "Approved successfully",
-    "rejected": "Rejected successfully",
-    "saved": "Saved successfully"
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "saved": "Saved successfully",
+    "sent": "Sent successfully"
   }
 }

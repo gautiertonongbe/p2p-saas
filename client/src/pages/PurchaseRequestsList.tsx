@@ -85,7 +85,7 @@ export default function PurchaseRequestsList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<FileText className="h-5 w-5" />} title="Demandes d'achat" description="Gérez vos demandes d'achat" />
+      <PageHeader icon={<FileText className="h-5 w-5" />} title={t("purchaseRequests.title")} description={t("purchaseRequests.list")} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

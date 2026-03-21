@@ -97,7 +97,7 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<TrendingUp className="h-5 w-5" />} title="Analyses" description="Tableau de bord analytique" />
+      <PageHeader icon={<TrendingUp className="h-5 w-5" />} title={t("analytics.title")} description={t("analytics.description")} />
 <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t("analytics.title")}</h1>

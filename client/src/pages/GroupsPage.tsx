@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -119,7 +120,7 @@ function GroupDetail({ groupId, onBack }: { groupId: number; onBack: () => void 
 
   return (
     <div className="space-y-4">
-      <PageHeader icon={<Lock className="h-5 w-5" />} title="Groupes & Accès" description="Permissions utilisateurs" /><button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+      <PageHeader icon={<Lock className="h-5 w-5" />} title={t("groups.title")} description={t("groups.description")} /><button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <X className="h-4 w-4" />Fermer
       </button>
 
@@ -242,6 +243,7 @@ function GroupDetail({ groupId, onBack }: { groupId: number; onBack: () => void 
 }
 
 export default function GroupsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "procurement_manager";
   const utils = trpc.useUtils();

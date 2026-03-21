@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +25,7 @@ import { PageHeader } from "@/components/PageHeader";
 const fmt = (n: number) => new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
 
 export default function InventoryPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const utils = trpc.useUtils();
 
@@ -76,7 +78,7 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<Package className="h-5 w-5" />} title="Inventaire" description="Gestion des stocks" />
+      <PageHeader icon={<Package className="h-5 w-5" />} title={t("inventory.title")} description={t("inventory.description")} />
 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Inventaire</h1>

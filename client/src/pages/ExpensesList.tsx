@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +21,7 @@ const STATUS = {
 };
 
 export default function ExpensesList() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "procurement_manager" || user?.role === "approver";
@@ -47,7 +49,7 @@ export default function ExpensesList() {
 
   return (
     <div className="space-y-5 pb-8">
-      <PageHeader icon={<Receipt className="h-5 w-5" />} title="Notes de frais" description="Gérez vos remboursements" />
+      <PageHeader icon={<Receipt className="h-5 w-5" />} title={t("expenses.title")} description={t("expenses.description")} />
 <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Notes de frais</h1>

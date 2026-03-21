@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useSearch } from "wouter";
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -63,6 +64,7 @@ function CellValue({ value, type }: { value: any; type: string }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ReportBuilder() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const utils = trpc.useUtils();
 
@@ -192,7 +194,7 @@ export default function ReportBuilder() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<BarChart2 className="h-5 w-5" />} title="Rapports" description="Rapports personnalisés" />
+      <PageHeader icon={<BarChart2 className="h-5 w-5" />} title={t("reports.title")} description={t("reports.description")} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

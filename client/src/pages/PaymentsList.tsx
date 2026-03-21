@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +47,7 @@ const STATUS_MAP: Record<string, { label: string; icon: React.FC<any>; cls: stri
 };
 
 export default function PaymentsList() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -71,7 +73,7 @@ export default function PaymentsList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<CreditCard className="h-5 w-5" />} title="Paiements" description="Suivi des paiements" />
+      <PageHeader icon={<CreditCard className="h-5 w-5" />} title={t("payments.title")} description="Suivi des paiements" />
 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Paiements</h1>

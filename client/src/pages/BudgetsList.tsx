@@ -88,7 +88,7 @@ export default function BudgetsList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<DollarSign className="h-5 w-5" />} title="Budgets" description="Contrôle budgétaire" />
+      <PageHeader icon={<DollarSign className="h-5 w-5" />} title={t("budgets.title")} description={t("budgets.description")} />
 
       {summary && (
         <div className="grid gap-4 md:grid-cols-4">

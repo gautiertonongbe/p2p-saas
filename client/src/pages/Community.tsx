@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +71,7 @@ function PostDetail({ postId, onBack }: { postId: number; onBack: () => void }) 
 
   return (
     <div className="space-y-4">
-      <PageHeader icon={<Users className="h-5 w-5" />} title="Communauté" description="Posez des questions, partagez des astuces" />
+      <PageHeader icon={<Users className="h-5 w-5" />} title={t("community.title")} description={t("community.description")} />
 <button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" />Retour à la communauté
       </button>
@@ -246,6 +247,7 @@ function NewPostForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
 
 // ── Main Community Page ───────────────────────────────────────────────────────
 export default function Community() {
+  const { t } = useTranslation();
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [showNewPost, setShowNewPost] = useState(false);
   const [search, setSearch] = useState("");

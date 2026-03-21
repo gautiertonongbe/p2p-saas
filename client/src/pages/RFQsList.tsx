@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +24,7 @@ const formatDate = (d: Date | string) =>
   new Date(d).toLocaleDateString("fr-FR", { year: "numeric", month: "short", day: "numeric" });
 
 export default function RFQsList() {
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
 
@@ -41,7 +43,7 @@ export default function RFQsList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<ClipboardList className="h-5 w-5" />} title="Appels d'offres" description="Demandes de cotation" />
+      <PageHeader icon={<ClipboardList className="h-5 w-5" />} title={t("rfqs.title")} description={t("rfqs.description")} />
 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Appels d'offres</h1>

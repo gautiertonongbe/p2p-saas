@@ -38,52 +38,52 @@ type NavGroup = { label: string; color: string; bgColor: string; items: NavItem[
 
 const getNavGroups = (t: (key: string) => string): NavGroup[] => [
   {
-    label: "Accueil", color: "#2563eb", bgColor: "#eff6ff",
-    items: [{ icon: LayoutDashboard, label: "Tableau de bord", path: "/" }],
+    label: t("navigation.dashboard"), color: "#2563eb", bgColor: "#eff6ff",
+    items: [{ icon: LayoutDashboard, label: t("navigation.dashboard"), path: "/" }],
   },
   {
-    label: "Achats", color: "#7c3aed", bgColor: "#f5f3ff",
+    label: t("common.purchases"), color: "#7c3aed", bgColor: "#f5f3ff",
     items: [
-      { icon: FileText, label: "Demandes d'achat", path: "/purchase-requests" },
-      { icon: ShoppingCart, label: "Bons de commande", path: "/purchase-orders" },
-      { icon: ClipboardList, label: "Appels d'offres", path: "/rfqs" },
+      { icon: FileText, label: t("purchaseRequests.title"), path: "/purchase-requests" },
+      { icon: ShoppingCart, label: t("purchaseOrders.title"), path: "/purchase-orders" },
+      { icon: ClipboardList, label: t("rfqs.title"), path: "/rfqs" },
     ],
   },
   {
-    label: "Finance", color: "#0891b2", bgColor: "#ecfeff",
+    label: t("common.finance"), color: "#0891b2", bgColor: "#ecfeff",
     items: [
-      { icon: FileCheck, label: "Factures", path: "/invoices" },
-      { icon: CreditCard, label: "Paiements", path: "/payments" },
-      { icon: Receipt, label: "Notes de frais", path: "/expenses" },
+      { icon: FileCheck, label: t("invoices.title"), path: "/invoices" },
+      { icon: CreditCard, label: t("payments.title"), path: "/payments" },
+      { icon: Receipt, label: t("expenses.title"), path: "/expenses" },
     ],
   },
   {
-    label: "Opérations", color: "#d97706", bgColor: "#fffbeb",
+    label: t("common.operations"), color: "#d97706", bgColor: "#fffbeb",
     items: [
-      { icon: Users, label: "Fournisseurs", path: "/vendors" },
-      { icon: Package, label: "Inventaire", path: "/inventory" },
-      { icon: DollarSign, label: "Budgets", path: "/budgets" },
+      { icon: Users, label: t("vendors.title"), path: "/vendors" },
+      { icon: Package, label: t("inventory.title"), path: "/inventory" },
+      { icon: DollarSign, label: t("budgets.title"), path: "/budgets" },
     ],
   },
   {
-    label: "Approbations", color: "#dc2626", bgColor: "#fff1f2",
+    label: t("approvals.title"), color: "#dc2626", bgColor: "#fff1f2",
     items: [
-      { icon: CheckCircle, label: "File d'approbation", path: "/approvals" },
+      { icon: CheckCircle, label: t("approvals.queue"), path: "/approvals" },
     ],
   },
   {
-    label: "Insights", color: "#059669", bgColor: "#f0fdf4",
+    label: t("analytics.title"), color: "#059669", bgColor: "#f0fdf4",
     items: [
-      { icon: TrendingUp, label: "Analyses", path: "/analytics" },
-      { icon: BarChart2, label: "Rapports", path: "/reports" },
+      { icon: TrendingUp, label: t("analytics.title"), path: "/analytics" },
+      { icon: BarChart2, label: t("reports.title"), path: "/reports" },
     ],
   },
   {
-    label: "Communauté", color: "#db2777", bgColor: "#fdf2f8",
+    label: t("community.title"), color: "#db2777", bgColor: "#fdf2f8",
     items: [
-      { icon: Users, label: "Forum", path: "/community" },
-      { icon: Lock, label: "Groupes & Accès", path: "/groups" },
-      { icon: Users, label: "Portail Fournisseur", path: "/supplier-portal" },
+      { icon: Users, label: t("navigation.community"), path: "/community" },
+      { icon: Lock, label: t("groups.title"), path: "/groups" },
+      { icon: Users, label: t("navigation.supplierPortal"), path: "/supplier-portal" },
     ],
   },
 ];
@@ -329,7 +329,7 @@ function DashboardLayoutContent({
               } : {}}
             >
               <Settings className="h-4 w-4 shrink-0" style={location === "/settings" ? { color: `hsl(${activeColor})` } : {}} />
-              <span>Paramètres</span>
+              <span>{t("navigation.settings")}</span>
             </button>
           </div>
 

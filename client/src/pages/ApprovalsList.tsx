@@ -262,7 +262,7 @@ export default function ApprovalsList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<CheckCircle className="h-5 w-5" />} title="Approbations" description="File d'attente d'approbations" />
+      <PageHeader icon={<CheckCircle className="h-5 w-5" />} title={t("approvals.title")} description={t("approvals.queue")} />
 <div>
         <h1 className="text-3xl font-bold tracking-tight">{t("approvals.title")}</h1>
         <p className="text-muted-foreground mt-2">{t("approvals.myApprovals")}</p>

@@ -184,7 +184,7 @@ export default function InvoicesList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<FileCheck className="h-5 w-5" />} title="Factures" description="Gérez vos factures fournisseurs" />
+      <PageHeader icon={<FileCheck className="h-5 w-5" />} title={t("invoices.title")} description={t("invoices.description")} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
