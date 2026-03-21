@@ -2,6 +2,10 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import HelpCenter from "@/pages/HelpCenter";
+import ContractsList from "@/pages/ContractsList";
+import ContractForm from "@/pages/ContractForm";
+import SavingsTracker from "@/pages/SavingsTracker";
+import VendorOnboarding from "@/pages/VendorOnboarding";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -79,6 +83,10 @@ function Router() {
       <Route path="/reports"><DashboardLayout><ReportBuilder /></DashboardLayout></Route>
       <Route path="/settings"><DashboardLayout><Settings /></DashboardLayout></Route>
       <Route path="/help"><DashboardLayout><HelpCenter /></DashboardLayout></Route>
+      <Route path="/contracts"><DashboardLayout><ContractsList /></DashboardLayout></Route>
+      <Route path="/contracts/new"><DashboardLayout><ContractForm /></DashboardLayout></Route>
+      <Route path="/savings"><DashboardLayout><SavingsTracker /></DashboardLayout></Route>
+      <Route path="/vendor-onboarding"><DashboardLayout><VendorOnboarding /></DashboardLayout></Route>
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
