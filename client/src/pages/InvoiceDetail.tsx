@@ -122,12 +122,6 @@ function ThreeWayMatchPanel({
         </CardContent>
       )}
     </Card>
-
-      {approvals && approvals.length > 0 && (
-        <ApprovalChainVisualization approvals={approvals} />
-      )}
-
-    </div>
   );
 }
 
@@ -638,22 +632,6 @@ export default function InvoiceDetail() {
             </div>
           </CardContent>
         </Card>
-      {/* Approval pending indicator */}
-      {invoice.status === 'pending' && (
-        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-          <div className="h-8 w-8 rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center shrink-0">
-            <Shield className="h-4 w-4 text-blue-600" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-blue-900">En attente d'approbation</p>
-            <p className="text-xs text-blue-700 mt-0.5">
-              Les approbateurs désignés ont été notifiés. Vous recevrez une notification dès qu'une décision est prise.
-            </p>
-          </div>
-        </div>
-      )}
-
-
         <Card>
           <CardContent className="pt-6">
             <div>
@@ -788,6 +766,22 @@ export default function InvoiceDetail() {
           </Card>
         );
       })()}
+
+      {/* Approval chain */}
+      {approvals && approvals.length > 0 && <ApprovalChainVisualization approvals={approvals} />}
+
+      {/* Pending banner */}
+      {invoice.status === "pending" && (
+        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="h-8 w-8 rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center shrink-0">
+            <Shield className="h-4 w-4 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-blue-900">En attente d'approbation</p>
+            <p className="text-xs text-blue-700 mt-0.5">Les approbateurs ont été notifiés.</p>
+          </div>
+        </div>
+      )}
 
       {/* History */}
       <div className="rounded-xl border bg-card">
