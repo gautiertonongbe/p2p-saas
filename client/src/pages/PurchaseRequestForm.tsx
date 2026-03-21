@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLocation } from "wouter";
+import { useLocation, useParams, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
-import { Plus, Trash2, Save, Send, ArrowLeft, Package, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Trash2, Save, Send, ArrowLeft, Package, FileText, ChevronDown, ChevronUp, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 type Item = { itemName: string; description: string; quantity: string; unit: string; unitPrice: string };
@@ -26,6 +26,14 @@ const UNITS = ["pcs", "kg", "g", "L", "mL", "m", "cm", "m²", "m³", "boîte", "
 export default function PurchaseRequestForm() {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
+  const params = useParams<{ id?: string }>();
+  const searchString = useSearch();
+  const urlParams = searchString ? new URLSearchParams(searchString) : null;
+  const editId = params?.id ? parseInt(params.id) : null;
+  const copyFromId = urlParams?.get("copyFrom") ? parseInt(urlParams.get("copyFrom")!) : null;
+  const sourceId = editId || copyFromId;
+  const isEdit = !!editId;
+  const isCopy = !!copyFromId;
   const utils = trpc.useUtils();
 
   const [title, setTitle] = useState("");
@@ -45,6 +53,36 @@ export default function PurchaseRequestForm() {
   ]);
 
   const { data: departments = [] } = trpc.settings.listDepartments.useQuery();
+
+  // Load existing data for edit or copy
+  const { data: existingRequest } = trpc.purchaseRequests.getById.useQuery(
+    { id: sourceId! }, { enabled: !!sourceId }
+  );
+  const { data: existingItems } = trpc.purchaseRequests.getRequestItems.useQuery(
+    { requestId: sourceId! }, { enabled: !!sourceId }
+  );
+  const [prefilled, setPrefilled] = useState(false);
+
+  useEffect(() => {
+    if (existingRequest && !prefilled) {
+      setTitle(isCopy ? `Copie — ${existingRequest.title}` : (existingRequest.title || ""));
+      setDescription((existingRequest as any).description || "");
+      setUrgencyLevel((existingRequest.urgencyLevel as any) || "medium");
+      setDeliveryDate(existingRequest.deliveryDate ? new Date(existingRequest.deliveryDate).toISOString().split("T")[0] : "");
+      setJustification((existingRequest as any).justification || "");
+      setDepartmentId(existingRequest.departmentId ? String(existingRequest.departmentId) : "");
+      if (existingItems && existingItems.length > 0) {
+        setItems(existingItems.map((it: any) => ({
+          itemName: it.itemName || "",
+          description: it.description || "",
+          quantity: String(it.quantity || 1),
+          unit: it.unit || "pcs",
+          unitPrice: String(Number(it.unitPrice) || 0),
+        })));
+      }
+      setPrefilled(true);
+    }
+  }, [existingRequest, existingItems, prefilled, isCopy]);
   const { data: lookupTypes = [] } = trpc.settings.getLookupTypes.useQuery();
   const categories = trpc.settings.getLookupValues.useQuery(
     { lookupTypeId: (lookupTypes as any[]).find((t: any) => t.name === "category")?.id ?? 0 },
@@ -56,8 +94,17 @@ export default function PurchaseRequestForm() {
   ).data ?? [];
 
 
+  const updateMutation = trpc.purchaseRequests.update.useMutation({
+    onSuccess: () => {
+      toast.success("Demande mise à jour");
+      utils.purchaseRequests.list.invalidate();
+      setLocation(`/purchase-requests/${editId}`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const createMutation = trpc.purchaseRequests.create.useMutation({
-    onSuccess: (data) => { utils.purchaseRequests.list.invalidate(); setLocation("/purchase-requests"); },
+    onSuccess: (data) => { utils.purchaseRequests.list.invalidate(); setLocation(`/purchase-requests/${(data as any).id || ""}`); },
     onError: (e) => toast.error(e.message),
   });
   const submitMutation = trpc.purchaseRequests.submit.useMutation({
@@ -97,7 +144,11 @@ export default function PurchaseRequestForm() {
 
   const handleSaveDraft = async () => {
     if (!title.trim()) { toast.error("Veuillez saisir un titre"); return; }
-    createMutation.mutate(buildPayload());
+    if (isEdit && editId) {
+      updateMutation.mutate({ id: editId, ...buildPayload() } as any);
+    } else {
+      createMutation.mutate(buildPayload());
+    }
   };
 
   const handleSubmit = async () => {
@@ -107,7 +158,7 @@ export default function PurchaseRequestForm() {
     if (data?.id) submitMutation.mutate({ id: data.id });
   };
 
-  const isPending = createMutation.isPending || submitMutation.isPending;
+  const isPending = createMutation.isPending || submitMutation.isPending || updateMutation.isPending;
 
   const URGENCY = [
     { value: "low", label: "Faible", color: "text-gray-600" },
@@ -124,7 +175,9 @@ export default function PurchaseRequestForm() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold">Nouvelle demande d'achat</h1>
+          <h1 className="text-2xl font-bold">
+            {isEdit ? "Modifier la demande" : isCopy ? "Copier la demande" : "Nouvelle demande d'achat"}
+          </h1>
           <p className="text-sm text-muted-foreground">Remplissez les informations de votre demande</p>
         </div>
       </div>
@@ -327,7 +380,7 @@ export default function PurchaseRequestForm() {
           <ArrowLeft className="h-4 w-4" />Annuler
         </button>
         <div className="flex gap-3">
-          <button type="button" onClick={handleSaveDraft} disabled={isPending || !title.trim()}
+          <button type="button" onClick={handleSaveDraft} disabled={isPending || !title.trim()} data-mode={isEdit ? "edit" : "new"}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
             <Save className="h-4 w-4" />Enregistrer brouillon
           </button>

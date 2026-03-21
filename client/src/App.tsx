@@ -46,6 +46,7 @@ function Router() {
       <Route path="/"><DashboardLayout><Dashboard /></DashboardLayout></Route>
       <Route path="/purchase-requests"><DashboardLayout><PurchaseRequestsList /></DashboardLayout></Route>
       <Route path="/purchase-requests/new"><DashboardLayout><PurchaseRequestForm /></DashboardLayout></Route>
+      <Route path="/purchase-requests/:id/edit"><DashboardLayout><PurchaseRequestForm /></DashboardLayout></Route>
       <Route path="/purchase-requests/:id"><DashboardLayout><PurchaseRequestDetail /></DashboardLayout></Route>
       <Route path="/approvals"><DashboardLayout><ApprovalsList /></DashboardLayout></Route>
       <Route path="/approvals/:id"><DashboardLayout><ApprovalsList /></DashboardLayout></Route>

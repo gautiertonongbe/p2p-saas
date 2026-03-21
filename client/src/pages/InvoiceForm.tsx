@@ -19,6 +19,7 @@ export default function InvoiceForm() {
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const urlPoId = searchString ? new URLSearchParams(searchString).get("poId") : null;
+  const copyFromId = searchString ? new URLSearchParams(searchString).get("copyFrom") : null;
 
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [vendorId, setVendorId] = useState("");
@@ -40,6 +41,12 @@ export default function InvoiceForm() {
   const { data: linkedPO } = trpc.purchaseOrders.getById.useQuery(
     { id: parseInt(urlPoId!) },
     { enabled: !!urlPoId }
+  );
+
+  // Fetch invoice to copy from
+  const { data: invoiceToCopy } = trpc.invoices.getById.useQuery(
+    { id: parseInt(copyFromId!) },
+    { enabled: !!copyFromId }
   );
 
   useEffect(() => {
@@ -69,6 +76,22 @@ export default function InvoiceForm() {
       toast.success(`Données pré-remplies depuis le BC ${po.poNumber}`);
     }
   }, [linkedPO, prefilled]);
+
+  // Copy from existing invoice
+  useEffect(() => {
+    if (invoiceToCopy && !prefilled) {
+      const inv = invoiceToCopy as any;
+      setInvoiceNumber(`COPIE-${inv.invoiceNumber}`);
+      setVendorId(inv.vendorId ? String(inv.vendorId) : "");
+      if (inv.dueDate) setDueDate(new Date(inv.dueDate).toISOString().split("T")[0]);
+      if (inv.taxAmount) setTaxAmount(String(Number(inv.taxAmount)));
+      if (inv.notes) setNotes(inv.notes);
+      // Copy line items from invoice amount if no detailed items
+      setLines([{ description: `Copie — ${inv.invoiceNumber}`, quantity: "1", unitPrice: String(Number(inv.amount)) }]);
+      setPrefilled(true);
+      toast.success(`Facture copiée depuis ${inv.invoiceNumber}`);
+    }
+  }, [invoiceToCopy, prefilled]);
 
   const utils = trpc.useUtils();
 
@@ -159,7 +182,8 @@ export default function InvoiceForm() {
               Pré-rempli depuis BC {(linkedPO as any).poNumber}
             </p>
           )}
-          {!linkedPO && <p className="text-sm text-muted-foreground">Saisir une facture fournisseur</p>}
+          {!linkedPO && !copyFromId && <p className="text-sm text-muted-foreground">Saisir une facture fournisseur</p>}
+          {copyFromId && <p className="text-sm text-blue-600">Copie d'une facture existante</p>}
         </div>
         <div className="ml-auto">
           <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden"

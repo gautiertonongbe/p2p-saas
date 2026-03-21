@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ApprovalChainVisualization } from "@/components/ApprovalChainVisualization";
 import { EntityHistory } from "@/components/EntityHistory";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Shield, ThumbsUp, ThumbsDown, ArrowLeft, CreditCard, Smartphone, Building2, Banknote, CheckCircle2, AlertCircle, Clock, Send, XCircle, ShieldCheck, FileText, AlertTriangle, Download} from "lucide-react";
+import { Shield, ThumbsUp, ThumbsDown, ArrowLeft, CreditCard, Smartphone, Building2, Banknote, CheckCircle2, AlertCircle, Clock, Send, XCircle, ShieldCheck, FileText, AlertTriangle, Download, Copy} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -631,6 +631,9 @@ export default function InvoiceDetail() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => setLocation(`/invoices/new?copyFrom=${invoice.id}`)}>
+            <Copy className="mr-2 h-4 w-4" />Copier
+          </Button>
           <Button variant="outline" onClick={() => exportPDFMutation.mutate({ id: invoice.id })} disabled={exportPDFMutation.isPending}>
             <Download className="mr-2 h-4 w-4" />
             {exportPDFMutation.isPending ? "Génération..." : "Télécharger PDF"}
