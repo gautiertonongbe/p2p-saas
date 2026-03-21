@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { db } from "../db";
+import { db, createAuditLog } from "../db";
 
 export const savingsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {

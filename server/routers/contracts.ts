@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { db } from "../db";
-import { createAuditLog } from "../utils/auditLog";
+import { db, createAuditLog } from "../db";
+
 
 export const contractsRouter = router({
   list: protectedProcedure
