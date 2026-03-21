@@ -4,11 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
-import {
-  ArrowLeft, Building2, Phone, Mail, Globe, FileText,
+import {ArrowLeft, Building2, Phone, Mail, Globe, FileText,
   TrendingUp, ShoppingCart, CheckCircle2, XCircle, Edit,
   Shield, Plus, Calendar, DollarSign, CreditCard, Smartphone,
-  PenLine, UserPlus} from "lucide-react";
+  PenLine, UserPlus, FileCheck} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";

@@ -23,6 +23,7 @@ export const expensesRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
+      try {
       const where = [`er.organizationId = ${ctx.user.organizationId}`];
       if (input?.status) where.push(`er.status = '${input.status}'`);
       if (input?.myOnly) where.push(`er.submitterId = ${ctx.user.id}`);
@@ -37,6 +38,7 @@ export const expensesRouter = router({
         LIMIT 200
       `);
       return (result as any)[0] || [];
+      } catch { return []; }
     }),
 
   // Get single report with lines
@@ -218,6 +220,6 @@ export const expensesRouter = router({
       FROM expenseReports
       WHERE organizationId = ${ctx.user.organizationId} AND submitterId = ${ctx.user.id}
     `);
-    return (result as any)[0]?.[0] || {};
+    try { return (result as any)[0]?.[0] || {}; } catch { return {}; }
   }),
 });

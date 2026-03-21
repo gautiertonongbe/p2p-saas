@@ -5,7 +5,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, FileText, Clock, CheckCircle, XCircle, DollarSign, TrendingUp, Loader2, Filter } from "lucide-react";
+import { Plus, FileText, Clock, CheckCircle, XCircle, DollarSign, TrendingUp, Loader2, Filter , Receipt} from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 
 function fmt(n: number) { return new Intl.NumberFormat("fr-FR").format(Number(n) || 0); }
