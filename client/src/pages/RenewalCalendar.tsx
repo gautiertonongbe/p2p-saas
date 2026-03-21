@@ -127,10 +127,10 @@ export default function RenewalCalendar() {
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-4 items-start">
+      <div className="grid lg:grid-cols-5 gap-4 items-start max-h-[600px]">
         {/* Calendar */}
         <Card className="lg:col-span-3">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-1 pt-4 px-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold text-blue-700 flex items-center gap-2">
                 <Calendar className="h-4 w-4" />{MONTHS_FR[viewMonth]} {viewYear}
@@ -144,10 +144,10 @@ export default function RenewalCalendar() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-7 gap-0 mb-1">
-              {DAYS_FR.map(d => <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">{d}</div>)}
+            <div className="grid grid-cols-7 gap-0 mb-0.5">
+              {DAYS_FR.map(d => <div key={d} className="text-center text-[11px] font-medium text-muted-foreground py-0.5">{d}</div>)}
             </div>
-            <div className="grid grid-cols-7 gap-0.5">
+            <div className="grid grid-cols-7 gap-0.5 px-1">
               {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
               {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
                 const dayEvents = eventsForDay(day);
@@ -156,7 +156,7 @@ export default function RenewalCalendar() {
                 return (
                   <button key={day}
                     onClick={() => dayEvents.length > 0 ? setSelectedDay(isSelected ? null : day) : undefined}
-                    className={`relative aspect-square flex flex-col items-center justify-start pt-1 rounded-lg text-xs transition-colors
+                    className={`relative h-10 flex flex-col items-center justify-start pt-1.5 rounded-lg text-xs transition-colors
                       ${isToday ? "bg-blue-600 text-white font-bold" : ""}
                       ${isSelected ? "ring-2 ring-blue-400" : ""}
                       ${dayEvents.length > 0 && !isToday ? "hover:bg-muted cursor-pointer" : ""}
