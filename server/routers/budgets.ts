@@ -175,6 +175,35 @@ export const budgetsRouter = router({
       return { success: true };
     }),
 
+
+  deactivate: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      isActive: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin" && ctx.user.role !== "procurement_manager") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized to deactivate budgets" });
+      }
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await dbInstance.execute(
+        `UPDATE budgets SET isActive = ${input.isActive ? 1 : 0} WHERE id = ${input.id} AND organizationId = ${ctx.user.organizationId}`
+      );
+
+      await createAuditLog({
+        organizationId: ctx.user.organizationId,
+        entityType: "budget",
+        entityId: input.id,
+        action: input.isActive ? "activated" : "deactivated",
+        actorId: ctx.user.id,
+        newValue: { isActive: input.isActive },
+      });
+
+      return { success: true };
+    }),
+
   checkAvailability: protectedProcedure
     .input(z.object({
       scopeType: z.enum(["department", "project", "category"]),

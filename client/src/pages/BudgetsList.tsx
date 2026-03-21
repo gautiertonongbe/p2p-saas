@@ -13,6 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { PowerOff, Power } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 
 export default function BudgetsList() {
@@ -21,7 +24,18 @@ export default function BudgetsList() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
 
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin" || user?.role === "procurement_manager";
+  const utils = trpc.useUtils();
   const { data: budgets, isLoading } = trpc.budgets.list.useQuery({});
+
+  const deactivateMut = trpc.budgets.deactivate.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(vars.isActive ? "Budget activé" : "Budget désactivé");
+      utils.budgets.list.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
   // Calculate summary from budgets
   const summary = budgets ? {
     totalAllocated: budgets.reduce((sum, b) => sum + parseFloat(b.allocatedAmount), 0),
@@ -185,7 +199,7 @@ export default function BudgetsList() {
             return (
               <Card
                 key={budget.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow"
+                className={`cursor-pointer hover:shadow-lg transition-shadow ${(budget as any).isActive === false ? "opacity-60" : ""}`}
                 onClick={() => setLocation(`/budgets/${budget.id}`)}
               >
                 <CardHeader>
@@ -204,7 +218,19 @@ export default function BudgetsList() {
                         Période: {budget.fiscalPeriod}
                       </CardDescription>
                     </div>
-                    {getStatusBadge(utilizationPercentage >= 100 ? 'exceeded' : utilizationPercentage >= 90 ? 'depleted' : 'active')}
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(utilizationPercentage >= 100 ? 'exceeded' : utilizationPercentage >= 90 ? 'depleted' : 'active')}
+                      {isAdmin && (
+                        <button
+                          onClick={e => { e.stopPropagation(); deactivateMut.mutate({ id: budget.id, isActive: (budget as any).isActive === false ? true : false }); }}
+                          title={(budget as any).isActive === false ? "Activer ce budget" : "Désactiver ce budget"}
+                          className={`p-1.5 rounded-md border text-xs transition-colors ${(budget as any).isActive === false ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50" : "border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700"}`}>
+                          {(budget as any).isActive === false
+                            ? <Power className="h-3.5 w-3.5" />
+                            : <PowerOff className="h-3.5 w-3.5" />}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">

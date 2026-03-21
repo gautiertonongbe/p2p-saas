@@ -626,6 +626,7 @@ function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
     onSuccess: () => { toast.success("Département créé"); utils.settings.listDepartments.invalidate(); setNewOpen(false); setCode(""); setName(""); setManagerId(""); },
     onError: (e: any) => toast.error(e.message),
   });
+  const [deptIsActive, setDeptIsActive] = useState(true);
   const updateMut = trpc.settings.updateDepartment.useMutation({
     onSuccess: () => { toast.success("Département mis à jour"); utils.settings.listDepartments.invalidate(); setEditDept(null); },
     onError: (e: any) => toast.error(e.message),
@@ -668,7 +669,7 @@ function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
                       </TableCell>
                       {isAdmin && (
                         <TableCell className="text-right">
-                          <Button size="sm" variant="ghost" onClick={() => { setEditDept(d); setCode(d.code); setName(d.name); setManagerId(d.managerId?.toString() || ""); }}>
+                          <Button size="sm" variant="ghost" onClick={() => { setEditDept(d); setCode(d.code); setName(d.name); setManagerId(d.managerId?.toString() || ""); setDeptIsActive(d.isActive !== false); }}>
                             <Edit className="h-4 w-4" />
                           </Button>
                         </TableCell>
@@ -703,11 +704,26 @@ function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
                 </Select>
               </div>
             </div>
+            {editDept && (
+              <div className="flex items-center justify-between px-1 py-2 border-t mt-2">
+                <div>
+                  <p className="text-sm font-medium">Statut du département</p>
+                  <p className="text-xs text-muted-foreground">Les départements inactifs ne peuvent plus être sélectionnés</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${deptIsActive ? "text-emerald-700" : "text-gray-500"}`}>{deptIsActive ? "Actif" : "Inactif"}</span>
+                  <button onClick={() => setDeptIsActive(!deptIsActive)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${deptIsActive ? "bg-emerald-500" : "bg-gray-300"}`}>
+                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${deptIsActive ? "translate-x-4.5" : "translate-x-0.5"}`} />
+                  </button>
+                </div>
+              </div>
+            )}
             <DialogFooter>
               <Button variant="outline" onClick={() => { setNewOpen(false); setEditDept(null); }}>Annuler</Button>
               <button disabled={!code || !name || createMut.isPending || updateMut.isPending} className="btn-primary flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                 onClick={() => editDept
-                  ? updateMut.mutate({ id: editDept.id, code, name, managerId: managerId ? parseInt(managerId) : undefined })
+                  ? updateMut.mutate({ id: editDept.id, code, name, managerId: managerId ? parseInt(managerId) : undefined, isActive: deptIsActive })
                   : createMut.mutate({ code, name, managerId: managerId ? parseInt(managerId) : undefined })}>
                 {(createMut.isPending || updateMut.isPending) ? "Enregistrement..." : "Enregistrer"}
               </button>
@@ -851,6 +867,10 @@ function ApprovalsSection({ isAdmin }: { isAdmin: boolean }) {
     onSuccess: () => { toast.success("Politique supprimée"); utils.settings.getApprovalPolicies.invalidate(); if (expanded && expanded === policies.find((p: any) => p.id === expanded)?.id) setExpanded(null); },
     onError: (e: any) => toast.error(e.message),
   });
+  const togglePolicyMut = trpc.settings.updateApprovalPolicy.useMutation({
+    onSuccess: () => { toast.success("Statut de la politique mis à jour"); utils.settings.getApprovalPolicies.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
 
@@ -894,10 +914,11 @@ function ApprovalsSection({ isAdmin }: { isAdmin: boolean }) {
                     <div className="flex items-center gap-2">
                       <Badge variant={p.isActive ? "default" : "outline"}>{p.isActive ? "Active" : "Inactive"}</Badge>
                       {isAdmin && (
-                        <Button size="sm" variant="ghost" className="text-destructive h-8 w-8 p-0"
-                          onClick={e => { e.stopPropagation(); if (confirm("Supprimer cette politique et toutes ses étapes ?")) deleteMut.mutate({ id: p.id }); }}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <button
+                          onClick={e => { e.stopPropagation(); togglePolicyMut.mutate({ id: p.id, isActive: !p.isActive }); }}
+                          className={`text-xs px-2.5 py-1 rounded-md border font-medium transition-colors ${p.isActive ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"}`}>
+                          {p.isActive ? "Désactiver" : "Activer"}
+                        </button>
                       )}
                       <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-transform", expanded === p.id ? "rotate-90" : "")} />
                     </div>

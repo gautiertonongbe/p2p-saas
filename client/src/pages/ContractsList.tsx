@@ -7,7 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FileText, Plus, Search, AlertTriangle, CheckCircle, Clock, XCircle, Calendar, DollarSign, Building } from "lucide-react";
+import { FileText, Plus, Search, AlertTriangle, CheckCircle, Clock, XCircle, Calendar, DollarSign, Building, PowerOff, Power, MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const TYPE_LABELS: Record<string, string> = {
   service: "Service", supply: "Fourniture", maintenance: "Maintenance",
@@ -29,7 +31,20 @@ export default function ContractsList() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin" || user?.role === "procurement_manager";
+  const utils = trpc.useUtils();
   const { data: contracts = [], isLoading } = trpc.contracts.list.useQuery();
+
+  const updateMut = trpc.contracts.update.useMutation({
+    onSuccess: (_, vars) => {
+      const msg = vars.status === "terminated" ? "Contrat résilié" : "Contrat réactivé";
+      toast.success(msg);
+      utils.contracts.list.invalidate();
+      utils.contracts.getStats.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
   const { data: stats } = trpc.contracts.getStats.useQuery();
 
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
@@ -150,6 +165,22 @@ export default function ContractsList() {
                   <StatusBadge status={contract.computedStatus} days={contract.daysUntilExpiry} />
                   {contract.autoRenew && (
                     <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">Auto-renouv.</span>
+                  )}
+                  {isAdmin && (
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (contract.computedStatus === "terminated") {
+                          updateMut.mutate({ id: contract.id, status: "active" });
+                        } else {
+                          if (confirm("Résilier ce contrat ? Cette action est enregistrée dans l'historique.")) {
+                            updateMut.mutate({ id: contract.id, status: "terminated" });
+                          }
+                        }
+                      }}
+                      className={`text-xs px-2 py-1 rounded border font-medium transition-colors shrink-0 ${contract.computedStatus === "terminated" ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50" : "border-red-200 text-red-600 hover:bg-red-50"}`}>
+                      {contract.computedStatus === "terminated" ? "Réactiver" : "Résilier"}
+                    </button>
                   )}
                 </div>
               </div>

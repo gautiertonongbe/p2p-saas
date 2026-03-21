@@ -433,6 +433,23 @@ export const settingsRouter = router({
       return { success: true };
     }),
 
+  updateApprovalPolicy: protectedProcedure
+    .input(z.object({ id: z.number(), isActive: z.boolean().optional(), name: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { approvalPolicies } = await import("../../drizzle/schema");
+      const { eq, and } = await import("drizzle-orm");
+      const updates: any = {};
+      if (input.isActive !== undefined) updates.isActive = input.isActive;
+      if (input.name !== undefined) updates.name = input.name;
+      await dbInstance.update(approvalPolicies).set(updates)
+        .where(and(eq(approvalPolicies.id, input.id), eq(approvalPolicies.organizationId, ctx.user.organizationId)));
+      await createAuditLog({ organizationId: ctx.user.organizationId, entityType: "approval_policy", entityId: input.id, action: input.isActive ? "activated" : "deactivated", actorId: ctx.user.id, newValue: updates });
+      return { success: true };
+    }),
+
   updateApprovalPolicies: protectedProcedure
     .input(z.record(z.string(), z.unknown()))
     .mutation(async ({ ctx, input }) => {
