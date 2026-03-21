@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { PriceBenchmark } from "@/components/PriceBenchmark";
 import CodingWidget, { type CodingValues } from "@/components/CodingWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -350,6 +351,19 @@ export default function PurchaseRequestForm() {
                   {fmt((parseFloat(String(item.quantity)) || 0) * parseNum(item.unitPrice))}
                 </span>
               </div>
+
+              {/* Price benchmark — spans full width below this row */}
+              {item.itemName.trim().length >= 3 && parseNum(item.unitPrice) > 0 && (
+                <div className="col-span-12">
+                  <PriceBenchmark
+                    itemName={item.itemName}
+                    unitPrice={parseNum(item.unitPrice)}
+                    unit={item.unit}
+                    quantity={parseFloat(String(item.quantity)) || 1}
+                    description={item.description}
+                  />
+                </div>
+              )}
 
               {/* Remove */}
               <div className="col-span-1 flex justify-end">
