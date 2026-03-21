@@ -50,9 +50,9 @@ export function ActionMenu({ actions }: Props) {
   if (visible.length === 0) return null;
 
   return (
-    <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="flex items-center justify-end gap-0.5">
       {visible.map((action, i) => {
-        const base = `p-1.5 rounded-md transition-colors text-gray-400 ${action.disabled ? "opacity-30 cursor-not-allowed" : VARIANT_CLASS[action.variant ?? "default"]}`;
+        const base = `p-1.5 rounded-md transition-all text-gray-300 hover:text-gray-700 ${action.disabled ? "opacity-30 cursor-not-allowed" : VARIANT_CLASS[action.variant ?? "default"]}`;
         const inner = (
           <Tooltip key={i} label={action.label}>
             {action.href && !action.disabled ? (
