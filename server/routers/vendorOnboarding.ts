@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
-import { db } from "../db";
+import * as db from "../db";
 
 export const vendorOnboardingRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
