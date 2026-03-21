@@ -7,6 +7,7 @@ import { createAuditLog } from "../db";
 const createRequestSchema = z.object({
   title: z.string().min(1).max(255),
   description: z.string().optional(),
+  justification: z.string().optional(),
   categoryId: z.number().optional(),
   billingStringId: z.number().optional(),
   costCenterId: z.number().optional(),
@@ -34,6 +35,7 @@ const updateRequestSchema = z.object({
   id: z.number(),
   title: z.string().min(1).max(255).optional(),
   description: z.string().optional(),
+  justification: z.string().optional(),
   categoryId: z.number().optional(),
   billingStringId: z.number().optional(),
   costCenterId: z.number().optional(),
@@ -84,6 +86,7 @@ export const purchaseRequestsRouter = router({
       const requestNumber = `${prPrefix}-${timestamp.toString().slice(-8)}`;
       
       const requestId = await db.createPurchaseRequest({
+      justification: input.justification,
         ...requestData,
         organizationId: ctx.user.organizationId,
         requesterId: ctx.user.id,
@@ -175,7 +178,7 @@ export const purchaseRequestsRouter = router({
       const bp = orgCfg.budgetPolicies;
 
       // Enforce: justification required
-      if (wf.requireJustification && !request.justification?.trim() && !request.description?.trim()) {
+      if (wf.requireJustification && !request.description?.trim()) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Une justification est obligatoire. Veuillez ajouter une justification à votre demande." });
       }
 
