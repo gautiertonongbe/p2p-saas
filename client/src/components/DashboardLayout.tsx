@@ -24,7 +24,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, ShoppingCart, FileCheck, DollarSign, TrendingUp, Settings, CheckCircle, Languages, ClipboardList, Package, CreditCard, BarChart2, Receipt, Lock, ChevronDown } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, ShoppingCart, FileCheck, DollarSign, TrendingUp, Settings, CheckCircle, Languages, ClipboardList, Package, CreditCard, BarChart2, Receipt, Lock, ChevronDown, HelpCircle} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -85,6 +85,7 @@ const getNavGroups = (t: (key: string) => string): NavGroup[] => [
       { icon: Users, label: t("navigation.community"), path: "/community" },
       { icon: Lock, label: t("groups.title"), path: "/groups" },
       { icon: Users, label: t("navigation.supplierPortal"), path: "/supplier-portal" },
+      { icon: HelpCircle, label: "Centre d'aide", path: "/help" },
     ],
   },
 ];

@@ -7,8 +7,7 @@ import {
   Clock, CheckCircle, FileText, ShoppingCart, AlertCircle,
   TrendingUp, ChevronRight, Package, FileCheck, Bell,
   Zap, Calendar, DollarSign, ArrowRight, Plus, Receipt,
-  Users, BarChart2, Shield
-} from "lucide-react";
+  Users, BarChart2, Shield, HelpCircle} from "lucide-react";
 import { useTheme, COLOR_PRESETS } from "@/contexts/ThemeContext";
 
 function timeAgo(date: string | Date) {
@@ -91,11 +90,11 @@ function ActionTile({ label, href, icon: Icon, color }: {
   const c = COLORS[color] || COLORS.blue;
   return (
     <Link href={href}>
-      <div className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border ${c.bg} ${c.border} cursor-pointer transition-all text-center group`}>
+      <div className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border ${c.bg} ${c.border} cursor-pointer transition-all text-center group min-w-0 overflow-hidden`}>
         <div className={`h-10 w-10 rounded-lg flex items-center justify-center bg-white/70 group-hover:scale-105 transition-transform`}>
           <Icon className={`h-5 w-5 ${c.icon}`} />
         </div>
-        <span className="text-xs font-semibold leading-tight">{label}</span>
+        <span className="text-xs font-semibold leading-tight w-full truncate px-1">{label}</span>
       </div>
     </Link>
   );
@@ -298,13 +297,14 @@ export default function Dashboard() {
                 Actions rapides
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2">
+            <CardContent className="grid grid-cols-2 gap-2 overflow-hidden">
               <ActionTile label="Demande d'achat" href="/purchase-requests/new" icon={FileText} color="blue" />
               <ActionTile label="Approbations" href="/approvals" icon={CheckCircle} color="amber" />
               <ActionTile label="Fournisseurs" href="/vendors" icon={Users} color="purple" />
               <ActionTile label="Factures" href="/invoices" icon={Receipt} color="cyan" />
               {isAdmin && <ActionTile label="Analyses" href="/analytics" icon={BarChart2} color="emerald" />}
               {isAdmin && <ActionTile label="Budgets" href="/budgets" icon={DollarSign} color="pink" />}
+              <ActionTile label="Centre d'aide" href="/help" icon={HelpCircle} color="blue" />
             </CardContent>
           </Card>
 
