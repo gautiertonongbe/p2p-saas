@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
@@ -78,6 +79,7 @@ function ScoreBadge({ score, blocked }: { score: number; blocked: boolean }) {
 
 export default function VendorRiskScoring() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const canManage = user?.role === 'admin' || user?.role === 'procurement_manager';
   const search = useSearch();
