@@ -84,9 +84,6 @@ export default function PurchaseOrdersList() {
         title="Bons de commande"
         description="Gérez vos commandes fournisseurs"
       />
-title="Bons de commande"
-        description="Gérez vos commandes fournisseurs"
-      />
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

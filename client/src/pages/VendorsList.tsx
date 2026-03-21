@@ -66,9 +66,6 @@ export default function VendorsList() {
         title="Fournisseurs"
         description="Gérez vos fournisseurs et partenaires"
       />
-title={t('vendors.title')}
-        description="Gérez vos fournisseurs et partenaires"
-      />
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
