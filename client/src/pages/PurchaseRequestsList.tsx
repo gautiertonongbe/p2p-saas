@@ -1,4 +1,4 @@
-import { PageHeader, PAGE_GRADIENTS } from "@/components/PageHeader";
+import { PageHeader, HeaderAction } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -85,24 +85,21 @@ export default function PurchaseRequestsList() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl p-6 text-white" style={{ background: "linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)" }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
-              <FileText className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">{t('purchaseRequests.title')}</h1>
-              <p className="text-purple-200 text-sm mt-0.5">{t('purchaseRequests.list')}</p>
-            </div>
-          </div>
+      <PageHeader
+        icon={<FileText className="h-5 w-5" />}
+        title="Demandes d'achat"
+        description="Gérez vos demandes d'achat"
+      />
+title={t('purchaseRequests.title')}
+        description={t('purchaseRequests.list')}
+        action={
           <Link href="/purchase-requests/new">
             <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors">
               <Plus className="h-4 w-4" />{t('purchaseRequests.new')}
             </button>
           </Link>
-        </div>
-      </div>
+        }
+      />
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

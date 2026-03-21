@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,19 +61,14 @@ export default function VendorsList() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl p-6 text-white" style={{ background: "linear-gradient(135deg, #d97706 0%, #f59e0b 100%)" }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
-              <Users className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">{t('vendors.title')}</h1>
-              <p className="text-amber-100 text-sm mt-0.5">Gérez vos fournisseurs et partenaires</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={<Users className="h-5 w-5" />}
+        title="Fournisseurs"
+        description="Gérez vos fournisseurs et partenaires"
+      />
+title={t('vendors.title')}
+        description="Gérez vos fournisseurs et partenaires"
+      />
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

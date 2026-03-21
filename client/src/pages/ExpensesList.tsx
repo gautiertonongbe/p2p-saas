@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,8 +47,12 @@ export default function ExpensesList() {
 
   return (
     <div className="space-y-5 pb-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <PageHeader
+        icon={<Receipt className="h-5 w-5" />}
+        title="Notes de frais"
+        description="Gérez vos remboursements de dépenses"
+      />
+<div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Notes de frais</h1>
           <p className="text-sm text-muted-foreground">Gérez vos remboursements de dépenses</p>
@@ -142,7 +147,11 @@ export default function ExpensesList() {
         </Card>
       ) : (
         <div className="space-y-2">
-          {(reports as any[]).map((report: any) => {
+}
+        title="Notes de frais"
+        description="Gérez vos remboursements"
+      />
+{(reports as any[]).map((report: any) => {
             const st = STATUS[report.status as keyof typeof STATUS] || STATUS.draft;
             return (
               <Card key={report.id} className="hover:shadow-md transition-shadow cursor-pointer"

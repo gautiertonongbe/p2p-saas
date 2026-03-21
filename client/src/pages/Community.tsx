@@ -1,3 +1,4 @@
+import { PageHeader, HeaderAction } from "@/components/PageHeader";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -69,7 +70,7 @@ function PostDetail({ postId, onBack }: { postId: number; onBack: () => void }) 
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+<button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" />Retour à la communauté
       </button>
 
@@ -267,21 +268,17 @@ export default function Community() {
 
   return (
     <div className="space-y-5 pb-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Users className="h-6 w-6 text-blue-600" />Communauté
-          </h1>
-          <p className="text-sm text-muted-foreground">Posez des questions, partagez des astuces, apprenez ensemble</p>
-        </div>
-        {!showNewPost && (
+      <PageHeader
+        icon={<Users className="h-5 w-5" />}
+        title="Communauté"
+        description="Posez des questions, partagez des astuces, apprenez ensemble"
+        action={!showNewPost ? (
           <button onClick={() => setShowNewPost(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-semibold btn-primary">
             <Plus className="h-4 w-4" />Nouvelle publication
           </button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

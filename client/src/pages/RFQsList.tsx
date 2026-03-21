@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +41,12 @@ export default function RFQsList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <PageHeader
+        icon={<ClipboardList className="h-5 w-5" />}
+        title="Appels d'offres"
+        description="Gérez vos demandes de cotation"
+      />
+<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Appels d'offres</h1>
           <p className="text-muted-foreground mt-1">Gérer vos demandes de cotation (RFQ)</p>

@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,7 +76,12 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <PageHeader
+        icon={<Package className="h-5 w-5" />}
+        title="Inventaire"
+        description="Gestion des stocks et articles"
+      />
+<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Inventaire</h1>
           <p className="text-muted-foreground mt-1">Gérer les stocks par entrepôt</p>

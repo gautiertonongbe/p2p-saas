@@ -12,45 +12,33 @@ interface Props {
 export function PageHeader({ icon, title, description, action, stats }: Props) {
   const { colorPreset } = useTheme();
   const preset = COLOR_PRESETS.find(p => p.id === colorPreset) || COLOR_PRESETS[0];
-
-  // primary is e.g. "221 83% 53%" — parse correctly
   const parts = preset.primary.split(" ");
   const h = parseInt(parts[0]);
-  const s = parseFloat(parts[1]); // strips % automatically
+  const s = parseFloat(parts[1]);
   const l = parseFloat(parts[2]);
-
-  // Darker shade for gradient start, lighter for end
-  const l1 = Math.max(l - 8, 15);
-  const l2 = Math.min(l + 12, 72);
-  const color1 = `hsl(${h}, ${s}%, ${l1}%)`;
-  const color2 = `hsl(${h}, ${s}%, ${l2}%)`;
+  const accentColor = `hsl(${h}, ${s}%, ${l}%)`;
+  const accentBg = `hsl(${h}, ${s}%, ${Math.min(l + 42, 96)}%)`;
 
   return (
-    <div
-      className="rounded-2xl p-5 text-white mb-5"
-      style={{ background: `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)` }}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            {icon}
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold text-white truncate">{title}</h1>
-            {description && (
-              <p className="text-white/70 text-xs mt-0.5 truncate">{description}</p>
-            )}
-          </div>
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-3">
+        <div className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ backgroundColor: accentBg, color: accentColor }}>
+          {icon}
         </div>
-        {action && <div className="shrink-0">{action}</div>}
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+          {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
+        </div>
       </div>
+      {action && <div className="shrink-0">{action}</div>}
       {stats && stats.length > 0 && (
-        <div className="grid gap-2 mt-4" style={{ gridTemplateColumns: `repeat(${Math.min(stats.length, 4)}, 1fr)` }}>
+        <div className="hidden sm:grid gap-3 ml-8" style={{ gridTemplateColumns: `repeat(${Math.min(stats.length, 4)}, 1fr)` }}>
           {stats.map((stat, i) => (
-            <div key={i} className="rounded-xl p-2.5 bg-white/15">
-              <p className="text-white/60 text-xs">{stat.label}</p>
-              <p className="text-white text-lg font-bold leading-tight">{stat.value}</p>
-              {stat.sub && <p className="text-white/50 text-xs">{stat.sub}</p>}
+            <div key={i} className="text-right">
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className="text-lg font-bold" style={{ color: accentColor }}>{stat.value}</p>
+              {stat.sub && <p className="text-xs text-muted-foreground">{stat.sub}</p>}
             </div>
           ))}
         </div>
@@ -66,10 +54,16 @@ export function PageHeaderButton({
   onClick?: () => void;
   children: ReactNode;
 }) {
+  const { colorPreset } = useTheme();
+  const preset = COLOR_PRESETS.find(p => p.id === colorPreset) || COLOR_PRESETS[0];
+  const parts = preset.primary.split(" ");
+  const accentColor = `hsl(${parseInt(parts[0])}, ${parseFloat(parts[1])}%, ${parseFloat(parts[2])}%)`;
+
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors whitespace-nowrap"
+      className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold transition-colors"
+      style={{ backgroundColor: accentColor }}
     >
       {children}
     </button>

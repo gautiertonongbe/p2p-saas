@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { PageHeader } from "@/components/PageHeader";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -118,7 +119,9 @@ function GroupDetail({ groupId, onBack }: { groupId: number; onBack: () => void 
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+title="Groupes & Accès"
+        description="Contrôlez les accès par groupe"
+      /><button onClick={onBack} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <X className="h-4 w-4" />Fermer
       </button>
 
@@ -271,7 +274,12 @@ export default function GroupsPage() {
 
   return (
     <div className="space-y-5 pb-8">
-      {/* Header */}
+      <PageHeader
+        icon={<Lock className="h-5 w-5" />}
+        title="Groupes & Accès"
+        description="Contrôlez les permissions utilisateurs"
+      />
+       */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2"><Lock className="h-6 w-6 text-blue-600" />Groupes & Accès</h1>

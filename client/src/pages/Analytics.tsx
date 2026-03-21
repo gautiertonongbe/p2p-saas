@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -96,7 +97,12 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <PageHeader
+        icon={<TrendingUp className="h-5 w-5" />}
+        title="Analyses"
+        description="Tableau de bord analytique"
+      />
+<div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t("analytics.title")}</h1>
           <p className="text-muted-foreground mt-2">{t("analytics.overview")}</p>

@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,17 +79,14 @@ export default function PurchaseOrdersList() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl p-6 text-white mb-4" style={{ background: "linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)" }}>
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
-            <ShoppingCart className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Bons de commande</h1>
-            <p className="text-purple-100 text-sm mt-0.5">Gérez vos commandes fournisseurs</p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={<ShoppingCart className="h-5 w-5" />}
+        title="Bons de commande"
+        description="Gérez vos commandes fournisseurs"
+      />
+title="Bons de commande"
+        description="Gérez vos commandes fournisseurs"
+      />
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>

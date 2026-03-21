@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -177,7 +178,12 @@ export default function ApprovalsList() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Raison du rejet *</label>
+      <PageHeader
+        icon={<CheckCircle className="h-5 w-5" />}
+        title="Approbations"
+        description="File d'attente de vos approbations"
+      />
+<label className="text-sm font-medium">Raison du rejet *</label>
                 <Textarea
                   value={rejectComments[approval.id] || ""}
                   onChange={(e) => setRejectComments(prev => ({ ...prev, [approval.id]: e.target.value }))}
@@ -261,7 +267,7 @@ export default function ApprovalsList() {
 
   return (
     <div className="space-y-6">
-      <div>
+<div>
         <h1 className="text-3xl font-bold tracking-tight">{t("approvals.title")}</h1>
         <p className="text-muted-foreground mt-2">{t("approvals.myApprovals")}</p>
       </div>

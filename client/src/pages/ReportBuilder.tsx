@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -191,7 +192,12 @@ export default function ReportBuilder() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      <PageHeader
+        icon={<BarChart2 className="h-5 w-5" />}
+        title="Rapports"
+        description="Créez des rapports personnalisés"
+      />
+       */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">

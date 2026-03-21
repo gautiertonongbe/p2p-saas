@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,7 +78,7 @@ export default function BudgetsList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
+<div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
@@ -87,24 +88,22 @@ export default function BudgetsList() {
 
   return (
     <div className="space-y-6">
-      {/* Colorful header banner */}
-      <div className="rounded-2xl p-6 text-white" style={{ background: "linear-gradient(135deg, #d97706 0%, #f59e0b 100%)" }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
-              <DollarSign className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">{t('budgets.title')}</h1>
-              <p className="text-amber-100 text-sm mt-0.5">{t('budgets.description')}</p>
-            </div>
-          </div>
+      <PageHeader
+        icon={<DollarSign className="h-5 w-5" />}
+        title="Budgets"
+        description="Contrôle budgétaire et suivi des dépenses"
+      />
+{/* Colorful header banner */}
+}
+        title={t('budgets.title')}
+        description={t('budgets.description')}
+        action={
           <button onClick={() => setLocation("/budgets/new")}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-semibold transition-colors">
             <Plus className="h-4 w-4" />{t('budgets.newBudget')}
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Summary Cards */}
       {summary && (

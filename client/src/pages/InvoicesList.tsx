@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -183,7 +184,12 @@ export default function InvoicesList() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      <PageHeader
+        icon={<FileCheck className="h-5 w-5" />}
+        title="Factures"
+        description="Gérez vos factures fournisseurs"
+      />
+       */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('invoices.title')}</h1>
