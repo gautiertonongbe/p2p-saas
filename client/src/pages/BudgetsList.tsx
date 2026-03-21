@@ -102,7 +102,19 @@ export default function BudgetsList() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<DollarSign className="h-5 w-5" />} title={t("budgets.title")} description={t("budgets.description")} />
+      <PageHeader
+        icon={<DollarSign className="h-5 w-5" />}
+        title={t("budgets.title")}
+        description={t("budgets.description")}
+        action={
+          isAdmin ? (
+            <button onClick={() => setLocation("/budgets/new")}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold btn-primary text-white">
+              <Plus className="h-4 w-4" />Nouveau budget
+            </button>
+          ) : undefined
+        }
+      />
 
       {summary && (
         <div className="grid gap-4 md:grid-cols-4">

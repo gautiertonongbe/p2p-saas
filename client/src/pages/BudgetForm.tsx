@@ -148,13 +148,27 @@ export default function BudgetForm() {
                       ))}
                     </SelectContent>
                   </Select>
+                ) : scopeType === 'category' ? (
+                  <Select value={scopeId} onValueChange={setScopeId}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner une catégorie" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Informatique & Technologie</SelectItem>
+                      <SelectItem value="2">Fournitures de bureau</SelectItem>
+                      <SelectItem value="3">Déplacements & Transport</SelectItem>
+                      <SelectItem value="4">Formation & Développement</SelectItem>
+                      <SelectItem value="5">Marketing & Communication</SelectItem>
+                      <SelectItem value="6">Maintenance & Réparations</SelectItem>
+                      <SelectItem value="7">Services professionnels</SelectItem>
+                      <SelectItem value="8">Autre</SelectItem>
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <Input
                     id="scopeId"
                     type="number"
                     value={scopeId}
                     onChange={(e) => setScopeId(e.target.value)}
-                    placeholder={`ID du ${scopeType === 'project' ? 'projet' : 'catégorie'}`}
+                    placeholder="Numéro du projet (ex: 101)"
                     required
                   />
                 )}

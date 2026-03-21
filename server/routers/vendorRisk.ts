@@ -5,16 +5,43 @@ import * as db from "../db";
 import { createAuditLog } from "../db";
 
 // Risk criteria definitions — weighted scoring
+// West Africa procurement risk criteria
+// Based on CIPS framework, ISO 20400, and OHADA legal requirements (Benin/Côte d'Ivoire)
+// Blocking = must pass for vendor to be usable on any PO
+// Total weight = 100
 const RISK_CRITERIA = [
-  { id: "ifu", label: "IFU / Numéro fiscal", weight: 25, category: "legal", blocking: true, description: "Numéro d'identification fiscale unique vérifié" },
-  { id: "rccm", label: "RCCM vérifié", weight: 20, category: "legal", blocking: true, description: "Registre du commerce et crédit mobilier à jour" },
-  { id: "rib", label: "RIB / Coordonnées bancaires", weight: 15, category: "financial", blocking: true, description: "Relevé d'identité bancaire vérifié" },
-  { id: "insurance", label: "Attestation d'assurance RC", weight: 10, category: "compliance", blocking: false, description: "Assurance responsabilité civile valide" },
-  { id: "references", label: "Références clients vérifiées", weight: 10, category: "reputation", blocking: false, description: "Au moins 2 références professionnelles confirmées" },
-  { id: "no_litigation", label: "Aucun litige en cours", weight: 10, category: "legal", blocking: false, description: "Pas de procédures judiciaires connues" },
-  { id: "financial_capacity", label: "Capacité financière", weight: 5, category: "financial", blocking: false, description: "Chiffre d'affaires ou capacité suffisants pour le marché" },
-  { id: "site_visit", label: "Visite du site réalisée", weight: 5, category: "reputation", blocking: false, description: "Locaux professionnels vérifiés physiquement ou par vidéo" },
+  // ── LEGAL IDENTITY (45 pts) ───────────────────────────────────────────────
+  { id: "ifu", label: "IFU / Numéro fiscal vérifié", weight: 20, category: "legal", blocking: true,
+    description: "Numéro d'identification fiscale unique — vérifier sur le portail fiscal national" },
+  { id: "rccm", label: "RCCM en cours de validité", weight: 15, category: "legal", blocking: true,
+    description: "Registre du commerce à jour — vérifier la date d'expiration (renouvellement annuel)" },
+  { id: "conflict_of_interest", label: "Déclaration d'absence de conflit d'intérêt", weight: 10, category: "legal", blocking: true,
+    description: "Document signé attestant l'absence de lien avec les décisionnaires de l'organisation" },
+
+  // ── CAPACITÉ FINANCIÈRE (25 pts) ──────────────────────────────────────────
+  { id: "rib", label: "RIB / Coordonnées bancaires vérifiées", weight: 15, category: "financial", blocking: true,
+    description: "Appel téléphonique de confirmation avec la banque ou virement test de 1 XOF" },
+  { id: "financial_capacity", label: "Capacité financière suffisante", weight: 10, category: "financial", blocking: false,
+    description: "Chiffre d'affaires annuel ≥ 2× la valeur du marché envisagé. Demander les derniers états financiers." },
+
+  // ── CONFORMITÉ RÉGLEMENTAIRE (20 pts) ─────────────────────────────────────
+  { id: "insurance", label: "Assurance RC professionnelle valide", weight: 10, category: "compliance", blocking: false,
+    description: "Attestation d'assurance responsabilité civile — vérifier la date d'expiration" },
+  { id: "tax_compliance", label: "Attestation de régularité fiscale", weight: 10, category: "compliance", blocking: false,
+    description: "Quitus fiscal ou attestation DGI de moins de 3 mois attestant l'absence de dette fiscale" },
+
+  // ── RÉPUTATION & RÉFÉRENCES (10 pts) ──────────────────────────────────────
+  { id: "references", label: "Références clients confirmées", weight: 5, category: "reputation", blocking: false,
+    description: "Au moins 2 références d'organisations similaires contactées et validées" },
+  { id: "no_litigation", label: "Absence de litige ou procédure judiciaire", weight: 5, category: "reputation", blocking: false,
+    description: "Recherche dans les registres publics et presse locale — demander une déclaration sur l'honneur" },
 ];
+
+// Risk thresholds (industry standard: CIPS Supplier Risk Framework)
+// < 60  = High risk   → alert on PO, recommend secondary approval
+// 60-79 = Medium risk → allowed with warning
+// ≥ 80  = Low risk    → approved, no restrictions
+// Blocked = any blocking criterion failed → cannot be used regardless of score
 
 export const vendorRiskRouter = router({
   getCriteria: protectedProcedure.query(() => RISK_CRITERIA),
@@ -38,7 +65,7 @@ export const vendorRiskRouter = router({
           if (checks[c.id]?.passed) score += c.weight;
           if (c.blocking && !checks[c.id]?.passed) blockingFailed.push(c.label);
         });
-        const riskLevel = score >= 80 ? "low" : score >= 55 ? "medium" : "high";
+        const riskLevel = score >= 80 ? "low" : score >= 60 ? "medium" : "high";
         const blocked = blockingFailed.length > 0;
         return { ...record, checks, score, riskLevel, blocked, blockingFailed };
       } catch { return null; }
@@ -67,7 +94,7 @@ export const vendorRiskRouter = router({
         if (input.checks[c.id]?.passed) score += c.weight;
         if (c.blocking && !input.checks[c.id]?.passed) blockingFailed.push(c.id);
       });
-      const riskLevel = score >= 80 ? "low" : score >= 55 ? "medium" : "high";
+      const riskLevel = score >= 80 ? "low" : score >= 60 ? "medium" : "high";
       const blocked = blockingFailed.length > 0;
       const checksJson = JSON.stringify(input.checks).replace(/'/g, "''");
       const notes = input.reviewNotes ? `'${input.reviewNotes.replace(/'/g, "''")}'` : "NULL";
@@ -122,7 +149,8 @@ export const vendorRiskRouter = router({
         const record = (rows[0] || [])[0];
         if (!record) return { allowed: true, score: null, riskLevel: null, blocked: false, message: "Fournisseur non évalué — évaluation recommandée avant commande" };
         if (record.blocked) return { allowed: false, score: record.score, riskLevel: record.riskLevel, blocked: true, message: "Fournisseur bloqué — documents obligatoires manquants (IFU, RCCM ou RIB)" };
-        if (record.riskLevel === "high") return { allowed: true, score: record.score, riskLevel: "high", blocked: false, message: "⚠️ Fournisseur à risque élevé — procédez avec précaution" };
+        if (record.riskLevel === "high") return { allowed: true, score: record.score, riskLevel: "high", blocked: false, message: "⚠️ Risque élevé (score < 60) — recommandez une approbation supplémentaire" };
+        if (record.riskLevel === "medium") return { allowed: true, score: record.score, riskLevel: "medium", blocked: false, message: "Risque modéré — vérifiez les critères manquants avant paiement" };
         return { allowed: true, score: record.score, riskLevel: record.riskLevel, blocked: false, message: null };
       } catch { return { allowed: true, score: null, riskLevel: null, blocked: false, message: null }; }
     }),
