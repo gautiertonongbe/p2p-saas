@@ -127,7 +127,7 @@ export default function RenewalCalendar() {
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-4 items-start max-h-[600px]">
+      <div className="grid lg:grid-cols-5 gap-4 items-stretch">
         {/* Calendar */}
         <Card className="lg:col-span-3">
           <CardHeader className="pb-1 pt-4 px-4">
@@ -197,13 +197,13 @@ export default function RenewalCalendar() {
         </Card>
 
         {/* Upcoming renewals list */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 flex flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-amber-700 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />Actions requises
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 max-h-[500px] overflow-y-auto">
+          <CardContent className="flex-1 space-y-2 overflow-y-auto">
             {expired.length === 0 && upcoming.length === 0 ? (
               <div className="text-center py-8">
                 <CheckCircle className="h-10 w-10 text-emerald-400 mx-auto mb-2" />
