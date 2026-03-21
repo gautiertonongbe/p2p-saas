@@ -281,7 +281,7 @@ function DashboardLayoutContent({
                       className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-muted/50 transition-colors group"
                     >
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary rounded-full" />
+                        <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: group.color }} />
                         <span className={`text-xs font-semibold uppercase tracking-wider ${hasActive ? "" : "text-muted-foreground"}`}
                           style={hasActive ? { color: `hsl(${activeColor})` } : {}}>
                           {group.label}
@@ -301,9 +301,14 @@ function DashboardLayoutContent({
                               className={`w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition-all text-left ${isActive ? "font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}
                               style={isActive ? { backgroundColor: `hsl(${activeColor} / 0.12)`, color: `hsl(${activeColor})` } : {}}
                             >
-                              <item.icon className="h-3.5 w-3.5 shrink-0" style={isActive ? { color: `hsl(${activeColor})` } : {}} />
+                              <div className="h-6 w-6 rounded-md flex items-center justify-center shrink-0 transition-colors"
+                                style={{
+                                  backgroundColor: isActive ? group.color : `${group.color}18`,
+                                }}>
+                                <item.icon className="h-3.5 w-3.5" style={{ color: isActive ? "#fff" : group.color }} />
+                              </div>
                               <span className="truncate">{item.label}</span>
-                              {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: `hsl(${activeColor})` }} />}
+                              {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: group.color }} />}
                             </button>
                           );
                         })}
@@ -329,7 +334,10 @@ function DashboardLayoutContent({
                 color: `hsl(${activeColor})`
               } : {}}
             >
-              <Settings className="h-4 w-4 shrink-0" style={location === "/settings" ? { color: `hsl(${activeColor})` } : {}} />
+              <div className="h-6 w-6 rounded-md flex items-center justify-center shrink-0 transition-colors"
+                style={{ backgroundColor: location === "/settings" ? `hsl(${activeColor})` : `hsl(${activeColor} / 0.12)` }}>
+                <Settings className="h-3.5 w-3.5" style={{ color: location === "/settings" ? "#fff" : `hsl(${activeColor})` }} />
+              </div>
               <span>{t("navigation.settings")}</span>
             </button>
           </div>
