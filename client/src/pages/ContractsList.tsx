@@ -29,12 +29,12 @@ export default function ContractsList() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const canManage = user?.role === "admin" || user?.role === "procurement_manager";
+  // canManage used below for button visibility
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
 
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin" || user?.role === "procurement_manager";
+  const isAdmin = canManage;
   const utils = trpc.useUtils();
   const { data: contracts = [], isLoading } = trpc.contracts.list.useQuery();
 
