@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, ShoppingCart, FileText } from "lucide-react";
+import { Plus, Search, ShoppingCart, FileText, ChevronRight, Truck} from "lucide-react";
 import { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
@@ -229,11 +229,28 @@ export default function PurchaseOrdersList() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/purchase-orders/${po.id}`}>
-                        <Button variant="ghost" size="sm">
-                          {t('common.view')}
-                        </Button>
-                      </Link>
+                      <div className="flex items-center justify-end gap-1">
+                        {po.status === "draft" && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">Brouillon</span>
+                        )}
+                        {(po.status === "approved" || po.status === "confirmed") && (
+                          <Link href={`/invoices/new?poId=${po.id}`}>
+                            <button className="text-xs px-2 py-1 rounded-md border border-cyan-200 text-cyan-700 hover:bg-cyan-50 transition-colors font-medium">
+                              Facturer
+                            </button>
+                          </Link>
+                        )}
+                        {po.status === "issued" && (
+                          <button className="text-xs px-2 py-1 rounded-md border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors font-medium">
+                            En attente
+                          </button>
+                        )}
+                        <Link href={`/purchase-orders/${po.id}`}>
+                          <button className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground">
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                        </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, FileText, Upload, Download , FileCheck} from "lucide-react";
+import { Plus, Search, FileText, Upload, Download , FileCheck, ChevronRight, CheckCircle, CreditCard} from "lucide-react";
 import React, { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
@@ -394,21 +394,34 @@ export default function InvoicesList() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            exportPDFMutation.mutate({ id: invoice.id });
-                          }}
+                      <div className="flex items-center justify-end gap-1">
+                        {invoice.status === "approved" && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3" />À payer
+                          </span>
+                        )}
+                        {invoice.status === "disputed" && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
+                            En litige
+                          </span>
+                        )}
+                        {invoice.status === "pending_approval" && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
+                            À approuver
+                          </span>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); exportPDFMutation.mutate({ id: invoice.id }); }}
                           disabled={exportPDFMutation.isPending}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          {t('common.view')}
-                        </Button>
+                          className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+                          title="Télécharger PDF">
+                          <Download className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; }}
+                          className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground">
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
                       </div>
                     </TableCell>
                   </TableRow>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, FileText } from "lucide-react";
+import { Plus, Search, FileText, Eye, ChevronRight, Copy, Send, CheckCircle} from "lucide-react";
 import { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
@@ -193,11 +193,27 @@ export default function PurchaseRequestsList() {
                     </TableCell>
                     <TableCell>{formatDate(request.createdAt)}</TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/purchase-requests/${request.id}`}>
-                        <Button variant="ghost" size="sm">
-                          {t('common.view')}
-                        </Button>
-                      </Link>
+                      <div className="flex items-center justify-end gap-1">
+                        {request.status === "draft" && (
+                          <Link href={`/purchase-requests/${request.id}/edit`}>
+                            <button className="text-xs px-2 py-1 rounded-md border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors font-medium">
+                              Modifier
+                            </button>
+                          </Link>
+                        )}
+                        {request.status === "approved" && (
+                          <Link href={`/purchase-orders/new?requestId=${request.id}`}>
+                            <button className="text-xs px-2 py-1 rounded-md border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-colors font-medium">
+                              Créer BC
+                            </button>
+                          </Link>
+                        )}
+                        <Link href={`/purchase-requests/${request.id}`}>
+                          <button className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground">
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                        </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
