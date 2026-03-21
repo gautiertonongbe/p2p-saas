@@ -310,7 +310,9 @@
       "unmatched": "Non conforme",
       "exception": "Exception",
       "manual_review": "Révision manuelle"
-    }
+    },
+    "vendor": "Fournisseur",
+    "matchStatusLabel": "Rapprochement"
   },
   "budgets": {
     "title": "Budgets",

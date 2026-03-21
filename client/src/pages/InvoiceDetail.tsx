@@ -702,24 +702,22 @@ export default function InvoiceDetail() {
       )}
 
       
-      {/* ── Invoice Action Bar — sticky, role-aware ── */}
+      {/* ── Invoice Action Bar ── */}
       {(() => {
         const isAdmin = user?.role === 'admin' || user?.role === 'procurement_manager';
         const isApproverRole = user?.role === 'approver';
-        const STATUS_LABEL: Record<string, string> = {
-          pending: "En attente — facture soumise pour approbation",
-          approved: "Approuvée — en attente de paiement",
-          paid: "Payée", rejected: "Refusée",
-          disputed: "Contestée", revised: "Révision demandée", cancelled: "Annulée",
-        };
         const isTerminal = ['paid','cancelled','rejected'].includes(invoice.status);
+        const STATUS_LABEL: Record<string,string> = {
+          pending:"En attente d'approbation", approved:"Approuvée — en attente de paiement",
+          paid:"Payée", rejected:"Refusée", disputed:"Contestée",
+          revised:"Révision demandée", cancelled:"Annulée",
+        };
         return (
           <Card className="sticky bottom-4 shadow-md border-2">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <p className="text-sm text-muted-foreground">{STATUS_LABEL[invoice.status] || invoice.status}</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {/* Pending: approve/reject */}
                   {invoice.status === 'pending' && (isAdmin || isApproverRole) && (
                     <>
                       <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50"
@@ -732,31 +730,27 @@ export default function InvoiceDetail() {
                       </Button>
                     </>
                   )}
-                  {/* Admin bypass */}
                   {invoice.status === 'pending' && isAdmin && (
                     <Button className="bg-amber-500 hover:bg-amber-600 text-white"
                       onClick={() => setBypassDialogOpen(true)} disabled={bypassMutation?.isPending}>
                       <ShieldCheck className="mr-2 h-4 w-4" />Approuver directement
                     </Button>
                   )}
-                  {/* Approved: mark as paid */}
                   {invoice.status === 'approved' && isAdmin && (
                     <Button className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => markAsPaidMutation.mutate({ id: invoice.id, paymentDate: new Date().toISOString(), paymentMethod: "bank_transfer" })} disabled={markAsPaidMutation?.isPending}>
+                      onClick={() => markAsPaidMutation.mutate({ id: invoice.id, paymentDate: new Date().toISOString(), paymentMethod: "bank_transfer" })}
+                      disabled={markAsPaidMutation?.isPending}>
                       <Banknote className="mr-2 h-4 w-4" />Marquer comme payée
                     </Button>
                   )}
-                  {/* Dispute */}
                   {['pending','approved'].includes(invoice.status) && isAdmin && (
                     <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50"
                       onClick={() => setDisputeDialogOpen(true)}>
                       <AlertTriangle className="mr-2 h-4 w-4" />Contester
                     </Button>
                   )}
-                  {/* Request revision */}
                   {invoice.status === 'pending' && isAdmin && (
-                    <Button variant="outline"
-                      onClick={() => setRevisionDialogOpen(true)}>
+                    <Button variant="outline" onClick={() => setRevisionDialogOpen(true)}>
                       <FileText className="mr-2 h-4 w-4" />Demander révision
                     </Button>
                   )}
@@ -766,6 +760,42 @@ export default function InvoiceDetail() {
           </Card>
         );
       })()}
+
+      {/* Approve Dialog */}
+      <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Approuver la facture ?</AlertDialogTitle><AlertDialogDescription>Facture {invoice.invoiceNumber}</AlertDialogDescription></AlertDialogHeader>
+          <Textarea value={approveComment} onChange={(e) => setApproveComment(e.target.value)} placeholder="Commentaire (optionnel)" rows={2} className="mt-2" />
+          <div className="flex gap-3 justify-end mt-2">
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => approveMutation.mutate({ id: invoice.id, comment: approveComment })} disabled={approveMutation?.isPending} className="bg-green-600 hover:bg-green-700">Approuver</AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject Dialog */}
+      <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Rejeter la facture ?</AlertDialogTitle></AlertDialogHeader>
+          <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Motif du rejet *" rows={2} className="mt-2" />
+          <div className="flex gap-3 justify-end mt-2">
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => rejectMutation.mutate({ id: invoice.id, reason: rejectReason })} disabled={rejectMutation?.isPending || !rejectReason.trim()} className="bg-red-600 hover:bg-red-700">Rejeter</AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bypass Dialog */}
+      <AlertDialog open={bypassDialogOpen} onOpenChange={setBypassDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Approuver directement (Admin)</AlertDialogTitle><AlertDialogDescription>Bypasse la chaîne d'approbation.</AlertDialogDescription></AlertDialogHeader>
+          <Textarea value={bypassComment} onChange={(e) => setBypassComment(e.target.value)} placeholder="Motif (optionnel)" rows={2} className="mt-2" />
+          <div className="flex gap-3 justify-end mt-2">
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => bypassMutation.mutate({ id: invoice.id, comment: bypassComment })} disabled={bypassMutation?.isPending} className="bg-amber-600 hover:bg-amber-700">Approuver directement</AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Approval chain */}
       {approvals && approvals.length > 0 && <ApprovalChainVisualization approvals={approvals} />}

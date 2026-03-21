@@ -352,7 +352,7 @@ export default function InvoicesList() {
                   <TableHead>{t('invoices.invoiceDate')}</TableHead>
                   <TableHead>{t('invoices.dueDate')}</TableHead>
                   <TableHead className="text-right">{t('invoices.amount')}</TableHead>
-                  <TableHead>{t('invoices.matchStatus')}</TableHead>
+                  <TableHead>{t('invoices.matchStatusLabel')}</TableHead>
                   <TableHead>{t('common.status')}</TableHead>
                   <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>

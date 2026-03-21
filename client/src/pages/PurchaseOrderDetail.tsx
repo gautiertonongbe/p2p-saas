@@ -240,7 +240,7 @@ export default function PurchaseOrderDetail() {
                   <Package className="mr-2 h-4 w-4" />Enregistrer réception
                 </Button>
               )}
-              {["confirmed","partially_received","received"].includes(p.status) && isAdmin && (
+              {["approved","confirmed","partially_received","received"].includes(p.status) && isAdmin && (
                 <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setLocation(`/invoices/new?poId=${p.id}`)}>
                   <FileText className="mr-2 h-4 w-4" />Créer une facture
                 </Button>

@@ -310,7 +310,9 @@
       "unmatched": "Unmatched",
       "exception": "Exception",
       "manual_review": "Manual review"
-    }
+    },
+    "vendor": "Vendor",
+    "matchStatusLabel": "Match"
   },
   "budgets": {
     "title": "Budgets",
