@@ -208,12 +208,12 @@ export default function InvoicesList() {
                 <Plus className="h-4 w-4" />Nouvelle facture
               </button>
             </Link>}
-          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+          {canManage && <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto btn-primary">
                 <Upload className="mr-2 h-4 w-4" />
                 {t('invoices.upload')}
-              </Button>}
+              </Button>
             </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -435,7 +435,7 @@ export default function InvoicesList() {
             <div className="p-8 text-center">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground/50" />
               <p className="mt-4 text-muted-foreground">Aucune facture trouvée</p>
-              <Button className="mt-4" variant="outline" onClick={() => setUploadDialogOpen(true)}>
+              {canManage && <Button className="mt-4" variant="outline" onClick={() => setUploadDialogOpen(true)}>
                 <Upload className="mr-2 h-4 w-4" />
                 {t('invoices.upload')}
               </Button>}
