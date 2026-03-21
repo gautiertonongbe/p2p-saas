@@ -53,7 +53,7 @@ export default function ContractsList() {
         icon={<FileText className="h-5 w-5" />}
         title="Contrats"
         description="Gérez vos contrats fournisseurs et suivez les renouvellements"
-        action={{ label: "Nouveau contrat", onClick: () => setLocation("/contracts/new") }}
+        action={<button onClick={() => setLocation("/contracts/new")} className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold btn-primary"><Plus className="h-4 w-4" />Nouveau contrat</button>}
       />
 
       {/* Stats */}

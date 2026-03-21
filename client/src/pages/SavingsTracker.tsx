@@ -73,7 +73,7 @@ export default function SavingsTracker() {
   return (
     <div className="space-y-6">
       <PageHeader icon={<TrendingDown className="h-5 w-5" />} title="Suivi des économies" description={`Économies réalisées en ${year} — démontrez la valeur des achats`}
-        action={{ label: "Enregistrer une économie", onClick: () => setShowForm(true) }} />
+        action={<button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold btn-primary"><Plus className="h-4 w-4" />Enregistrer une économie</button>} />
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
