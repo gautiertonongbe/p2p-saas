@@ -12,7 +12,7 @@
 
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect } from "react";
-import { Plus, X, ChevronDown } from "lucide-react";
+import { Plus, X } from "lucide-react";
 
 export interface TaxLine {
   code: string;
@@ -102,38 +102,45 @@ export function TaxSelector({ baseAmount, value, onChange, readOnly }: TaxSelect
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-gray-700">Taxes</span>
         {!readOnly && (
-          <div className="relative">
-            <button onClick={() => setOpen(!open)}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors font-medium">
-              <Plus className="h-3.5 w-3.5" />Ajouter une taxe
-              <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
-            </button>
-            {open && (
-              <div className="absolute right-0 top-8 z-50 w-72 bg-white rounded-xl shadow-xl border overflow-hidden">
-                <div className="px-3 py-2 border-b bg-gray-50">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Catalogue fiscal — Afrique de l'Ouest</p>
-                </div>
-                {catalogue.map(tax => (
-                  <button key={tax.code} onClick={() => addTax(tax)}
-                    disabled={!!value.find(t => t.code === tax.code)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-blue-50 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed border-b last:border-0">
-                    <div>
-                      <p className="text-sm font-medium">{tax.label}</p>
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${TYPE_COLORS[tax.type]}`}>
-                        {TYPE_LABELS[tax.type]}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-gray-900">{tax.rate}%</p>
-                      {tax.isWithholding && <p className="text-xs text-amber-600">à déduire</p>}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <button onClick={() => setOpen(!open)}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-colors font-medium">
+            <Plus className="h-3.5 w-3.5" />
+            {open ? "Fermer" : "Ajouter une taxe"}
+          </button>
         )}
       </div>
+
+      {/* Catalogue — shown inline when open */}
+      {open && !readOnly && (
+        <div className="border rounded-xl overflow-hidden bg-white shadow-sm">
+          <div className="px-3 py-2 bg-gray-50 border-b">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Catalogue fiscal OHADA — Afrique de l'Ouest</p>
+          </div>
+          <div className="divide-y">
+            {catalogue.map(tax => {
+              const already = !!value.find(t => t.code === tax.code);
+              return (
+                <button key={tax.code} onClick={() => addTax(tax)} disabled={already}
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-blue-50 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed">
+                  <div>
+                    <p className="text-sm font-medium">{tax.label}</p>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${TYPE_COLORS[tax.type]}`}>
+                      {TYPE_LABELS[tax.type]}{tax.isWithholding ? " · à déduire" : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-gray-700">{tax.rate}%</span>
+                    {already
+                      ? <span className="text-xs text-emerald-600 font-medium">✓ Ajouté</span>
+                      : <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">+ Ajouter</span>
+                    }
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Applied tax lines */}
       {value.length > 0 && (

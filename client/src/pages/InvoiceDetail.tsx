@@ -795,7 +795,6 @@ export default function InvoiceDetail() {
       )}
 
       </div>{/* end max-w-4xl */}
-    </div>{/* end min-h-screen */}
 
       {/* Approve Dialog */}
       <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
@@ -924,5 +923,6 @@ export default function InvoiceDetail() {
         <MarkAsPaidSection invoiceId={parseInt(id!)} onSuccess={() => utils.invoices.getById.invalidate()} />
       )}
     </div>
-  );
+    </div>
+    );
 }
