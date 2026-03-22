@@ -45,6 +45,7 @@ import RFQForm from "./pages/RFQForm";
 import RFQDetail from "./pages/RFQDetail";
 import InventoryPage from "./pages/InventoryPage";
 import PaymentsList from "./pages/PaymentsList";
+import PaymentDetail from "./pages/PaymentDetail";
 import ReportBuilder from "./pages/ReportBuilder";
 
 function Router() {
@@ -75,6 +76,7 @@ function Router() {
       <Route path="/supplier-portal"><SupplierPortal /></Route>
       <Route path="/invoices/:id"><DashboardLayout><InvoiceDetail /></DashboardLayout></Route>
       <Route path="/payments"><DashboardLayout><PaymentsList /></DashboardLayout></Route>
+      <Route path="/payments/:id"><DashboardLayout><PaymentDetail /></DashboardLayout></Route>
       <Route path="/budgets"><DashboardLayout><BudgetsList /></DashboardLayout></Route>
       <Route path="/budgets/new"><DashboardLayout><BudgetForm /></DashboardLayout></Route>
       <Route path="/budgets/:id"><DashboardLayout><BudgetDetail /></DashboardLayout></Route>
