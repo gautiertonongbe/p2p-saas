@@ -132,7 +132,7 @@ export default function PurchaseOrderDetail() {
         </div>
       </div>
 
-      {/* Pending banner */
+      {/* Pending banner */}
       {p.status === "issued" && (
         <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
           <div className="h-8 w-8 rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center shrink-0">
