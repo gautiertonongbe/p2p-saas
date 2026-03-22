@@ -823,7 +823,17 @@ export default function InvoiceDetail() {
       </AlertDialog>
 
       {/* Approval chain */}
-      {approvals && approvals.length > 0 && <ApprovalChainVisualization approvals={approvals} />}
+      {approvals && approvals.length > 0
+  ? <ApprovalChainVisualization approvals={approvals} />
+  : <div className="bg-white rounded-2xl border overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-3 border-b bg-gray-50/60">
+        <span className="font-semibold text-sm">Approbateurs</span>
+      </div>
+      <div className="px-5 py-6 text-center text-muted-foreground text-sm">
+        Aucune étape d'approbation pour cette facture
+      </div>
+    </div>
+}
 
       {/* Pending banner */}
       {invoice.status === "pending" && (

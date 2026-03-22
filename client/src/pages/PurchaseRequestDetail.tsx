@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, FileText, Calendar, User, DollarSign, ShieldCheck, ShoppingCart, Edit, Send, Clock, Copy, RefreshCw} from "lucide-react";
+import { ArrowLeft, FileText, Calendar, User, DollarSign, ShieldCheck, ShoppingCart, Edit, Send, Clock, Copy, RefreshCw, Shield} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,7 +61,7 @@ export default function PurchaseRequestDetail() {
 
   const { data: approvals } = trpc.approvals.getByRequest.useQuery(
     { requestId: parseInt(id!) },
-    { enabled: !!id && request?.status !== "draft" }
+    { enabled: !!id }
   );
 
   const { data: history, isLoading: historyLoading } = trpc.settings.getEntityHistory.useQuery(
@@ -389,9 +389,20 @@ export default function PurchaseRequestDetail() {
         </CardContent>
       </Card>
 
-      {/* Approval Chain */}
-      {approvals && approvals.length > 0 && (
-        <ApprovalChainVisualization approvals={approvals} />
+      {/* Approval Chain — always show for non-draft */}
+      {request.status !== "draft" && (
+        approvals && approvals.length > 0
+          ? <ApprovalChainVisualization approvals={approvals} />
+          : <div className="bg-white rounded-2xl border overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3 border-b bg-gray-50/60">
+                <Shield className="h-4 w-4 text-blue-600" />
+                <span className="font-semibold text-sm">Approbateurs</span>
+              </div>
+              <div className="px-5 py-8 text-center text-muted-foreground text-sm">
+                <Clock className="h-6 w-6 mx-auto mb-2 opacity-30" />
+                Aucune étape d'approbation configurée pour cette demande
+              </div>
+            </div>
       )}
 
       {/* History */}
@@ -446,14 +457,15 @@ export default function PurchaseRequestDetail() {
                     </Button>
                   )}
 
-                  {/* Admin: approve directly from draft OR pending */}
+                  {/* Admin: bypass approval workflow */}
                   {isAdmin && (isDraft || isPending) && (
                     <Button
                       onClick={() => setBypassDialogOpen(true)}
                       className="bg-amber-500 hover:bg-amber-600 text-white"
+                      title="Contourner le workflow d'approbation (réservé aux admins)"
                     >
                       <ShieldCheck className="mr-2 h-4 w-4" />
-                      Approuver directement
+                      Contournement workflow
                     </Button>
                   )}
 
@@ -587,7 +599,7 @@ export default function PurchaseRequestDetail() {
         </DialogContent>
       </Dialog>
 
-      {/* Bypass Approval Dialog */}
+      {/* Contournement workflow Dialog */}
       <Dialog open={bypassDialogOpen} onOpenChange={setBypassDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -623,7 +635,7 @@ export default function PurchaseRequestDetail() {
               disabled={bypassMutation.isPending}
               className="bg-amber-600 hover:bg-amber-700"
             >
-              {bypassMutation.isPending ? "Approbation en cours..." : "Approuver directement"}
+              {bypassMutation.isPending ? "Approbation en cours..." : "Contournement du workflow"}
             </Button>
           </DialogFooter>
         </DialogContent>
