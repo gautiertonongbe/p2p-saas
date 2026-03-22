@@ -37,7 +37,6 @@ export default function PurchaseOrderDetail() {
   const { data: po, isLoading } = trpc.purchaseOrders.getById.useQuery({ id: parseInt(id!) }, { enabled: !!id });
   const { data: approvals = [] } = trpc.approvals.getByEntity.useQuery({ entityType: "purchaseOrder", entityId: parseInt(id!) }, { enabled: !!id });
   const { data: history, isLoading: historyLoading } = trpc.settings.getEntityHistory.useQuery({ entityType: "purchaseOrder", entityId: parseInt(id!) }, { enabled: !!id });
-  const poItems = (po as any)?.items || [];
 
   const invalidate = () => utils.purchaseOrders.getById.invalidate();
 
@@ -101,17 +100,6 @@ export default function PurchaseOrderDetail() {
       <Button onClick={() => setLocation("/purchase-orders")} variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t("common.back")}</Button>
     </div>
   );
-
-  const p = po as any;
-  const isAdmin = user?.role === "admin" || user?.role === "procurement_manager";
-  const isApproverRole = user?.role === "approver";
-  const isTerminal = ["closed","cancelled","rejected"].includes(p.status);
-  const STATUS_LABEL: Record<string,string> = {
-    draft:"Brouillon — bon non encore émis", issued:"Émis — en attente d'approbation",
-    approved:"Approuvé — en attente de réception", confirmed:"Confirmé — en attente de réception",
-    partially_received:"Partiellement reçu", received:"Totalement reçu — prêt pour facturation",
-    closed:"Clôturé", cancelled:"Annulé", rejected:"Refusé",
-  };
 
   const p = po as any;
   const isAdmin = user?.role === "admin" || user?.role === "procurement_manager";
