@@ -134,6 +134,22 @@ export const purchaseOrdersRouter = router({
         newValue: { poNumber, ...orderData, totalAmount, taxAmount },
       });
 
+
+      // Auto-record savings if PO amount < PR estimated amount
+      try {
+        const pr = await db.getPurchaseRequestById(input.requestId, ctx.user.organizationId);
+        if (pr && pr.amountEstimate && Number(totalAmount) < Number(pr.amountEstimate)) {
+          const savingsAmount = Number(pr.amountEstimate) - Number(totalAmount);
+          const savingsPct = ((savingsAmount / Number(pr.amountEstimate)) * 100).toFixed(2);
+          if (savingsAmount > 0) {
+            await dbInstance.execute(
+              `INSERT INTO savingsRecords (organizationId, title, vendorId, savingsType, budgetAmount, actualAmount, savingsAmount, savingsPercent, poId, notes, recordedBy)
+               VALUES (${ctx.user.organizationId}, 'Économie BC vs DA: ${(pr.title || "").replace(/'/g, "''")}', ${input.vendorId}, 'price_negotiation', ${Number(pr.amountEstimate)}, ${Number(totalAmount)}, ${savingsAmount}, ${savingsPct}, ${poId}, 'Calculé automatiquement depuis la DA ${pr.requestNumber || ""}', ${ctx.user.id})`
+            );
+          }
+        }
+      } catch (e) { /* non-blocking */ }
+
       return { id: poId, poNumber };
     }),
 
