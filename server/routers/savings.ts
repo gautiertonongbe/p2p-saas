@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
+const safe = (s: string) => String(s || "").replace(/'/g, "''");
 import { TRPCError } from "@trpc/server";
 import * as db from "../db";
 import { createAuditLog } from "../db";
@@ -43,7 +44,7 @@ export const savingsRouter = router({
       const savingsPct = ((savingsAmount / input.budgetAmount) * 100).toFixed(2);
       await dbInstance.execute(
         `INSERT INTO savingsRecords (organizationId, title, vendorId, savingsType, budgetAmount, actualAmount, savingsAmount, savingsPercent, category, departmentId, poId, notes, recordedBy)
-         VALUES (${ctx.user.organizationId}, '${input.title.replace(/'/g, "''")}', ${input.vendorId || "NULL"}, '${input.savingsType}', ${input.budgetAmount}, ${input.actualAmount}, ${savingsAmount}, ${savingsPct}, ${input.category ? `'${input.category}'` : "NULL"}, ${input.departmentId || "NULL"}, ${input.poId || "NULL"}, ${input.notes ? `'${input.notes.replace(/'/g, "''")}'` : "NULL"}, ${ctx.user.id})`
+         VALUES (${ctx.user.organizationId}, '${input.title.replace(/'/g, "''")}', ${input.vendorId || "NULL"}, '${safe(input.savingsType)}', ${input.budgetAmount}, ${input.actualAmount}, ${savingsAmount}, ${savingsPct}, ${input.category ? `'${input.category}'` : "NULL"}, ${input.departmentId || "NULL"}, ${input.poId || "NULL"}, ${input.notes ? `'${input.notes.replace(/'/g, "''")}'` : "NULL"}, ${ctx.user.id})`
       );
       return { success: true, savingsAmount, savingsPercent: parseFloat(savingsPct) };
     }),

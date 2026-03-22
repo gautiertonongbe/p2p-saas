@@ -2,6 +2,8 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import * as db from "../db";
 
+const safe = (s: string) => String(s || "").replace(/'/g, "''");
+
 export const priceBenchmarkRouter = router({
   // ── Query historical prices for an item name ──────────────────────────────
   getHistorical: protectedProcedure
@@ -110,7 +112,7 @@ Always respond ONLY with valid JSON, no explanation. Format:
 }`,
             messages: [{
               role: "user",
-              content: `Estimate the market price for: "${input.itemName}"${input.description ? ` (${input.description})` : ""}${input.unit ? `, unit: ${input.unit}` : ""}${input.quantity ? `, quantity: ${input.quantity}` : ""}.
+              content: `Estimate the market price for: "${safe(input.itemName)}"${input.description ? ` (${input.description})` : ""}${input.unit ? `, unit: ${input.unit}` : ""}${input.quantity ? `, quantity: ${input.quantity}` : ""}.
 Context: B2B procurement in Benin/Côte d'Ivoire, formal supplier, standard commercial terms.`
             }]
           })

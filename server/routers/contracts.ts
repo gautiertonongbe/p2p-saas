@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
+const safe = (s: string) => String(s || "").replace(/'/g, "''");
 import { TRPCError } from "@trpc/server";
 import * as db from "../db";
 import { createAuditLog } from "../db";
@@ -75,7 +76,7 @@ export const contractsRouter = router({
       const contractNumber = `CTR-${Date.now().toString().slice(-8)}`;
       const result = await dbInstance.execute(
         `INSERT INTO contracts (organizationId, contractNumber, title, vendorId, contractType, startDate, endDate, value, currency, autoRenew, noticePeriodDays, description, fileUrl, alertDaysBefore, status, createdBy)
-         VALUES (${ctx.user.organizationId}, '${contractNumber}', '${input.title.replace(/'/g, "''")}', ${input.vendorId}, '${input.contractType}', '${input.startDate}', '${input.endDate}', ${input.value || "NULL"}, '${input.currency}', ${input.autoRenew ? 1 : 0}, ${input.noticePeriodDays}, ${input.description ? `'${input.description.replace(/'/g, "''")}'` : "NULL"}, ${input.fileUrl ? `'${input.fileUrl}'` : "NULL"}, ${input.alertDaysBefore}, 'active', ${ctx.user.id})`
+         VALUES (${ctx.user.organizationId}, '${contractNumber}', '${input.title.replace(/'/g, "''")}', ${input.vendorId}, '${safe(input.contractType)}', '${safe(input.startDate)}', '${safe(input.endDate)}', ${input.value || "NULL"}, '${safe(input.currency)}', ${input.autoRenew ? 1 : 0}, ${input.noticePeriodDays}, ${input.description ? `'${input.description.replace(/'/g, "''")}'` : "NULL"}, ${input.fileUrl ? `'${input.fileUrl}'` : "NULL"}, ${input.alertDaysBefore}, 'active', ${ctx.user.id})`
       ) as any;
       const id = result[0]?.insertId;
       await createAuditLog({ organizationId: ctx.user.organizationId, entityType: "contract", entityId: id, action: "created", actorId: ctx.user.id, newValue: input });

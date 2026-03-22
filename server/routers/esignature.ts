@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { getDb } from "../db";
+const safe = (s: string) => String(s || "").replace(/'/g, "''");
 import { TRPCError } from "@trpc/server";
 import crypto from "crypto";
 
@@ -70,7 +71,7 @@ export const esignatureRouter = router({
         SELECT cs.*, vc.title, vc.contractNumber, vc.description, vc.startDate, vc.endDate, vc.totalValue
         FROM contractSignatures cs
         JOIN vendorContracts vc ON cs.contractId = vc.id
-        WHERE cs.signatureToken = '${input.token}'
+        WHERE cs.signatureToken = '${safe(input.token)}'
         LIMIT 1
       `);
       const rows = (result as any)[0];
@@ -92,7 +93,7 @@ export const esignatureRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       // Get signature record
-      const result = await db.execute(`SELECT * FROM contractSignatures WHERE signatureToken = '${input.token}' LIMIT 1`);
+      const result = await db.execute(`SELECT * FROM contractSignatures WHERE signatureToken = '${safe(input.token)}' LIMIT 1`);
       const rows = (result as any)[0];
       if (!rows || rows.length === 0) throw new TRPCError({ code: "NOT_FOUND" });
       const sig = rows[0];
@@ -104,7 +105,7 @@ export const esignatureRouter = router({
         SET signatureData = '${input.signatureData.replace(/'/g, "''")}',
             status = 'signed',
             signedAt = NOW()
-        WHERE signatureToken = '${input.token}'
+        WHERE signatureToken = '${safe(input.token)}'
       `);
 
       // Check if all signatories have signed

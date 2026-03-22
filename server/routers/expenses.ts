@@ -25,7 +25,7 @@ export const expensesRouter = router({
       if (!db) return [];
       try {
       const where = [`er.organizationId = ${ctx.user.organizationId}`];
-      if (input?.status) where.push(`er.status = '${input.status}'`);
+      if (input?.status) where.push(`er.status = '${safe(input.status)}'`);
       if (input?.myOnly) where.push(`er.submitterId = ${ctx.user.id}`);
       const result = await db.execute(`
         SELECT er.*, u.name as submitterName, u.email as submitterEmail,
@@ -186,7 +186,7 @@ export const expensesRouter = router({
       await db.execute(`
         UPDATE expenseReports 
         SET status = 'reimbursed', reimbursedAt = NOW(),
-            reimbursementMethod = '${input.method}',
+            reimbursementMethod = '${safe(input.method)}',
             reimbursementRef = ${input.reference ? `'${safe(input.reference)}'` : "NULL"}
         WHERE id = ${input.id} AND organizationId = ${ctx.user.organizationId} AND status = 'approved'
       `);

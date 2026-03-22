@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import * as db from "../db";
+const safe = (s: string) => String(s || "").replace(/'/g, "''");
 import { TRPCError } from "@trpc/server";
 import { createAuditLog } from "../db";
 
@@ -123,7 +124,7 @@ export const inventoryRouter = router({
         organizationId: ctx.user.organizationId,
         entityType: "inventoryStock",
         entityId: input.itemId,
-        action: `stock_${input.type}`,
+        action: `stock_${safe(input.type)}`,
         actorId: ctx.user.id,
         oldValue: { quantity: currentQty },
         newValue: { quantity: newQty, warehouseId: input.warehouseId, notes: input.notes },

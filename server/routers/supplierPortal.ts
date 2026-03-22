@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { getDb } from "../db";
+const safe = (s: string) => String(s || "").replace(/'/g, "''");
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "../_core/cookies";
@@ -180,7 +181,7 @@ export const supplierPortalRouter = router({
           ${data.vendorId}, ${data.organizationId},
           ${input.poId || 'NULL'},
           '${input.invoiceNumber.replace(/'/g, "''")}',
-          '${input.invoiceDate}',
+          '${safe(input.invoiceDate)}',
           ${input.dueDate ? `'${input.dueDate}'` : 'NULL'},
           ${input.amount},
           ${input.taxAmount || 0},

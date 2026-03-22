@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import * as db from "../db";
+const safe = (s: string) => String(s || "").replace(/'/g, "''");
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "../_core/llm";
 import { notifyOwner } from "../_core/notification";
@@ -306,8 +307,8 @@ export const aiInsightsRouter = router({
 
       // Send notification
       const notificationSent = await notifyOwner({
-        title: `Status Update: ${input.entityType} ${entityNumber}`,
-        content: `Status changed from "${input.oldStatus}" to "${input.newStatus}". ${requester ? `Requester: ${requester.name}` : ""}`,
+        title: `Status Update: ${safe(input.entityType)} ${entityNumber}`,
+        content: `Status changed from "${safe(input.oldStatus)}" to "${safe(input.newStatus)}". ${requester ? `Requester: ${requester.name}` : ""}`,
       });
 
       return {

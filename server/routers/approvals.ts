@@ -37,6 +37,7 @@ export function assertValidTransition(
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import * as db from "../db";
+const safe = (s: string) => String(s || "").replace(/'/g, "''");
 import { TRPCError } from "@trpc/server";
 import { createAuditLog } from "../db";
 
@@ -380,7 +381,7 @@ export const approvalsRouter = router({
           userId: rejectedRequest.requesterId,
           type: "rejected",
           title: "Demande rejetée",
-          message: `Votre demande "${rejectedRequest.title}" a été rejetée. Raison: ${input.comment}`,
+          message: `Votre demande "${rejectedRequest.title}" a été rejetée. Raison: ${safe(input.comment)}`,
           entityType: "purchaseRequest",
           entityId: rejectedRequest.id,
         });

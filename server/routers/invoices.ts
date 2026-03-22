@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import * as db from "../db";
+const safe = (s: string) => String(s || "").replace(/'/g, "''");
 import { TRPCError } from "@trpc/server";
 import { createAuditLog } from "../db";
 import { invokeLLM } from "../_core/llm";
@@ -81,7 +82,7 @@ export const invoicesRouter = router({
       if (duplicate) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: `Facture en double détectée: le numéro ${input.invoiceNumber} existe déjà pour ce fournisseur (ID: ${duplicate.id})`,
+          message: `Facture en double détectée: le numéro ${safe(input.invoiceNumber)} existe déjà pour ce fournisseur (ID: ${duplicate.id})`,
         });
       }
 
@@ -640,7 +641,7 @@ export const invoicesRouter = router({
           status: "disputed",
           disputeReason: input.reason + (input.details ? `
 
-Détails: ${input.details}` : ""),
+Détails: ${safe(input.details)}` : ""),
           disputedAt: new Date(),
           disputedBy: ctx.user.id,
         })
@@ -661,7 +662,7 @@ Détails: ${input.details}` : ""),
           userIds: notifyIds,
           type: "invoice_overdue" as any,
           title: "Facture disputée",
-          message: `La facture ${(invoice as any).invoiceNumber} a été disputée. Raison: ${input.reason}`,
+          message: `La facture ${(invoice as any).invoiceNumber} a été disputée. Raison: ${safe(input.reason)}`,
           entityType: "invoice",
           entityId: input.invoiceId,
         });
@@ -717,7 +718,7 @@ Détails: ${input.details}` : ""),
         organizationId: ctx.user.organizationId,
         entityType: "invoice",
         entityId: input.invoiceId,
-        action: `dispute_resolved_${input.resolution}`,
+        action: `dispute_resolved_${safe(input.resolution)}`,
         actorId: ctx.user.id,
         newValue: { resolution: input.resolution, notes: input.notes, newStatus },
       });
@@ -856,7 +857,7 @@ Détails: ${input.details}` : ""),
         .where(and(eq(invoices.invoiceNumber, input.invoiceNumber), eq(invoices.vendorId, (po as any).vendorId), eq(invoices.organizationId, ctx.user.organizationId)))
         .limit(1);
       if (existing.length > 0) {
-        throw new TRPCError({ code: "CONFLICT", message: `La facture ${input.invoiceNumber} existe déjà pour ce fournisseur` });
+        throw new TRPCError({ code: "CONFLICT", message: `La facture ${safe(input.invoiceNumber)} existe déjà pour ce fournisseur` });
       }
 
       const amount = input.amount ?? parseFloat((po as any).totalAmount);
