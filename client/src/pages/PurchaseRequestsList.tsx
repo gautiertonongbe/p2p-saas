@@ -8,7 +8,9 @@ import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, FileText, Eye, ChevronRight, Copy, Send, CheckCircle, Edit2, ShoppingCart, XCircle} from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { SortToggle } from "@/components/SortToggle";
+// keep: import { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
   Table,
@@ -42,6 +44,7 @@ export default function PurchaseRequestsList() {
     onSuccess: () => { toast.success("Demande annulée"); utils.purchaseRequests.list.invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
+  const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewState, setViewState] = useState<ViewState>({
@@ -99,6 +102,14 @@ export default function PurchaseRequestsList() {
     return new Date(date).toLocaleDateString('fr-FR');
   };
 
+  const sortedItems = useMemo(() => {
+    return [...(filteredRequests || [])].sort((a: any, b: any) => {
+      const aDate = new Date(a.createdAt || a.createdAt || 0).getTime();
+      const bDate = new Date(b.createdAt || b.createdAt || 0).getTime();
+      return sortDir === "desc" ? bDate - aDate : aDate - bDate;
+    });
+  }, [filteredRequests, sortDir]);
+
   return (
     <div className="space-y-6">
       <PageHeader icon={<FileText className="h-5 w-5" />} title={t("purchaseRequests.title")} description={t("purchaseRequests.list")} />
@@ -117,7 +128,8 @@ export default function PurchaseRequestsList() {
             onChange={setViewState}
             defaultColumns={PR_COLUMNS.map(c => c.key)}
           />
-          <Link href="/purchase-requests/new">
+          <SortToggle value={sortDir} onChange={setSortDir} />
+                <Link href="/purchase-requests/new">
             <Button className="w-full sm:w-auto btn-primary">
               <Plus className="mr-2 h-4 w-4" />
               {t('purchaseRequests.new')}
@@ -181,7 +193,7 @@ export default function PurchaseRequestsList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRequests.map((request) => (
+                {sortedItems.map((request) => (
                   <TableRow key={request.id} className="cursor-pointer hover:bg-muted/50 group">
                     <TableCell className="font-medium">{request.requestNumber}</TableCell>
                     <TableCell>

@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
 import { Plus, Search, FileText, Users, Clock, CheckCircle2 , ClipboardList, Eye, Edit2, ChevronRight, Send, XCircle} from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { SortToggle } from "@/components/SortToggle";
+// keep: import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -94,7 +96,8 @@ export default function RFQsList() {
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground">Chargement...</div>
           ) : filtered && filtered.length > 0 ? (
-            <Table>
+            <div className="flex justify-end mb-3"><SortToggle value={sortDir} onChange={setSortDir} /></div>
+      <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>N° RFQ</TableHead>
@@ -107,7 +110,7 @@ export default function RFQsList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(rfq => {
+                {sortedItems.map(rfq => {
                   const s = STATUS_MAP[rfq.status] ?? STATUS_MAP.draft;
                   const isOverdue = rfq.status === "sent" && new Date(rfq.deadline) < new Date();
                   return (

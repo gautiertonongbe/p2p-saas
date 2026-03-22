@@ -1,3 +1,4 @@
+import { SortToggle } from "@/components/SortToggle";
 import { ActionMenu } from "@/components/ActionMenu";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ export default function InvoicesList() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const canManage = user?.role === "admin" || user?.role === "procurement_manager";
+  const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewState, setViewState] = useState<ViewState>({ filters: [], displayType: "table" });
@@ -185,6 +187,14 @@ export default function InvoicesList() {
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('fr-FR');
   };
+
+  const sortedItems = useMemo(() => {
+    return [...(filteredInvoices || [])].sort((a: any, b: any) => {
+      const aDate = new Date(a.invoiceDate || a.createdAt || 0).getTime();
+      const bDate = new Date(b.invoiceDate || b.createdAt || 0).getTime();
+      return sortDir === "desc" ? bDate - aDate : aDate - bDate;
+    });
+  }, [filteredInvoices, sortDir]);
 
   return (
     <div className="space-y-6">
@@ -348,7 +358,8 @@ export default function InvoicesList() {
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground">{t('common.loading')}</div>
           ) : filteredInvoices && filteredInvoices.length > 0 ? (
-            <Table>
+            <div className="flex justify-end mb-3"><SortToggle value={sortDir} onChange={setSortDir} /></div>
+      <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('invoices.invoiceNumber')}</TableHead>
@@ -362,7 +373,7 @@ export default function InvoicesList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInvoices.map((invoice) => (
+                {sortedItems.map((invoice) => (
                   <TableRow
                     key={invoice.id}
                     className="cursor-pointer hover:bg-muted/50 group"

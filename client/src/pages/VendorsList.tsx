@@ -7,7 +7,9 @@ import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, Users, Building2, Eye, Edit2, ChevronRight, XCircle, ShieldCheck, UserCheck} from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { SortToggle } from "@/components/SortToggle";
+// keep: import { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
   Table,
@@ -30,6 +32,7 @@ export default function VendorsList() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const canManage = user?.role === "admin" || user?.role === "procurement_manager";
+  const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewState, setViewState] = useState<ViewState>({ filters: [], displayType: "table" });
@@ -63,6 +66,14 @@ export default function VendorsList() {
     return matchesSearch && matchesStatus && matchesViewFilters;
   });
 
+  const sortedItems = useMemo(() => {
+    return [...(filteredVendors || [])].sort((a: any, b: any) => {
+      const aDate = new Date(a.createdAt || a.createdAt || 0).getTime();
+      const bDate = new Date(b.createdAt || b.createdAt || 0).getTime();
+      return sortDir === "desc" ? bDate - aDate : aDate - bDate;
+    });
+  }, [filteredVendors, sortDir]);
+
   return (
     <div className="space-y-6">
       <PageHeader icon={<Users className="h-5 w-5" />} title={t("vendors.title")} description={t("vendors.description")} />
@@ -81,7 +92,8 @@ export default function VendorsList() {
             onChange={setViewState}
             defaultColumns={VENDOR_COLUMNS.map(c => c.key)}
           />
-          {canManage && <Link href="/vendors/new">
+          {canManage && <SortToggle value={sortDir} onChange={setSortDir} />
+                <Link href="/vendors/new">
             <Button className="w-full sm:w-auto btn-primary">
               <Plus className="mr-2 h-4 w-4" />
               {t('vendors.new')}
@@ -144,7 +156,7 @@ export default function VendorsList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredVendors.map((vendor) => (
+                {sortedItems.map((vendor) => (
                   <TableRow key={vendor.id} className="cursor-pointer hover:bg-muted/50 group">
                     <TableCell className="font-medium">V-{vendor.id}</TableCell>
                     <TableCell>

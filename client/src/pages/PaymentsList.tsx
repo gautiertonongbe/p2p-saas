@@ -1,3 +1,4 @@
+import { SortToggle } from "@/components/SortToggle";
 import { useTranslation } from "react-i18next";
 import { ActionMenu } from "@/components/ActionMenu";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -74,6 +75,14 @@ export default function PaymentsList() {
 
   const pendingCount = payments?.filter(p => p.status === "scheduled").length ?? 0;
 
+  const sortedItems = useMemo(() => {
+    return [...(filtered || [])].sort((a: any, b: any) => {
+      const aDate = new Date(a.createdAt || a.createdAt || 0).getTime();
+      const bDate = new Date(b.createdAt || b.createdAt || 0).getTime();
+      return sortDir === "desc" ? bDate - aDate : aDate - bDate;
+    });
+  }, [filtered, sortDir]);
+
   return (
     <div className="space-y-6">
       <PageHeader icon={<CreditCard className="h-5 w-5" />} title={t("payments.title")} description="Suivi des paiements" />
@@ -148,7 +157,8 @@ export default function PaymentsList() {
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground">Chargement…</div>
           ) : filtered && filtered.length > 0 ? (
-            <Table>
+            <div className="flex justify-end mb-3"><SortToggle value={sortDir} onChange={setSortDir} /></div>
+      <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Fournisseur</TableHead>
@@ -162,7 +172,7 @@ export default function PaymentsList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(p => {
+                {sortedItems.map(p => {
                   const st = STATUS_MAP[p.status] ?? STATUS_MAP.completed;
                   const Icon = METHOD_ICONS[p.paymentMethod] ?? DollarSign;
                   return (

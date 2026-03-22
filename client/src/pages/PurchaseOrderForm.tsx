@@ -64,6 +64,8 @@ export default function PurchaseOrderForm() {
   const handleSubmit = async () => {
     if (!vendorId) { toast.error("Sélectionnez un fournisseur"); return; }
     if (!selectedRequest) { toast.error("Sélectionnez une demande d'achat"); return; }
+    if (items.length === 0) { toast.error("Aucun article dans la demande"); return; }
+    if (!selectedRequest) { toast.error("Sélectionnez une demande d'achat"); return; }
     await createMut.mutateAsync({
       requestId: selectedRequest.id,
       vendorId,

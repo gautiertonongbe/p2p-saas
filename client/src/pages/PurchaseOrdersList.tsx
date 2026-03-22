@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, ShoppingCart, FileText, ChevronRight, Truck, Eye, Edit2, Send, CheckCircle, XCircle, Download} from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { SortToggle } from "@/components/SortToggle";
+// keep: import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { ViewManager, ViewState } from "@/components/ViewManager";
@@ -35,6 +37,7 @@ export default function PurchaseOrdersList() {
   const isApprover = user?.role === "approver";
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+  const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
   const [searchQuery, setSearchQuery] = useState("");
 
   const issueMut = trpc.purchaseOrders.issue.useMutation({
@@ -103,6 +106,14 @@ export default function PurchaseOrdersList() {
     return new Date(date).toLocaleDateString("fr-FR");
   };
 
+  const sortedItems = useMemo(() => {
+    return [...(filteredOrders || [])].sort((a: any, b: any) => {
+      const aDate = new Date(a.createdAt || a.createdAt || 0).getTime();
+      const bDate = new Date(b.createdAt || b.createdAt || 0).getTime();
+      return sortDir === "desc" ? bDate - aDate : aDate - bDate;
+    });
+  }, [filteredOrders, sortDir]);
+
   return (
     <div className="space-y-6">
       <PageHeader icon={<ShoppingCart className="h-5 w-5" />} title={t("purchaseOrders.title")} description={t("purchaseOrders.description")} />
@@ -121,7 +132,8 @@ export default function PurchaseOrdersList() {
             onChange={setViewState}
             defaultColumns={PO_COLUMNS.map(c => c.key)}
           />
-          <Link href="/purchase-orders/new">
+          <SortToggle value={sortDir} onChange={setSortDir} />
+                <Link href="/purchase-orders/new">
             <Button className="w-full sm:w-auto btn-primary">
               <Plus className="mr-2 h-4 w-4" />
               {t('purchaseOrders.new')}
@@ -242,7 +254,7 @@ export default function PurchaseOrdersList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredOrders.map((po) => (
+                {sortedItems.map((po) => (
                   <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50 group">
                     <TableCell className="font-medium">{po.poNumber}</TableCell>
                     <TableCell>-</TableCell>

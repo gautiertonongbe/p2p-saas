@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { SortToggle } from "@/components/SortToggle";
+// keep: import { useState } from "react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { ActionMenu } from "@/components/ActionMenu";
@@ -47,7 +49,7 @@ export default function ExpensesList() {
     onError: (e) => toast.error(e.message),
   });
 
-  const pendingApproval = (reports as any[]).filter(r => r.status === "submitted");
+  const pendingApproval = (sortedItems as any[]).filter(r => r.status === "submitted");
 
   return (
     <div className="space-y-5 pb-8">
@@ -59,7 +61,8 @@ export default function ExpensesList() {
         </div>
         <button onClick={() => setLocation("/expenses/new")}
           className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-semibold btn-primary">
-          <Plus className="h-4 w-4" />Nouvelle note de frais
+          <SortToggle value={sortDir} onChange={setSortDir} />
+                <Plus className="h-4 w-4" />Nouvelle note de frais
         </button>
       </div>
 
@@ -134,7 +137,7 @@ export default function ExpensesList() {
       {/* List */}
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-      ) : (reports as any[]).length === 0 ? (
+      ) : (sortedItems as any[]).length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
             <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
@@ -147,7 +150,7 @@ export default function ExpensesList() {
         </Card>
       ) : (
         <div className="space-y-2">
-{(reports as any[]).map((report: any) => {
+{(sortedItems as any[]).map((report: any) => {
             const st = STATUS[report.status as keyof typeof STATUS] || STATUS.draft;
             return (
               <Card key={report.id} className="hover:shadow-md transition-shadow cursor-pointer"

@@ -96,8 +96,9 @@ export default function PurchaseOrderDetail() {
   if (!po) return (
     <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
       <Package className="h-16 w-16 text-muted-foreground/50" />
-      <p className="text-muted-foreground">{t("errors.notFound")}</p>
-      <Button onClick={() => setLocation("/purchase-orders")} variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />{t("common.back")}</Button>
+      <p className="font-semibold text-gray-700">Bon de commande introuvable</p>
+      <p className="text-muted-foreground text-sm">Ce document n'existe pas ou vous n'avez pas accès.</p>
+      <Button onClick={() => setLocation("/purchase-orders")} variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Retour</Button>
     </div>
   );
 

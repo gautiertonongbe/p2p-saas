@@ -597,11 +597,15 @@ export default function InvoiceDetail() {
 
   if (!invoice) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">Facture non trouvée</p>
-        <Button onClick={() => setLocation("/invoices")} className="mt-4">
-          Retour aux factures
-        </Button>
+      <div className="min-h-screen bg-gray-50/40 flex items-center justify-center">
+        <div className="text-center">
+          <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="font-semibold text-gray-700">Facture introuvable</p>
+          <p className="text-sm text-muted-foreground mt-1">Ce document n'existe pas ou vous n'avez pas accès.</p>
+          <button onClick={() => setLocation("/invoices")} className="mt-4 text-sm text-blue-600 hover:underline flex items-center gap-1 mx-auto">
+            <ArrowLeft className="h-4 w-4" />Retour aux factures
+          </button>
+        </div>
       </div>
     );
   }

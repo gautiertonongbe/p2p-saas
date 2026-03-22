@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { SortToggle } from "@/components/SortToggle";
+// keep: import { useState } from "react";
 import { ActionMenu } from "@/components/ActionMenu";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
@@ -71,7 +73,8 @@ export default function ContractsList() {
         icon={<FileText className="h-5 w-5" />}
         title="Contrats"
         description="Gérez vos contrats fournisseurs et suivez les renouvellements"
-        action={<button onClick={() => setLocation("/contracts/new")} className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold btn-primary"><Plus className="h-4 w-4" />Nouveau contrat</button>}
+        action={<button onClick={() => setLocation("/contracts/new")} className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold btn-primary"><SortToggle value={sortDir} onChange={setSortDir} />
+                <Plus className="h-4 w-4" />Nouveau contrat</button>}
       />
 
       {/* Stats */}
@@ -137,7 +140,7 @@ export default function ContractsList() {
         </Card>
       ) : (
         <div className="space-y-2">
-          {filtered.map((contract: any) => (
+          {sortedItems.map((contract: any) => (
             <div key={contract.id} onClick={() => setLocation(`/contracts/${contract.id}`)}
               className="bg-card border rounded-xl p-4 hover:shadow-md transition-all cursor-pointer group">
               <div className="flex items-start justify-between gap-4">
