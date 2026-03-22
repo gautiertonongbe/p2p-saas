@@ -10,7 +10,7 @@ import {ArrowLeft, Building2, Phone, Mail, Globe, FileText,
   Shield, Plus, Calendar, DollarSign, CreditCard, Smartphone,
   PenLine, UserPlus, FileCheck, Clock} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useState } from "react";
+import { useState , useEffect} from "react";
 import { toast } from "sonner";
 import { EntityHistory } from "@/components/EntityHistory";
 import {
