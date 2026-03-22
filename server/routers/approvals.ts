@@ -115,10 +115,24 @@ export const approvalsRouter = router({
           if (!row?.requestId) return [];
           requestId = row.requestId;
         } else if (input.entityType === "invoice") {
-          const res = await dbInstance.execute(`SELECT po.requestId FROM invoices inv LEFT JOIN purchaseOrders po ON inv.poId = po.id WHERE inv.id = ${input.entityId} AND inv.organizationId = ${ctx.user.organizationId} LIMIT 1`);
+          // Try to get approvals from linked PR via PO
+          const res = await dbInstance.execute(`SELECT po.requestId, inv.approvedBy, inv.approvedAt, inv.status FROM invoices inv LEFT JOIN purchaseOrders po ON inv.poId = po.id WHERE inv.id = ${input.entityId} AND inv.organizationId = ${ctx.user.organizationId} LIMIT 1`);
           const row = (res as any)[0]?.[0];
-          if (!row?.requestId) return [];
-          requestId = row.requestId;
+          if (row?.requestId) {
+            requestId = row.requestId;
+          } else if (row?.approvedBy) {
+            // Direct approval — synthesize a single approval record from the invoice itself
+            const approver = await db.getUserById(row.approvedBy);
+            return [{
+              id: -1, requestId: input.entityId, stepOrder: 1,
+              approverId: row.approvedBy, decision: "approved" as const,
+              comment: null, decidedAt: row.approvedAt, dueAt: null,
+              isParallel: false, policyName: "Approbation directe",
+              approver: approver ? { id: approver.id, name: approver.name, email: approver.email, role: approver.role } : null,
+            }];
+          } else {
+            return [];
+          }
         }
         const approvals = await db.getApprovalsByRequest(requestId);
         const enriched = await Promise.all(approvals.map(async (approval) => {
