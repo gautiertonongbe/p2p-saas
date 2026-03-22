@@ -8,6 +8,8 @@ import { Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, ShoppingCart, FileText, ChevronRight, Truck, Eye, Edit2, Send, CheckCircle, XCircle, Download} from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
+import { toast } from "sonner";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
   Table,
@@ -30,7 +32,27 @@ export default function PurchaseOrdersList() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const canManage = user?.role === "admin" || user?.role === "procurement_manager";
+  const isApprover = user?.role === "approver";
+  const [, setLocation] = useLocation();
+  const utils = trpc.useUtils();
   const [searchQuery, setSearchQuery] = useState("");
+
+  const issueMut = trpc.purchaseOrders.issue.useMutation({
+    onSuccess: () => { toast.success("BC émis avec succès"); utils.purchaseOrders.list.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const cancelMut = trpc.purchaseOrders.cancel.useMutation({
+    onSuccess: () => { toast.success("BC annulé"); utils.purchaseOrders.list.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const approveMut = trpc.purchaseOrders.approve.useMutation({
+    onSuccess: () => { toast.success("BC approuvé"); utils.purchaseOrders.list.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const exportPDFMut = trpc.purchaseOrders.exportPDF?.useMutation?.({
+    onSuccess: () => toast.success("PDF généré"),
+    onError: () => toast.info("Export PDF — voir le détail du BC"),
+  });
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewState, setViewState] = useState<ViewState>({ filters: [], displayType: "table" });
 
@@ -234,13 +256,40 @@ export default function PurchaseOrdersList() {
                     </TableCell>
                     <TableCell className="text-right">
                       <ActionMenu actions={[
+                        // Always visible
                         { icon: <Eye className="h-4 w-4" />, label: "Voir le détail", href: `/purchase-orders/${po.id}` },
-                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/purchase-orders/${po.id}/edit`, hidden: po.status !== "draft" || !canManage },
-                        { icon: <Send className="h-4 w-4" />, label: "Envoyer au fournisseur", hidden: po.status !== "approved" || !canManage, variant: "success", onClick: () => {} },
-                        { icon: <FileText className="h-4 w-4" />, label: "Créer une facture", href: `/invoices/new?poId=${po.id}`, hidden: !["approved","confirmed","issued"].includes(po.status) || !canManage, variant: "success" },
-                        { icon: <Truck className="h-4 w-4" />, label: "Enregistrer réception", href: `/purchase-orders/${po.id}`, hidden: !["issued","partially_received"].includes(po.status), variant: "warning" },
-                        { icon: <Download className="h-4 w-4" />, label: "Télécharger PDF", onClick: () => {}, hidden: po.status === "draft" },
-                        { icon: <XCircle className="h-4 w-4" />, label: "Annuler le BC", hidden: !["draft","approved"].includes(po.status) || !canManage, variant: "danger", onClick: () => {} },
+
+                        // Draft: edit + issue
+                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier le BC",
+                          href: `/purchase-orders/${po.id}`, hidden: po.status !== "draft" || !canManage },
+                        { icon: <Send className="h-4 w-4" />, label: "Émettre le BC",
+                          hidden: po.status !== "draft" || !canManage, variant: "success",
+                          onClick: (e) => { e.stopPropagation(); if (confirm(`Émettre le BC ${po.poNumber} ? Il sera envoyé en approbation.`)) issueMut.mutate({ id: po.id }); } },
+
+                        // Issued: approve (admin + approver)
+                        { icon: <CheckCircle className="h-4 w-4" />, label: "Approuver le BC",
+                          hidden: po.status !== "issued" || (!canManage && !isApprover), variant: "success",
+                          onClick: (e) => { e.stopPropagation(); if (confirm(`Approuver le BC ${po.poNumber} ?`)) approveMut.mutate({ id: po.id }); } },
+
+                        // Approved/confirmed/issued: create invoice
+                        { icon: <FileText className="h-4 w-4" />, label: "Créer une facture",
+                          href: `/invoices/new?poId=${po.id}`,
+                          hidden: !["approved","confirmed","issued"].includes(po.status) || !canManage, variant: "success" },
+
+                        // Issued/partially received: log reception
+                        { icon: <Truck className="h-4 w-4" />, label: "Enregistrer réception",
+                          href: `/purchase-orders/${po.id}`,
+                          hidden: !["issued","partially_received","approved"].includes(po.status), variant: "warning" },
+
+                        // Non-draft: download PDF
+                        { icon: <Download className="h-4 w-4" />, label: "Télécharger PDF",
+                          hidden: po.status === "draft",
+                          onClick: (e) => { e.stopPropagation(); setLocation(`/purchase-orders/${po.id}`); } },
+
+                        // Cancel — draft or issued only
+                        { icon: <XCircle className="h-4 w-4" />, label: "Annuler le BC",
+                          hidden: !["draft","issued","approved"].includes(po.status) || !canManage, variant: "danger",
+                          onClick: (e) => { e.stopPropagation(); const reason = prompt(`Motif d'annulation du BC ${po.poNumber} :`); if (reason !== null) cancelMut.mutate({ id: po.id, reason: reason || "Annulé par l'utilisateur" }); } },
                       ]} />
                     </TableCell>
                   </TableRow>

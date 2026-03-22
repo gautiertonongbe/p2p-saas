@@ -4,9 +4,10 @@ import { ActionMenu } from "@/components/ActionMenu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter"; from "wouter";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, FileText, Eye, ChevronRight, Copy, Send, CheckCircle, Edit2, ShoppingCart, XCircle} from "lucide-react";
+import { toast } from "sonner";
 import { useState } from "react";
 import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
@@ -29,7 +30,18 @@ import {
 export default function PurchaseRequestsList() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const utils = trpc.useUtils();
+  const [, setLocation] = useLocation();
   const canManage = user?.role === "admin" || user?.role === "procurement_manager";
+
+  const submitMut = trpc.purchaseRequests.submit.useMutation({
+    onSuccess: () => { toast.success("Demande soumise"); utils.purchaseRequests.list.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const cancelMut2 = trpc.purchaseRequests.cancel.useMutation({
+    onSuccess: () => { toast.success("Demande annulée"); utils.purchaseRequests.list.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewState, setViewState] = useState<ViewState>({
@@ -200,10 +212,10 @@ export default function PurchaseRequestsList() {
                       <ActionMenu actions={[
                         { icon: <Eye className="h-4 w-4" />, label: "Voir le détail", href: `/purchase-requests/${request.id}` },
                         { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/purchase-requests/${request.id}/edit`, hidden: request.status !== "draft" || !canManage },
-                        { icon: <Send className="h-4 w-4" />, label: "Soumettre", hidden: request.status !== "draft", onClick: () => setLocation(`/purchase-requests/${request.id}`), variant: "success" },
+                        { icon: <Send className="h-4 w-4" />, label: "Soumettre pour approbation", hidden: request.status !== "draft", variant: "success", onClick: (e) => { e.stopPropagation(); submitMut.mutate({ id: request.id }); } },
                         { icon: <ShoppingCart className="h-4 w-4" />, label: "Créer un bon de commande", href: `/purchase-orders/new?requestId=${request.id}`, hidden: request.status !== "approved", variant: "success" },
                         { icon: <Copy className="h-4 w-4" />, label: "Dupliquer", href: `/purchase-requests/new?copyFrom=${request.id}`, hidden: !canManage },
-                        { icon: <XCircle className="h-4 w-4" />, label: "Annuler", hidden: !["draft","submitted"].includes(request.status) || !canManage, variant: "danger", onClick: () => {} },
+                        { icon: <XCircle className="h-4 w-4" />, label: "Annuler la demande", hidden: !["draft","submitted"].includes(request.status) || !canManage, variant: "danger", onClick: (e) => { e.stopPropagation(); const reason = prompt("Motif d'annulation :"); if (reason !== null) cancelMut2.mutate({ id: request.id, reason: reason || "Annulé" }); } },
                       ]} />
                     </TableCell>
                   </TableRow>
