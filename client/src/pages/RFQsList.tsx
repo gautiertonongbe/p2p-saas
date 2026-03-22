@@ -93,11 +93,11 @@ export default function RFQsList() {
       {/* Table */}
       <Card>
         <CardContent className="p-0">
+          <div className="flex justify-end mb-2"><SortToggle value={sortDir} onChange={setSortDir} /></div>
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground">Chargement...</div>
           ) : filtered && filtered.length > 0 ? (
-            <div className="flex justify-end mb-3"><SortToggle value={sortDir} onChange={setSortDir} /></div>
-      <Table>
+<Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>N° RFQ</TableHead>

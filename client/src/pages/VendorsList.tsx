@@ -92,8 +92,8 @@ export default function VendorsList() {
             onChange={setViewState}
             defaultColumns={VENDOR_COLUMNS.map(c => c.key)}
           />
-          {canManage && <SortToggle value={sortDir} onChange={setSortDir} />
-                <Link href="/vendors/new">
+          <SortToggle value={sortDir} onChange={setSortDir} />
+          {canManage && <Link href="/vendors/new">
             <Button className="w-full sm:w-auto btn-primary">
               <Plus className="mr-2 h-4 w-4" />
               {t('vendors.new')}
