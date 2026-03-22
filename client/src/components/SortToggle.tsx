@@ -1,6 +1,7 @@
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { useState } from "react";
+import { ArrowUp, ArrowDown } from "lucide-react";
 
-type SortDir = "asc" | "desc";
+export type SortDir = "asc" | "desc";
 
 interface SortToggleProps {
   value: SortDir;
@@ -17,40 +18,8 @@ export function SortToggle({ value, onChange, label = "Date" }: SortToggleProps)
       {value === "desc"
         ? <ArrowDown className="h-3.5 w-3.5 text-blue-600" />
         : <ArrowUp className="h-3.5 w-3.5 text-blue-600" />}
-      <span className="hidden sm:inline">{label}</span>
-      <span className="text-xs text-muted-foreground">{value === "desc" ? "↓" : "↑"}</span>
+      <span className="hidden sm:inline text-xs">{label}</span>
+      <span className="text-xs text-muted-foreground ml-0.5">{value === "desc" ? "↓" : "↑"}</span>
     </button>
   );
-}
-
-// Hook to sort any array
-export function useSortDir(initialDir: SortDir = "desc") {
-  const { useState } = require("react");
-  const [sortDir, setSortDir] = useState<SortDir>(initialDir);
-  
-  function sortByDate<T>(arr: T[], dateField: keyof T = "createdAt" as keyof T): T[] {
-    return [...arr].sort((a: any, b: any) => {
-      const aDate = new Date(a[dateField] || 0).getTime();
-      const bDate = new Date(b[dateField] || 0).getTime();
-      return sortDir === "desc" ? bDate - aDate : aDate - bDate;
-    });
-  }
-
-  function sortByField<T>(arr: T[], field: keyof T, type: "date" | "number" | "string" = "date"): T[] {
-    return [...arr].sort((a: any, b: any) => {
-      if (type === "date") {
-        const aV = new Date(a[field] || 0).getTime();
-        const bV = new Date(b[field] || 0).getTime();
-        return sortDir === "desc" ? bV - aV : aV - bV;
-      }
-      if (type === "number") {
-        return sortDir === "desc" ? Number(b[field]) - Number(a[field]) : Number(a[field]) - Number(b[field]);
-      }
-      const aV = String(a[field] || "").toLowerCase();
-      const bV = String(b[field] || "").toLowerCase();
-      return sortDir === "desc" ? bV.localeCompare(aV) : aV.localeCompare(bV);
-    });
-  }
-
-  return { sortDir, setSortDir, sortByDate, sortByField };
 }
