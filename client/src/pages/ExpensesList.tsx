@@ -27,6 +27,12 @@ export default function ExpensesList() {
   const { user } = useAuth();
   const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const isAdmin = canManage || user?.role === "approver";
+  const utils = trpc.useUtils();
+  const rejectMut = trpc.expenses.reject.useMutation({
+    onSuccess: () => { toast.success("Note de frais refusée"); utils.expenses.list.invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
   const [, setLocation] = useLocation();
   const [filter, setFilter] = useState<"mine" | "all">("mine");
