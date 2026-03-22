@@ -236,6 +236,24 @@ export default function PurchaseRequestDetail() {
           </div>
         )}
 
+        {request.status === "submitted" && isAdmin && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-amber-800">Aucun workflow d'approbation configuré</p>
+                <p className="text-sm text-amber-600">Cette demande est en attente. Configurez un workflow ou approuvez manuellement via le contournement.</p>
+              </div>
+            </div>
+            <button onClick={() => setLocation("/workflow-builder")}
+              className="px-4 py-2 rounded-xl bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 shrink-0">
+              Configurer un workflow →
+            </button>
+          </div>
+        )}
+
         {request.status === "converted_to_po" && (
           <div className="bg-purple-50 border border-purple-200 rounded-2xl p-5 flex items-center gap-4">
             <div className="h-10 w-10 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">

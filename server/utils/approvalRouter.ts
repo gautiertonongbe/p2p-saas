@@ -151,14 +151,14 @@ export async function createApprovalChain(
 
   const policy = await findMatchingPolicy(organizationId, request);
   if (!policy) {
-    log(`[ApprovalRouter] No policy matched request ${requestId} (amount: ${request.totalAmount}) — auto-approving`);
-    return { success: true, approvalCount: 0 };
+    log(`[ApprovalRouter] No policy matched request ${requestId} — no workflow configured, will require manual admin approval`);
+    return { success: true, approvalCount: 0, noPolicy: true };
   }
 
   const steps = await getApprovalSteps(policy.id);
   if (steps.length === 0) {
-    log(`[ApprovalRouter] Policy "${policy.name}" has no steps — auto-approving`);
-    return { success: true, approvalCount: 0 };
+    log(`[ApprovalRouter] Policy "${policy.name}" has no steps — requires admin to configure steps`);
+    return { success: true, approvalCount: 0, noPolicy: true };
   }
 
   let approvalCount = 0;

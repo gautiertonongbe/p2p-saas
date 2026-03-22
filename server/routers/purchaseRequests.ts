@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import * as db from "../db";
+const safe = (s: string) => String(s || "").replace(/'/g, "''");
 import { TRPCError } from "@trpc/server";
 import { createAuditLog } from "../db";
 
@@ -230,7 +231,13 @@ export const purchaseRequestsRouter = router({
         totalAmount: request.amountEstimate, urgency: request.urgencyLevel, requesterId: request.requesterId,
       });
 
-      const newStatus = approvalResult.approvalCount > 0 ? "pending_approval" : "approved";
+      // Only auto-approve if approvalCount > 0 was expected (not due to missing policy)
+      // If no policy configured: keep as submitted, admin must configure workflow or bypass
+      const newStatus = approvalResult.approvalCount > 0
+        ? "pending_approval"
+        : (approvalResult as any).noPolicy
+          ? "submitted"  // no workflow configured - stays submitted for admin action
+          : "approved";  // policy existed but 0 steps = intentional auto-approve
       await db.updatePurchaseRequest(input.id, ctx.user.organizationId, { status: newStatus });
 
       // Email first approvers

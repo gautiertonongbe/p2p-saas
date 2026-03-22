@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLocation, useParams, useSearch } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Save, Send, ArrowLeft, Package, FileText, ChevronDown, ChevronUp, Copy } from "lucide-react";
+import { Plus, Trash2, Save, Send, ArrowLeft, Package, FileText, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 type Item = { itemName: string; description: string; quantity: string; unit: string; unitPrice: string };
@@ -46,7 +46,6 @@ export default function PurchaseRequestForm() {
   const [categoryId, setCategoryId] = useState("");
   const [costCenterId, setCostCenterId] = useState("");
   const [billingStringId, setBillingStringId] = useState("");
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [coding, setCoding] = useState<CodingValues>({});
 
   const [items, setItems] = useState<Item[]>([
@@ -145,6 +144,7 @@ export default function PurchaseRequestForm() {
 
   const handleSaveDraft = async () => {
     if (!title.trim()) { toast.error("Veuillez saisir un titre"); return; }
+    if (!justification.trim()) { toast.error("La justification est obligatoire"); return; }
     if (isEdit && editId) {
       updateMutation.mutate({ id: editId, ...buildPayload() } as any);
     } else {
@@ -154,6 +154,7 @@ export default function PurchaseRequestForm() {
 
   const handleSubmit = async () => {
     if (!title.trim()) { toast.error("Veuillez saisir un titre"); return; }
+    if (!justification.trim()) { toast.error("La justification est obligatoire — expliquez pourquoi cet achat est nécessaire"); return; }
     if (items.every(it => !it.itemName.trim())) { toast.error("Ajoutez au moins un article"); return; }
     const data = await createMutation.mutateAsync(buildPayload()).catch(() => null);
     if (data?.id) submitMutation.mutate({ id: data.id });
@@ -216,22 +217,16 @@ export default function PurchaseRequestForm() {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Justification</Label>
+            <Label>Justification <span className="text-red-500">*</span></Label>
             <Textarea value={justification} onChange={e => setJustification(e.target.value)}
-              placeholder="Expliquez pourquoi cette demande est nécessaire..." rows={3} />
+              placeholder="Expliquez pourquoi cette demande est nécessaire..." rows={3}
+              className={!justification.trim() && "border-red-200 focus-visible:ring-red-300"} />
           </div>
 
-          {/* Advanced - department, category, etc */}
-          <button type="button" onClick={() => setShowAdvanced(v => !v)}
-            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
-            {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            {showAdvanced ? "Masquer" : "Afficher"} les champs optionnels (département, catégorie, centre de coût...)
-          </button>
-
-          {showAdvanced && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
+          {/* Billing fields - always visible and required */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
               <div className="space-y-1.5">
-                <Label>Département</Label>
+                <Label>Département <span className="text-red-500">*</span></Label>
                 <Select value={departmentId || "none"} onValueChange={v => setDepartmentId(v === "none" ? "" : v)}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                   <SelectContent>
@@ -241,7 +236,7 @@ export default function PurchaseRequestForm() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Catégorie</Label>
+                <Label>Catégorie <span className="text-red-500">*</span></Label>
                 <Select value={categoryId || "none"} onValueChange={v => setCategoryId(v === "none" ? "" : v)}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                   <SelectContent>
@@ -251,7 +246,7 @@ export default function PurchaseRequestForm() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Centre de coût</Label>
+                <Label>Centre de coût <span className="text-red-500">*</span></Label>
                 <Select value={costCenterId || "none"} onValueChange={v => setCostCenterId(v === "none" ? "" : v)}>
                   <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                   <SelectContent>
@@ -265,7 +260,6 @@ export default function PurchaseRequestForm() {
                 <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Description supplémentaire" />
               </div>
             </div>
-          )}
         </CardContent>
       </Card>
 
