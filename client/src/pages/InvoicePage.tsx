@@ -60,6 +60,7 @@ export default function InvoicePage() {
   const searchString = useSearch();
   const urlParams   = searchString ? new URLSearchParams(searchString) : null;
   const urlPoId     = urlParams?.get("poId");
+  const startInEdit = urlParams?.get("edit") === "1";
   const copyFromId  = urlParams?.get("copyFrom");
   const [, setLocation] = useLocation();
   const { user } = useAuth();
@@ -71,7 +72,7 @@ export default function InvoicePage() {
   const isApprover = user?.role === "approver";
 
   // Edit mode: true when creating, false when viewing existing
-  const [editMode, setEditMode]       = useState(isNew);
+  const [editMode, setEditMode]       = useState(isNew || startInEdit);
   const [prefilled, setPrefilled]     = useState(false);
   const [scanning, setScanning]       = useState(false);
 

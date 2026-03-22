@@ -56,16 +56,6 @@ function ScoreResponseInline({
 
   return (
     <div className="mt-4 p-4 border rounded-lg bg-muted/20 space-y-4">
-      {/* Sticky topbar */}
-      <div className="sticky top-0 z-30 bg-white border-b px-6 py-3 flex items-center gap-3 -mx-4 sm:-mx-6 mb-6">
-        <button onClick={() => setLocation("/rfqs")}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" />Appels d'offres
-        </button>
-        <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
-        <span className="text-sm font-medium truncate max-w-48">{vendor?.legalName || rfq?.title || "..."}</span>
-      </div>
-
       <p className="text-sm font-medium">Notation de l'offre (1-10 par critère)</p>
       {criteria.map(c => (
         <div key={c.name} className="space-y-1">
@@ -150,6 +140,16 @@ export default function RFQDetail() {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      {/* Sticky topbar */}
+      <div className="sticky top-0 z-30 bg-white border-b px-6 py-3 flex items-center gap-3 mb-4">
+        <button onClick={() => setLocation("/rfqs")}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" />Appels d'offres
+        </button>
+        <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+        <span className="text-sm font-medium truncate max-w-48">{rfq?.title || "..."}</span>
+      </div>
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
