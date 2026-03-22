@@ -29,6 +29,7 @@ export default function InvoiceForm() {
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState("");
   const [taxAmount, setTaxAmount] = useState("");
+  const [taxLines, setTaxLines] = useState<TaxLine[]>([]);
   const [notes, setNotes] = useState("");
   const [coding, setCoding] = useState<CodingValues>({});
   const [scanning, setScanning] = useState(false);
@@ -317,21 +318,22 @@ export default function InvoiceForm() {
             </div>
           ))}
 
-          <div className="border-t pt-4 space-y-2">
-            <div className="flex justify-end items-center gap-4">
-              <span className="text-sm text-muted-foreground">Sous-total HT</span>
-              <span className="text-sm font-medium w-36 text-right">{fmt(subtotal)} XOF</span>
-            </div>
-            <div className="flex justify-end items-center gap-4">
-              <Label className="text-sm text-muted-foreground">TVA / Taxes (XOF)</Label>
-              <Input type="text" inputMode="decimal" value={taxAmount}
-                onChange={e => setTaxAmount(e.target.value)} placeholder="0"
-                className="h-8 text-sm text-right w-36" />
-            </div>
-            <div className="flex justify-end items-center gap-4 pt-2 border-t">
-              <span className="text-sm font-semibold">Total TTC</span>
-              <span className="text-xl font-bold text-blue-700 w-36 text-right">{fmt(total)} XOF</span>
-            </div>
+          <div className="border-t pt-4">
+            <TaxSelector
+              baseAmount={subtotal}
+              value={taxLines}
+              onChange={(lines) => {
+                setTaxLines(lines);
+                const vat = lines.filter(t => !t.isWithholding).reduce((s,t) => s+t.amount, 0);
+                setTaxAmount(String(vat));
+              }}
+            />
+            {taxLines.length === 0 && (
+              <div className="flex justify-between items-center pt-3 border-t mt-3">
+                <span className="text-sm font-semibold">Total HT</span>
+                <span className="text-xl font-bold text-blue-700">{fmt(subtotal)} XOF</span>
+              </div>
+            )}
           </div>
 
           <div className="pt-3 border-t">

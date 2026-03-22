@@ -1908,9 +1908,13 @@ function TaxRatesSection({ isAdmin }: { isAdmin: boolean }) {
   const { data: org } = trpc.settings.getOrganization.useQuery();
   const utils = trpc.useUtils();
   const defaultRates = [
-    { code: "EXONERE", label: "Exonéré (0%)", rate: 0, isDefault: false },
-    { code: "TVA18", label: "TVA 18%", rate: 18, isDefault: true },
-    { code: "RSFD", label: "Retenue à la source 5%", rate: 5, isDefault: false },
+    { code: "TVA_18",  label: "TVA 18% (standard)",              rate: 18, isDefault: true,  type: "vat" },
+    { code: "TVA_0",   label: "TVA 0% — Export / Exonéré",       rate: 0,  isDefault: false, type: "vat" },
+    { code: "RS_5",    label: "Retenue source 5% (Services)",     rate: 5,  isDefault: false, type: "withholding" },
+    { code: "RS_10",   label: "Retenue source 10% (Libéral)",     rate: 10, isDefault: false, type: "withholding" },
+    { code: "AIB_1",   label: "AIB 1% (Achats courants)",         rate: 1,  isDefault: false, type: "other" },
+    { code: "AIB_5",   label: "AIB 5% (Marchés publics)",         rate: 5,  isDefault: false, type: "other" },
+    { code: "TOS_5",   label: "TOS 5% (Sous-traitance)",          rate: 5,  isDefault: false, type: "other" },
   ];
   const [rates, setRates] = useState(defaultRates);
   const [addOpen, setAddOpen] = useState(false);
@@ -1932,7 +1936,12 @@ function TaxRatesSection({ isAdmin }: { isAdmin: boolean }) {
     <div>
       <SectionHeader icon={DollarSign} title="Taux de taxes" desc="TVA, retenues à la source et autres taxes applicables sur les achats" />
       <div className="p-6 max-w-3xl">
-        <InfoBox>Bénin: TVA 18% (standard). Côte d'Ivoire: TVA 18%. Ces taux sont appliqués automatiquement lors de la création de factures selon la configuration du fournisseur.</InfoBox>
+        <InfoBox>
+  <strong>OHADA — Afrique de l'Ouest :</strong> TVA 18% standard (Bénin, Côte d'Ivoire, Sénégal, Togo, Burkina Faso).
+  <strong>Retenues à la source</strong> : 5% sur services courants, 10% sur professions libérales.
+  <strong>AIB</strong> (Acompte sur Impôt des BIC) : 1% achats courants, 5% marchés publics.
+  Ces taux apparaissent dans le sélecteur lors de la création de factures et BCs.
+</InfoBox>
         {isAdmin && <div className="flex justify-end mt-4 mb-4"><button onClick={() => setAddOpen(true)} className="btn-primary flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"><Plus className="h-4 w-4" />Ajouter un taux</button></div>}
         <Card>
           <CardContent className="p-0">

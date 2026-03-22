@@ -236,6 +236,18 @@ export default function PurchaseRequestDetail() {
           </div>
         )}
 
+        {request.status === "converted_to_po" && (
+          <div className="bg-purple-50 border border-purple-200 rounded-2xl p-5 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+              <ShoppingCart className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-purple-800">Demande convertie en bon de commande</p>
+              <p className="text-sm text-purple-600">Cette demande est verrouillée — un BC a été créé. Consultez le BC pour toute modification.</p>
+            </div>
+          </div>
+        )}
+
         {isRejected && (isOwner || isAdmin) && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
