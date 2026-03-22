@@ -187,11 +187,15 @@ export default function PurchaseOrderDetail() {
             </div>
           </div>
         )}
-        {["approved","confirmed"].includes(p.status) && isAdmin && (
+        {["approved","confirmed","partially_received"].includes(p.status) && isAdmin && (
           <div className="bg-emerald-600 text-white rounded-2xl p-5 flex items-center justify-between gap-4">
             <div>
-              <p className="font-semibold">BC approuvé — en attente de réception</p>
-              <p className="text-sm text-emerald-100">Enregistrez la réception quand les marchandises arrivent</p>
+              <p className="font-semibold">
+                {p.status === "partially_received" ? "Réception partielle enregistrée" : "BC approuvé — en attente de réception"}
+              </p>
+              <p className="text-sm text-emerald-100">
+                {p.status === "partially_received" ? "Enregistrez la réception du reste des marchandises" : "Enregistrez la réception quand les marchandises arrivent"}
+              </p>
             </div>
             <button onClick={() => { setSelectedItemReceipts({}); setReceiptNotes(""); setReceiptDialogOpen(true); }}
               className="px-4 py-2 rounded-xl bg-white text-emerald-700 text-sm font-semibold hover:bg-emerald-50 transition-colors flex items-center gap-1.5 shrink-0">
@@ -299,6 +303,7 @@ export default function PurchaseOrderDetail() {
                       max={Number(item.quantity)}
                       placeholder="0"
                       value={selectedItemReceipts[item.id]?.quantity ?? ""}
+                      placeholder={String(Math.max(0, Number(item.quantity) - Number(item.receivedQuantity || 0)))}
                       onChange={(e) => {
                         const val = e.target.value === "" ? 0 : parseFloat(e.target.value) || 0;
                         updateItemReceipt(item.id, "quantity", val);

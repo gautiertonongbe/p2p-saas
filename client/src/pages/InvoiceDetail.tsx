@@ -656,48 +656,127 @@ export default function InvoiceDetail() {
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
 
-      {/* Main info card */}
-      <div className="bg-white rounded-2xl border overflow-hidden">
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-x border-b">
-          <div className="px-5 py-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Montant HT</p>
-            <p className="text-xl font-bold mt-1">{formatCurrency(invoice.amount)} XOF</p>
-          </div>
-          <div className="px-5 py-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">TVA</p>
-            <p className="text-xl font-bold mt-1">{formatCurrency(invoice.taxAmount || 0)} XOF</p>
-          </div>
-          <div className="px-5 py-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Date facture</p>
-            <p className="text-base font-semibold mt-1">{formatDate(invoice.invoiceDate)}</p>
-          </div>
-          <div className="px-5 py-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Date d'échéance</p>
-            <p className="text-base font-semibold mt-1">{formatDate(invoice.dueDate) || "—"}</p>
-          </div>
-        </div>
-      </div>{/* end main info card */}
+        {/* ── INVOICE DOCUMENT — proper invoice layout ── */}
+        <div className="bg-white rounded-2xl border overflow-hidden shadow-sm">
 
-      {/* Vendor Info */}
-      <div className="bg-white rounded-2xl border p-5">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Informations fournisseur</p>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-muted-foreground">Fournisseur</p>
-            <p className="font-semibold mt-0.5">{invoice.vendor?.legalName ?? `Fournisseur #${invoice.vendorId}`}</p>
+          {/* Invoice header — FROM / TO / DETAILS */}
+          <div className="grid grid-cols-2 gap-0 border-b">
+            {/* Left: FROM (vendor) */}
+            <div className="p-6 border-r">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">Fournisseur</p>
+              <p className="text-lg font-bold text-gray-900">{invoice.vendor?.legalName ?? `Fournisseur #${invoice.vendorId}`}</p>
+              {invoice.vendor?.address && <p className="text-sm text-muted-foreground mt-1">{invoice.vendor.address}</p>}
+              {invoice.vendor?.taxId && <p className="text-xs text-muted-foreground mt-1">IFU: {invoice.vendor.taxId}</p>}
+            </div>
+            {/* Right: invoice meta */}
+            <div className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Numéro de facture</p>
+                  <p className="text-2xl font-bold text-gray-900">{invoice.invoiceNumber}</p>
+                </div>
+                <div className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                  invoice.status === 'paid' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                  invoice.status === 'approved' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                  invoice.status === 'pending' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                  invoice.status === 'rejected' ? 'bg-red-100 text-red-700 border border-red-200' :
+                  'bg-gray-100 text-gray-600 border border-gray-200'
+                }`}>
+                  {invoice.status === 'paid' ? '✓ Payée' :
+                   invoice.status === 'approved' ? 'Approuvée' :
+                   invoice.status === 'pending' ? 'En attente' :
+                   invoice.status === 'rejected' ? 'Refusée' :
+                   invoice.status}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Date d'émission</p>
+                  <p className="text-sm font-semibold mt-0.5">{formatDate(invoice.invoiceDate)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Date d'échéance</p>
+                  <p className={`text-sm font-semibold mt-0.5 ${
+                    invoice.dueDate && new Date(invoice.dueDate) < new Date() && invoice.status !== 'paid'
+                      ? 'text-red-600' : ''
+                  }`}>{formatDate(invoice.dueDate) || "—"}</p>
+                </div>
+                {invoice.purchaseOrder && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-muted-foreground">Bon de commande</p>
+                    <p className="text-sm font-semibold mt-0.5 text-blue-600">{invoice.purchaseOrder.poNumber}</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Numéro de facture</p>
-            <p className="font-semibold mt-0.5">{invoice.invoiceNumber}</p>
+
+          {/* Line items table */}
+          <div className="overflow-x-auto">
+            {(invoice as any).lineItems?.length > 0 ? (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b">
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-20">Qté</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-32">P.U. XOF</th>
+                    <th className="text-right px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide w-36">Total XOF</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(invoice as any).lineItems.map((item: any, i: number) => (
+                    <tr key={i} className="border-b last:border-0">
+                      <td className="px-6 py-3 font-medium">{item.description}</td>
+                      <td className="px-4 py-3 text-right text-muted-foreground">{item.quantity}</td>
+                      <td className="px-4 py-3 text-right text-muted-foreground">{formatCurrency(item.unitPrice)}</td>
+                      <td className="px-6 py-3 text-right font-semibold">{formatCurrency(item.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="px-6 py-4 border-b">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{invoice.purchaseOrder ? `Services / Fournitures — ${invoice.purchaseOrder.poNumber}` : "Prestations & fournitures"}</span>
+                  <span className="font-semibold">{formatCurrency(invoice.amount)} XOF</span>
+                </div>
+              </div>
+            )}
           </div>
-          {invoice.purchaseOrder && (
-            <div>
-              <p className="text-xs text-muted-foreground">Bon de commande</p>
-              <p className="font-semibold mt-0.5">{invoice.purchaseOrder.poNumber}</p>
+
+          {/* Totals block — right-aligned like real invoices */}
+          <div className="px-6 py-4 border-t bg-gray-50/50">
+            <div className="ml-auto max-w-xs space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Montant HT</span>
+                <span className="font-medium">{formatCurrency(invoice.amount)} XOF</span>
+              </div>
+              {Number(invoice.taxAmount || 0) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">TVA (18%)</span>
+                  <span className="font-medium text-blue-700">+{formatCurrency(invoice.taxAmount || 0)} XOF</span>
+                </div>
+              )}
+              <div className="flex justify-between text-base font-bold border-t pt-2 mt-2">
+                <span>Total TTC</span>
+                <span className="text-gray-900 text-lg">{formatCurrency(Number(invoice.amount) + Number(invoice.taxAmount || 0))} XOF</span>
+              </div>
+              {invoice.status === 'paid' && (
+                <div className="flex justify-between text-sm text-emerald-700 bg-emerald-50 -mx-2 px-2 py-1.5 rounded-lg">
+                  <span className="font-semibold">✓ Payée</span>
+                  <span className="font-semibold">{formatCurrency(Number(invoice.amount) + Number(invoice.taxAmount || 0))} XOF</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Notes if any */}
+          {(invoice as any).notes && (
+            <div className="px-6 py-4 border-t text-sm text-muted-foreground">
+              <span className="font-medium text-gray-700">Notes : </span>{(invoice as any).notes}
             </div>
           )}
         </div>
-      </div>
 
       {/* Three-Way Match Panel */}
       {invoice.poId && (
