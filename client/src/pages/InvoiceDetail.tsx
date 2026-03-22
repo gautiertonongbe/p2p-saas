@@ -672,43 +672,32 @@ export default function InvoiceDetail() {
             <p className="text-base font-semibold mt-1">{formatDate(invoice.invoiceDate)}</p>
           </div>
           <div className="px-5 py-4">
-          <CardContent className="pt-6">
-            <div>
-              <p className="text-sm text-muted-foreground">Date d'échéance</p>
-              <p className="text-lg font-medium mt-1">
-                {formatDate(invoice.dueDate)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Date d'échéance</p>
+            <p className="text-base font-semibold mt-1">{formatDate(invoice.dueDate) || "—"}</p>
+          </div>
+        </div>
+      </div>{/* end main info card */}
 
       {/* Vendor Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations du fournisseur</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Nom du fournisseur</p>
-              <p className="font-medium mt-1">
-                {invoice.vendor?.legalName ?? `Fournisseur #${invoice.vendorId}`}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Numéro de facture</p>
-              <p className="font-medium mt-1">{invoice.invoiceNumber}</p>
-            </div>
-            {invoice.purchaseOrder && (
-              <div>
-                <p className="text-sm text-muted-foreground">Bon de commande associé</p>
-                <p className="font-medium mt-1">{invoice.purchaseOrder.poNumber}</p>
-              </div>
-            )}
+      <div className="bg-white rounded-2xl border p-5">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Informations fournisseur</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Fournisseur</p>
+            <p className="font-semibold mt-0.5">{invoice.vendor?.legalName ?? `Fournisseur #${invoice.vendorId}`}</p>
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <p className="text-xs text-muted-foreground">Numéro de facture</p>
+            <p className="font-semibold mt-0.5">{invoice.invoiceNumber}</p>
+          </div>
+          {invoice.purchaseOrder && (
+            <div>
+              <p className="text-xs text-muted-foreground">Bon de commande</p>
+              <p className="font-semibold mt-0.5">{invoice.purchaseOrder.poNumber}</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Three-Way Match Panel */}
       {invoice.poId && (
@@ -806,6 +795,7 @@ export default function InvoiceDetail() {
       )}
 
       </div>{/* end max-w-4xl */}
+    </div>{/* end min-h-screen */}
 
       {/* Approve Dialog */}
       <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
@@ -844,7 +834,6 @@ export default function InvoiceDetail() {
       </AlertDialog>
 
       {/* Approval chain */}
-      </div>{/* end main info card */}
 
       {approvals && approvals.length > 0
   ? <ApprovalChainVisualization approvals={approvals} />
