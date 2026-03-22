@@ -167,6 +167,14 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Keep all app code in a single chunk to avoid chunk ordering issues
+          if (id.includes('/client/src/')) return 'app';
+        }
+      }
+    }
   },
   server: {
     host: true,
