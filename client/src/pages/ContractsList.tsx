@@ -33,6 +33,7 @@ export default function ContractsList() {
   const { user } = useAuth();
   const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   // canManage used below for button visibility
+  const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");

@@ -28,6 +28,7 @@ export default function ExpensesList() {
   const { user } = useAuth();
   const canManage = user?.role === "admin" || user?.role === "procurement_manager";
   const isAdmin = canManage || user?.role === "approver";
+  const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
   const [, setLocation] = useLocation();
   const [filter, setFilter] = useState<"mine" | "all">("mine");
   const [statusFilter, setStatusFilter] = useState("");

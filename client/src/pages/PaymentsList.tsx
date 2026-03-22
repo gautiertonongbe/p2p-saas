@@ -53,6 +53,7 @@ export default function PaymentsList() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const canManage = user?.role === "admin" || user?.role === "procurement_manager";
+  const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
   const [, setLocation] = useLocation();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
