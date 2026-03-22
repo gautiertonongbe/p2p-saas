@@ -55,8 +55,6 @@ export default function ExpensesList() {
     onError: (e) => toast.error(e.message),
   });
 
-  const pendingApproval = (sortedItems as any[]).filter(r => r.status === "submitted");
-
   const sortedItems = useMemo(() => {
     const arr = Array.isArray(reports) ? reports : [];
     return [...arr].sort((a: any, b: any) => {
@@ -66,6 +64,8 @@ export default function ExpensesList() {
     });
   }, [reports, sortDir]);
 
+  const pendingApproval = (sortedItems as any[]).filter((r: any) => r.status === "submitted");
+
   return (
     <div className="space-y-5 pb-8">
       <PageHeader icon={<Receipt className="h-5 w-5" />} title={t("expenses.title")} description={t("expenses.description")} />
@@ -74,11 +74,13 @@ export default function ExpensesList() {
           <h1 className="text-2xl font-bold">Notes de frais</h1>
           <p className="text-sm text-muted-foreground">Gérez vos remboursements de dépenses</p>
         </div>
-        <button onClick={() => setLocation("/expenses/new")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-semibold btn-primary">
+        <div className="flex items-center gap-2">
           <SortToggle value={sortDir} onChange={setSortDir} />
-                <Plus className="h-4 w-4" />Nouvelle note de frais
-        </button>
+          <button onClick={() => setLocation("/expenses/new")}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white text-sm font-semibold btn-primary">
+            <Plus className="h-4 w-4" />Nouvelle note de frais
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
