@@ -54,17 +54,20 @@ export async function findMatchingPolicy(
       eq(approvalPolicies.organizationId, organizationId),
       eq(approvalPolicies.isActive, true)
     ))
-    .orderBy(approvalPolicies.priority);
+    .orderBy(approvalPolicies.priority); // evaluated ascending; use 0=low,10=high priority
 
   const amount = parseFloat(request.totalAmount);
 
   for (const policy of policies) {
     const c = policy.conditions;
-    if (!c) continue;
-    if (c.minAmount !== undefined && amount < c.minAmount) continue;
-    if (c.maxAmount !== undefined && amount > c.maxAmount) continue;
-    if (c.departmentIds?.length && (!request.departmentId || !c.departmentIds.includes(request.departmentId))) continue;
-    if (c.urgencyLevels?.length && !c.urgencyLevels.includes(request.urgency)) continue;
+    // null/empty conditions = catch-all policy — matches everything
+    if (c) {
+      if (c.minAmount !== undefined && amount < c.minAmount) continue;
+      if (c.maxAmount !== undefined && amount > c.maxAmount) continue;
+      if (c.departmentIds?.length && (!request.departmentId || !c.departmentIds.includes(request.departmentId))) continue;
+      if (c.urgencyLevels?.length && !c.urgencyLevels.includes(request.urgency)) continue;
+    }
+    log(`[ApprovalRouter] Policy matched: "${policy.name}" (id=${policy.id})`);
     return policy;
   }
 
@@ -178,8 +181,14 @@ export async function createApprovalChain(
     }
   }
 
+  const firstStepOrder = Math.min(...steps.map(s => s.stepOrder));
+  const firstApprovers: number[] = [];
+  for (const step of steps.filter(s => s.stepOrder === firstStepOrder)) {
+    const ids = await resolveApprover(organizationId, step, request.requesterId, request.departmentId);
+    firstApprovers.push(...ids);
+  }
   log(`[ApprovalRouter] Created ${approvalCount} approval(s) for request ${requestId} via policy "${policy.name}"`);
-  return { success: true, approvalCount };
+  return { success: true, approvalCount, firstApprovers };
 }
 
 /**

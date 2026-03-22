@@ -195,12 +195,25 @@ export const approvalsRouter = router({
         }
       }
 
-      // Update approval
-      await db.updateApproval(input.approvalId, {
-        decision: "approved",
-        comment: input.comment,
-        decidedAt: new Date(),
-      });
+      // ── B: Atomic update — WHERE decision='pending' prevents race conditions ──
+      // If two approvers click simultaneously, only one UPDATE will succeed (rowsAffected=1)
+      const dbInstance2 = await db.getDb();
+      if (!dbInstance2) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const now = new Date();
+      const result = await dbInstance2.execute(
+        `UPDATE approvals
+         SET decision = 'approved', comment = ${input.comment ? `'${input.comment.replace(/'/g, "''")}'` : 'NULL'}, decidedAt = NOW()
+         WHERE id = ${input.approvalId}
+           AND approverId = ${ctx.user.id}
+           AND decision = 'pending'`
+      ) as any;
+      const rowsAffected = result[0]?.affectedRows ?? 0;
+      if (rowsAffected === 0) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Cette approbation a déjà été traitée par un autre processus. Rafraîchissez la page.",
+        });
+      }
 
       // Update request status based on approval chain progress
       const { updateRequestStatus } = await import("../utils/approvalRouter");
@@ -323,11 +336,22 @@ export const approvalsRouter = router({
       }
 
       // Update approval
-      await db.updateApproval(input.approvalId, {
-        decision: "rejected",
-        comment: input.comment,
-        decidedAt: new Date(),
-      });
+      // Atomic reject — WHERE decision='pending'
+      const dbRej = await db.getDb();
+      if (!dbRej) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rejResult = await dbRej.execute(
+        `UPDATE approvals
+         SET decision = 'rejected', comment = ${input.comment ? `'${input.comment.replace(/'/g, "''")}'` : 'NULL'}, decidedAt = NOW()
+         WHERE id = ${input.approvalId}
+           AND approverId = ${ctx.user.id}
+           AND decision = 'pending'`
+      ) as any;
+      if ((rejResult[0]?.affectedRows ?? 0) === 0) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Cette approbation a déjà été traitée. Rafraîchissez la page.",
+        });
+      }
 
       // Update request status based on approval chain
       const { updateRequestStatus } = await import("../utils/approvalRouter");
