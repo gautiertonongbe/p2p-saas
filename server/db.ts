@@ -386,6 +386,27 @@ export function deleteAuditLog(): never {
   throw new Error("Audit logs are immutable. Deletion is not permitted.");
 }
 
+
+// ── Safe Execute — blocks mutations on immutable tables ───────────────────────
+// Use this instead of dbInstance.execute() for any raw SQL in routers.
+// Automatically prevents DELETE/UPDATE on auditLogs at the application layer.
+export async function safeExecute(sql: string, ...args: any[]): Promise<any> {
+  const normalized = sql.replace(/\s+/g, " ").toLowerCase().trim();
+  const IMMUTABLE_TABLES = ["auditlogs", "auditlog"];
+  const isDangerous = (normalized.startsWith("delete") || normalized.startsWith("update"));
+  const targetsImmutable = IMMUTABLE_TABLES.some(t => normalized.includes(t));
+
+  if (isDangerous && targetsImmutable) {
+    // Log the attempt as a security event
+    console.error(`[SECURITY] Blocked ${normalized.startsWith("delete") ? "DELETE" : "UPDATE"} on immutable table. SQL: ${sql.slice(0, 100)}`);
+    throw new Error("Operation blocked: audit logs are immutable and cannot be modified.");
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.execute(sql, ...args);
+}
+
 export async function createAuditLog(data: {
   organizationId: number;
   entityType: string;
