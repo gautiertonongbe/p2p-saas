@@ -28,6 +28,7 @@ import { vendorOnboardingRouter } from "./routers/vendorOnboarding";
 import { vendorRiskRouter } from "./routers/vendorRisk";
 import { archivingRouter } from "./routers/archiving";
 import { priceBenchmarkRouter } from "./routers/priceBenchmark";
+import { seederRouter } from "./routers/seeder";
 
 export const appRouter = router({
   system: systemRouter,
@@ -70,6 +71,7 @@ export const appRouter = router({
   vendorRisk: vendorRiskRouter,
   archiving: archivingRouter,
   priceBenchmark: priceBenchmarkRouter,
+  seeder: seederRouter,
 });
 
 export type AppRouter = typeof appRouter;

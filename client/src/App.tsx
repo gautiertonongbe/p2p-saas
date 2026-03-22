@@ -47,6 +47,7 @@ import RFQDetail from "./pages/RFQDetail";
 import InventoryPage from "./pages/InventoryPage";
 import PaymentsList from "./pages/PaymentsList";
 import PaymentDetail from "./pages/PaymentDetail";
+import SeederPage from "./pages/SeederPage";
 import ReportBuilder from "./pages/ReportBuilder";
 
 function Router() {
@@ -79,6 +80,7 @@ function Router() {
       <Route path="/invoices/:id"><DashboardLayout><InvoicePage /></DashboardLayout></Route>
       <Route path="/payments"><DashboardLayout><PaymentsList /></DashboardLayout></Route>
       <Route path="/payments/:id"><DashboardLayout><PaymentDetail /></DashboardLayout></Route>
+      <Route path="/admin/seed"><DashboardLayout><SeederPage /></DashboardLayout></Route>
       <Route path="/budgets"><DashboardLayout><BudgetsList /></DashboardLayout></Route>
       <Route path="/budgets/new"><DashboardLayout><BudgetForm /></DashboardLayout></Route>
       <Route path="/budgets/:id"><DashboardLayout><BudgetDetail /></DashboardLayout></Route>
