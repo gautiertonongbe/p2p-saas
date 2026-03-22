@@ -113,147 +113,178 @@ export default function PurchaseOrderDetail() {
     closed:"Clôturé", cancelled:"Annulé", rejected:"Refusé",
   };
 
+  const p = po as any;
+  const isAdmin = user?.role === "admin" || user?.role === "procurement_manager";
+  const isApproverRole = user?.role === "approver";
+  const poItems = p.items || [];
+
+  const PO_STEPS = [
+    { n:1, label:"Brouillon",   icon:"📝", done: true },
+    { n:2, label:"Émis",        icon:"📤", done: ["issued","approved","confirmed","partially_received","received","closed"].includes(p.status) },
+    { n:3, label:"Approuvé",    icon:"✅", done: ["approved","confirmed","partially_received","received","closed"].includes(p.status) },
+    { n:4, label:"Réceptionné", icon:"📦", done: ["partially_received","received","closed"].includes(p.status) },
+    { n:5, label:"Facturé",     icon:"🧾", done: p.status === "closed" },
+  ];
+  const activeStep = p.status === "draft" ? 1 : p.status === "issued" ? 2 : p.status === "approved" ? 3 : ["partially_received","received"].includes(p.status) ? 4 : 5;
+
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button onClick={() => setLocation("/purchase-orders")} variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Bon de commande</h1>
-            <p className="text-muted-foreground mt-1">{p.poNumber}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button onClick={() => exportPDFMutation.mutate({ id: p.id })} disabled={exportPDFMutation.isPending} variant="outline">
-            <Download className="mr-2 h-4 w-4" />PDF
-          </Button>
+    <div className="min-h-screen bg-gray-50/40">
+      {/* Top bar */}
+      <div className="sticky top-0 z-30 bg-white border-b px-6 py-3 flex items-center gap-4">
+        <button onClick={() => setLocation("/purchase-orders")}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" /><span>Bons de commande</span>
+        </button>
+        <span className="text-muted-foreground/40">›</span>
+        <span className="text-sm font-medium">{p.poNumber}</span>
+        <div className="ml-auto flex items-center gap-2">
           <span className={`status-badge status-${p.status}`}>{t(`purchaseOrders.status.${p.status}`)}</span>
+          <button onClick={() => exportPDFMutation.mutate({ id: p.id })} disabled={exportPDFMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm hover:bg-muted transition-colors">
+            <Download className="h-3.5 w-3.5" />PDF
+          </button>
         </div>
       </div>
 
-      {/* Pending banner */}
-      {p.status === "issued" && (
-        <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-          <div className="h-8 w-8 rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center shrink-0">
-            <Shield className="h-4 w-4 text-blue-600" />
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+
+        {/* Progress */}
+        <div className="bg-white rounded-2xl border p-5">
+          <div className="flex items-center justify-between relative">
+            <div className="absolute left-0 right-0 top-5 h-0.5 bg-gray-100 mx-10" />
+            {PO_STEPS.map((step) => (
+              <div key={step.n} className="flex flex-col items-center gap-2 relative z-10">
+                <div className={`h-10 w-10 rounded-full flex items-center justify-center border-2 text-base transition-all ${
+                  step.done && step.n < activeStep ? "bg-emerald-500 border-emerald-500" :
+                  step.n === activeStep ? "bg-blue-600 border-blue-600" :
+                  "bg-white border-gray-200"
+                }`}>
+                  {step.done && step.n < activeStep
+                    ? <CheckCircle className="h-5 w-5 text-white" />
+                    : <span className={step.n === activeStep ? "text-white text-sm" : "text-gray-300 text-sm"}>{step.icon}</span>}
+                </div>
+                <span className={`text-xs font-medium ${step.n === activeStep ? "text-blue-700" : step.done && step.n < activeStep ? "text-emerald-700" : "text-gray-400"}`}>
+                  {step.label}
+                </span>
+              </div>
+            ))}
           </div>
-          <div>
-            <p className="text-sm font-semibold text-blue-900">En attente d'approbation</p>
-            <p className="text-xs text-blue-700 mt-0.5">Les approbateurs désignés ont été notifiés.</p>
+        </div>
+
+        {/* Context banner */}
+        {p.status === "draft" && isAdmin && (
+          <div className="bg-gray-800 text-white rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold">Brouillon — prêt à émettre ?</p>
+              <p className="text-sm text-gray-300">Vérifiez les articles puis émettez le BC au fournisseur</p>
+            </div>
+            <button onClick={() => { if(confirm("Émettre ce BC ?")) issueMutation.mutate({ id: p.id }); }}
+              disabled={issueMutation.isPending}
+              className="px-4 py-2 rounded-xl bg-white text-gray-900 text-sm font-semibold hover:bg-gray-100 transition-colors flex items-center gap-1.5 shrink-0">
+              <Send className="h-3.5 w-3.5" />Émettre le BC
+            </button>
           </div>
-        </div>
-      )}
-
-      {/* Overview */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Fournisseur</p><p className="text-lg font-medium mt-1">{p.vendor?.legalName || "-"}</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Montant total</p><p className="text-lg font-bold mt-1">{fmt(p.totalAmount)} XOF</p></CardContent></Card>
-        <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Livraison prévue</p><p className="text-lg font-medium mt-1">{p.expectedDeliveryDate ? fmtDate(p.expectedDeliveryDate) : "-"}</p></CardContent></Card>
-      </div>
-
-      {/* Items */}
-      <Card>
-        <CardHeader><CardTitle>Articles commandés</CardTitle><CardDescription>Liste des articles dans ce bon de commande</CardDescription></CardHeader>
-        <CardContent>
-          {poItems.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Article</TableHead><TableHead>Description</TableHead>
-                  <TableHead className="text-right">Quantité</TableHead>
-                  <TableHead className="text-right">Prix unitaire</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {poItems.map((item: any) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.itemName}</TableCell>
-                    <TableCell className="text-muted-foreground">{item.description || "-"}</TableCell>
-                    <TableCell className="text-right">{item.quantity} {item.unit || "pcs"}</TableCell>
-                    <TableCell className="text-right">{fmt(item.unitPrice)} XOF</TableCell>
-                    <TableCell className="text-right font-medium">{fmt(item.totalPrice)} XOF</TableCell>
-                  </TableRow>
-                ))}
-                <TableRow>
-                  <TableCell colSpan={4} className="text-right font-bold">Total</TableCell>
-                  <TableCell className="text-right font-bold text-lg">{fmt(p.totalAmount)} XOF</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          ) : <p className="text-center py-8 text-muted-foreground">Aucun article</p>}
-        </CardContent>
-      </Card>
-
-      {/* Notes */}
-      {p.notes && (
-        <Card>
-          <CardHeader><CardTitle>Notes</CardTitle></CardHeader>
-          <CardContent><p className="text-muted-foreground">{p.notes}</p></CardContent>
-        </Card>
-      )}
-
-      {/* Approval Chain — before Historique */}
-      {approvals && approvals.length > 0 && <ApprovalChainVisualization approvals={approvals} />}
-
-      {/* History */}
-      <div className="rounded-xl border bg-card">
-        <div className="flex items-center gap-2 px-5 py-4 border-b">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <h3 className="font-semibold text-sm">Historique</h3>
-          {history && history.length > 0 && <span className="ml-auto text-xs text-muted-foreground">{history.length} action{history.length > 1 ? "s" : ""}</span>}
-        </div>
-        <div className="px-4 py-3">
-          <EntityHistory entries={history || []} isLoading={historyLoading} />
-        </div>
-      </div>
-
-      {/* Sticky Action Bar */}
-      <Card className="sticky bottom-4 shadow-md border-2">
-        <CardContent className="pt-4 pb-4">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <p className="text-sm text-muted-foreground">{STATUS_LABEL[p.status] || p.status}</p>
-            <div className="flex items-center gap-2 flex-wrap">
-              {p.status === "draft" && isAdmin && (
-                <Button className="btn-primary text-white" onClick={() => issueMutation.mutate({ id: p.id })} disabled={issueMutation.isPending}>
-                  <Send className="mr-2 h-4 w-4" />Émettre le bon
-                </Button>
-              )}
-              {p.status === "issued" && (isAdmin || isApproverRole) && (
-                <>
-                  <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setRejectDialogOpen(true)} disabled={rejectMutation.isPending}>
-                    <ThumbsDown className="mr-2 h-4 w-4" />Rejeter
-                  </Button>
-                  <Button variant="outline" className="border-green-200 text-green-700 hover:bg-green-50" onClick={() => setApproveDialogOpen(true)} disabled={approveMutation.isPending}>
-                    <ThumbsUp className="mr-2 h-4 w-4" />Approuver
-                  </Button>
-                </>
-              )}
-              {p.status === "issued" && isAdmin && (
-                <Button className="bg-amber-500 hover:bg-amber-600 text-white hover:opacity-90" onClick={() => setBypassDialogOpen(true)} disabled={bypassMutation.isPending}>
-                  <ShieldCheck className="mr-2 h-4 w-4" />Approuver directement
-                </Button>
-              )}
-              {["approved","confirmed","partially_received"].includes(p.status) && (
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => { setSelectedItemReceipts({}); setReceiptNotes(""); setReceiptDialogOpen(true); }}>
-                  <Package className="mr-2 h-4 w-4" />Enregistrer réception
-                </Button>
-              )}
-              {["approved","confirmed","partially_received","received"].includes(p.status) && isAdmin && (
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setLocation(`/invoices/new?poId=${p.id}`)}>
-                  <FileText className="mr-2 h-4 w-4" />Créer une facture
-                </Button>
-              )}
-              {!isTerminal && isAdmin && (
-                <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => cancelMutation.mutate({ id: p.id })}>
-                  <XCircle className="mr-2 h-4 w-4" />Annuler
-                </Button>
-              )}
+        )}
+        {p.status === "issued" && (isAdmin || isApproverRole) && (
+          <div className="bg-blue-600 text-white rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold">Approbation requise</p>
+              <p className="text-sm text-blue-100">Ce BC attend votre approbation</p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => setRejectDialogOpen(true)}
+                className="px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-medium transition-colors">Rejeter</button>
+              <button onClick={() => setApproveDialogOpen(true)}
+                className="px-4 py-2 rounded-xl bg-white text-blue-700 text-sm font-semibold hover:bg-blue-50 transition-colors">✓ Approuver</button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+        {["approved","confirmed"].includes(p.status) && isAdmin && (
+          <div className="bg-emerald-600 text-white rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold">BC approuvé — en attente de réception</p>
+              <p className="text-sm text-emerald-100">Enregistrez la réception quand les marchandises arrivent</p>
+            </div>
+            <button onClick={() => { setSelectedItemReceipts({}); setReceiptNotes(""); setReceiptDialogOpen(true); }}
+              className="px-4 py-2 rounded-xl bg-white text-emerald-700 text-sm font-semibold hover:bg-emerald-50 transition-colors flex items-center gap-1.5 shrink-0">
+              <Package className="h-3.5 w-3.5" />Enregistrer réception
+            </button>
+          </div>
+        )}
+        {p.status === "received" && isAdmin && (
+          <div className="bg-purple-600 text-white rounded-2xl p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold">Marchandises reçues — créez la facture</p>
+              <p className="text-sm text-purple-100">Toutes les marchandises ont été réceptionnées</p>
+            </div>
+            <button onClick={() => setLocation(`/invoices/new?poId=${p.id}`)}
+              className="px-4 py-2 rounded-xl bg-white text-purple-700 text-sm font-semibold hover:bg-purple-50 transition-colors flex items-center gap-1.5 shrink-0">
+              <FileText className="h-3.5 w-3.5" />Créer une facture
+            </button>
+          </div>
+        )}
+
+        {/* Main card */}
+        <div className="bg-white rounded-2xl border overflow-hidden">
+          <div className="grid grid-cols-3 divide-x border-b">
+            {[
+              { label: "Fournisseur", value: p.vendor?.legalName || "—" },
+              { label: "Montant total", value: `${fmt(p.totalAmount)} XOF`, bold: true },
+              { label: "Livraison prévue", value: p.expectedDeliveryDate ? fmtDate(p.expectedDeliveryDate) : "—" },
+            ].map((kpi, i) => (
+              <div key={i} className="px-6 py-4">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">{kpi.label}</p>
+                <p className={`mt-1 ${kpi.bold ? "text-xl font-bold" : "text-base font-semibold"}`}>{kpi.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Items */}
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-gray-50/50">
+                <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Article</th>
+                <th className="text-right px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Qté</th>
+                <th className="text-right px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Prix unit.</th>
+                <th className="text-right px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {poItems.map((item: any, i: number) => (
+                <tr key={item.id} className={`border-b last:border-0 ${i%2===0?"":"bg-gray-50/30"}`}>
+                  <td className="px-6 py-3.5 font-medium">{item.itemName}</td>
+                  <td className="px-6 py-3.5 text-right text-muted-foreground">{item.quantity} {item.unit||"pcs"}</td>
+                  <td className="px-6 py-3.5 text-right text-muted-foreground">{fmt(item.unitPrice)} XOF</td>
+                  <td className="px-6 py-3.5 text-right font-semibold">{fmt(item.totalPrice)} XOF</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-gray-50/70">
+                <td colSpan={3} className="px-6 py-4 text-right font-semibold text-gray-700">Total</td>
+                <td className="px-6 py-4 text-right font-bold text-xl">{fmt(p.totalAmount)} <span className="text-sm font-normal text-muted-foreground">XOF</span></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* Approval chain */}
+        {approvals && approvals.length > 0 && <ApprovalChainVisualization approvals={approvals} />}
+
+        {/* History */}
+        <div className="bg-white rounded-2xl border overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-3 border-b">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="font-semibold text-sm">Historique</span>
+            </div>
+            {history && history.length > 0 && <span className="text-xs text-muted-foreground">{history.length} actions</span>}
+          </div>
+          <div className="px-4 py-3">
+            <EntityHistory entries={history || []} isLoading={historyLoading} />
+          </div>
+        </div>
+      </div>
 
       {/* Receipt Dialog */}
       <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>

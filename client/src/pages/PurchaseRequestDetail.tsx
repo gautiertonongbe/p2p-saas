@@ -1,698 +1,446 @@
 import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, FileText, Calendar, User, DollarSign, ShieldCheck, ShoppingCart, Edit, Send, Clock, Copy, RefreshCw, Shield, AlertTriangle} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ApprovalChainVisualization } from "@/components/ApprovalChainVisualization";
 import { EntityHistory } from "@/components/EntityHistory";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { CheckCircle2, XCircle } from "lucide-react";
+  ArrowLeft, Edit, Send, ShoppingCart, ShieldCheck, CheckCircle2, XCircle,
+  Clock, AlertTriangle, Shield, RefreshCw, Package, User, Calendar,
+  DollarSign, FileText, ChevronRight, MoreHorizontal, Zap
+} from "lucide-react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string; step: number }> = {
+  draft:            { label: "Brouillon",          color: "text-gray-600",   bg: "bg-gray-100",   dot: "bg-gray-400",   step: 1 },
+  submitted:        { label: "Soumis",              color: "text-blue-700",   bg: "bg-blue-100",   dot: "bg-blue-500",   step: 2 },
+  pending_approval: { label: "En approbation",      color: "text-amber-700",  bg: "bg-amber-100",  dot: "bg-amber-500",  step: 2 },
+  approved:         { label: "Approuvée",           color: "text-emerald-700",bg: "bg-emerald-100",dot: "bg-emerald-500",step: 3 },
+  rejected:         { label: "Refusée",             color: "text-red-700",    bg: "bg-red-100",    dot: "bg-red-500",    step: 2 },
+  cancelled:        { label: "Annulée",             color: "text-gray-500",   bg: "bg-gray-100",   dot: "bg-gray-400",   step: 1 },
+  converted_to_po:  { label: "Convertie en BC",     color: "text-purple-700", bg: "bg-purple-100", dot: "bg-purple-500", step: 4 },
+};
+
+const URGENCY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  low:      { label: "Faible",    color: "text-gray-600",   bg: "bg-gray-100"   },
+  normal:   { label: "Normal",    color: "text-blue-700",   bg: "bg-blue-100"   },
+  medium:   { label: "Modérée",   color: "text-amber-700",  bg: "bg-amber-100"  },
+  high:     { label: "Élevée",    color: "text-orange-700", bg: "bg-orange-100" },
+  critical: { label: "Critique",  color: "text-red-700",    bg: "bg-red-100"    },
+};
+
+function fmt(n: string | number) {
+  return new Intl.NumberFormat("fr-FR").format(Number(n));
+}
+function fmtDate(d: any) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+}
 
 export default function PurchaseRequestDetail() {
   const { t } = useTranslation();
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const [bypassDialogOpen, setBypassDialogOpen] = useState(false);
-  const [bypassComment, setBypassComment] = useState("");
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+
+  const [approveDialog, setApproveDialog] = useState(false);
+  const [rejectDialog, setRejectDialog]   = useState(false);
+  const [bypassDialog, setBypassDialog]   = useState(false);
   const [rejectComment, setRejectComment] = useState("");
-  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [bypassComment, setBypassComment] = useState("");
+  const [justifDialog, setJustifDialog]   = useState(false);
+  const [justifText, setJustifText]       = useState("");
 
-  const { data: request, isLoading } = trpc.purchaseRequests.getById.useQuery(
-    { id: parseInt(id!) },
-    { enabled: !!id }
-  );
-
-  const { data: items } = trpc.purchaseRequests.getRequestItems.useQuery(
-    { requestId: parseInt(id!) },
-    { enabled: !!id }
-  );
-
-  const { data: approvals } = trpc.approvals.getByRequest.useQuery(
-    { requestId: parseInt(id!) },
-    { enabled: !!id }
-  );
-
-  const { data: diagnosis } = trpc.approvals.diagnoseApprovals.useQuery(
-    { requestId: parseInt(id!) },
-    { enabled: !!id && !!request && request.status !== "draft" && (!approvals || approvals.length === 0) }
-  );
-
-  const { data: history, isLoading: historyLoading } = trpc.settings.getEntityHistory.useQuery(
-    { entityType: "purchaseRequest", entityId: parseInt(id!) },
-    { enabled: !!id }
-  );
+  const { data: request, isLoading } = trpc.purchaseRequests.getById.useQuery({ id: parseInt(id!) }, { enabled: !!id });
+  const { data: items = [] }         = trpc.purchaseRequests.getRequestItems.useQuery({ requestId: parseInt(id!) }, { enabled: !!id });
+  const { data: approvals }          = trpc.approvals.getByRequest.useQuery({ requestId: parseInt(id!) }, { enabled: !!id });
+  const { data: diagnosis }          = trpc.approvals.diagnoseApprovals.useQuery({ requestId: parseInt(id!) }, { enabled: !!id && !!request && request.status !== "draft" && (!approvals || approvals.length === 0) });
+  const { data: history, isLoading: historyLoading } = trpc.settings.getEntityHistory.useQuery({ entityType: "purchaseRequest", entityId: parseInt(id!) }, { enabled: !!id });
 
   const utils = trpc.useUtils();
-  const [justifDialogOpen, setJustifDialogOpen] = useState(false);
-  const [justifText, setJustifText] = useState("");
-  const updateMutation = trpc.purchaseRequests.update.useMutation({
-    onSuccess: () => submitMutation.mutate({ id: request!.id }),
-    onError: (e: any) => toast.error(e.message),
-  });
-  const resubmitMutation = trpc.purchaseRequests.resubmit.useMutation({
-    onSuccess: () => {
-      toast.success("Demande remise en brouillon — modifiez et soumettez à nouveau");
-      utils.purchaseRequests.getById.invalidate();
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  const submitMutation = trpc.purchaseRequests.submit.useMutation({
-    onSuccess: (data) => {
-      toast.success(
-        <div>
-          <p className="font-semibold">Demande soumise avec succès!</p>
-          <p className="text-sm mt-1">La demande a été envoyée aux approbateurs. Vous pouvez suivre son statut dans la section "Demandes d'achat".</p>
-        </div>,
-        { duration: 4000 }
-      );
-      utils.purchaseRequests.getById.invalidate({ id: parseInt(id!) });
-      utils.approvals.getByRequest.invalidate({ requestId: parseInt(id!) });
-      // Navigate back to purchase requests list
-      setTimeout(() => {
-        setLocation("/purchase-requests");
-      }, 2000);
-    },
-    onError: (error) => {
-      toast.error(`Erreur lors de la soumission: ${error.message}`);
-    },
-  });
-
-  const handleSubmit = () => {
-    if (!request) return;
-    // If no description/justification, prompt the user
-    if (!request.description?.trim()) {
-      setJustifDialogOpen(true);
-      return;
-    }
-    submitMutation.mutate({ id: request.id });
+  const refresh = () => {
+    utils.purchaseRequests.getById.invalidate();
+    utils.approvals.getByRequest.invalidate({ requestId: parseInt(id!) });
+    utils.settings.getEntityHistory.invalidate();
   };
 
-  const handleJustifSubmit = () => {
-    if (!justifText.trim() || justifText.trim().length < 10) {
-      toast.error("La justification doit contenir au moins 10 caractères");
-      return;
-    }
-    setJustifDialogOpen(false);
-    updateMutation.mutate({ id: request!.id, description: justifText.trim() });
-  };
+  const updateMut  = trpc.purchaseRequests.update.useMutation({ onSuccess: refresh, onError: (e: any) => toast.error(e.message) });
+  const submitMut  = trpc.purchaseRequests.submit.useMutation({ onSuccess: () => { toast.success("Demande soumise pour approbation"); refresh(); }, onError: (e: any) => toast.error(e.message) });
+  const approveMut = trpc.approvals.approve.useMutation({ onSuccess: () => { toast.success("Approuvée"); setApproveDialog(false); refresh(); }, onError: (e: any) => toast.error(e.message) });
+  const rejectMut  = trpc.approvals.reject.useMutation({ onSuccess: () => { toast.success("Refusée"); setRejectDialog(false); refresh(); }, onError: (e: any) => toast.error(e.message) });
+  const bypassMut  = trpc.purchaseRequests.adminBypassApproval?.useMutation?.({ onSuccess: () => { toast.success("Approuvée (contournement)"); setBypassDialog(false); refresh(); }, onError: (e: any) => toast.error(e.message) });
+  const cancelMut  = trpc.purchaseRequests.cancel.useMutation({ onSuccess: () => { toast.success("Annulée"); refresh(); }, onError: (e: any) => toast.error(e.message) });
+  const resubmitMut = trpc.purchaseRequests.resubmit.useMutation({ onSuccess: () => { toast.success("Remise en brouillon"); refresh(); }, onError: (e: any) => toast.error(e.message) });
 
-  const bypassMutation = trpc.purchaseRequests.adminBypassApproval.useMutation({
-    onSuccess: () => {
-      toast.success(
-        <div>
-          <p className="font-semibold">Demande approuvée directement!</p>
-          <p className="text-sm mt-1">La demande a été approuvée en tant qu'administrateur, en contournant la chaîne d'approbation.</p>
-        </div>,
-        { duration: 4000 }
-      );
-      utils.purchaseRequests.getById.invalidate({ id: parseInt(id!) });
-      utils.approvals.getByRequest.invalidate({ requestId: parseInt(id!) });
-      utils.settings.getEntityHistory.invalidate({ entityType: "purchaseRequest", entityId: parseInt(id!) });
-      setBypassDialogOpen(false);
-      setBypassComment("");
-    },
-    onError: (error) => {
-      toast.error(`Erreur: ${error.message}`);
-    },
-  });
+  const userPendingApproval = approvals?.find(a => a.decision === "pending" && (a as any).approverId === user?.id);
+  const isAdmin   = user?.role === "admin" || user?.role === "procurement_manager";
+  const isOwner   = request?.requesterId === user?.id;
 
-  const handleBypassApproval = () => {
-    if (!request) return;
-    bypassMutation.mutate({ 
-      id: request.id,
-      comment: bypassComment || undefined,
-    });
-  };
-
-  const approveMutation = trpc.approvals.approve.useMutation({
-    onSuccess: () => {
-      toast.success(
-        <div>
-          <p className="font-semibold">Demande approuvée!</p>
-          <p className="text-sm mt-1">Votre approbation a été enregistrée.</p>
-        </div>,
-        { duration: 4000 }
-      );
-      utils.purchaseRequests.getById.invalidate({ id: parseInt(id!) });
-      utils.approvals.getByRequest.invalidate({ requestId: parseInt(id!) });
-      utils.settings.getEntityHistory.invalidate({ entityType: "purchaseRequest", entityId: parseInt(id!) });
-      setApproveDialogOpen(false);
-    },
-    onError: (error) => {
-      toast.error(`Erreur: ${error.message}`);
-    },
-  });
-
-  const rejectMutation = trpc.approvals.reject.useMutation({
-    onSuccess: () => {
-      toast.success(
-        <div>
-          <p className="font-semibold">Demande rejetée!</p>
-          <p className="text-sm mt-1">Votre rejet a été enregistré.</p>
-        </div>,
-        { duration: 4000 }
-      );
-      utils.purchaseRequests.getById.invalidate({ id: parseInt(id!) });
-      utils.approvals.getByRequest.invalidate({ requestId: parseInt(id!) });
-      utils.settings.getEntityHistory.invalidate({ entityType: "purchaseRequest", entityId: parseInt(id!) });
-      setRejectDialogOpen(false);
-      setRejectComment("");
-    },
-    onError: (error) => {
-      toast.error(`Erreur: ${error.message}`);
-    },
-  });
-
-  // Find pending approval for current user
-  const userPendingApproval = approvals?.find(
-    (approval) => approval.decision === "pending" && approval.approverId === user?.id
+  if (isLoading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin h-8 w-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+    </div>
   );
+  if (!request) return <div className="p-8 text-center text-muted-foreground">Demande introuvable</div>;
 
-  const handleApprove = () => {
-    if (!userPendingApproval) return;
-    approveMutation.mutate({ approvalId: userPendingApproval.id });
-  };
+  const statusCfg  = STATUS_CONFIG[request.status] ?? STATUS_CONFIG.draft;
+  const urgencyCfg = URGENCY_CONFIG[request.urgencyLevel ?? "normal"] ?? URGENCY_CONFIG.normal;
+  const total      = items.reduce((s, i) => s + Number(i.quantity) * Number(i.unitPrice), 0) || Number(request.amountEstimate);
+  const isPending  = request.status === "pending_approval";
+  const isDraft    = request.status === "draft";
+  const isApproved = request.status === "approved";
+  const isRejected = request.status === "rejected";
 
-  const handleReject = () => {
-    if (!userPendingApproval) return;
-    rejectMutation.mutate({ 
-      approvalId: userPendingApproval.id,
-      comment: rejectComment || "",
-    });
-  };
-
-  const formatCurrency = (amount: string | number) => {
-    return new Intl.NumberFormat('fr-FR').format(Number(amount));
-  };
-
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-muted-foreground">{t('common.loading')}</div>
-      </div>
-    );
-  }
-
-  if (!request) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <FileText className="h-16 w-16 text-muted-foreground/50" />
-        <p className="text-muted-foreground">{t('errors.notFound')}</p>
-        <Button onClick={() => setLocation("/purchase-requests")} variant="outline">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t('common.back')}
-        </Button>
-      </div>
-    );
-  }
+  // ── Progress steps ────────────────────────────────────────────────────────
+  const STEPS = [
+    { n: 1, label: "Création",    icon: FileText   },
+    { n: 2, label: "Approbation", icon: Shield     },
+    { n: 3, label: "Approuvée",   icon: CheckCircle2 },
+    { n: 4, label: "Bon de commande", icon: Package },
+  ];
+  const currentStep = statusCfg.step;
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button onClick={() => setLocation("/purchase-requests")} variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{request.title}</h1>
-            <p className="text-muted-foreground mt-1">{request.requestNumber}</p>
+    <div className="min-h-screen bg-gray-50/40">
+      {/* ── Top bar ── */}
+      <div className="sticky top-0 z-30 bg-white border-b px-6 py-3 flex items-center gap-4">
+        <button onClick={() => setLocation("/purchase-requests")}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" /><span>Demandes</span>
+        </button>
+        <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+        <span className="text-sm font-medium truncate max-w-48">{request.requestNumber}</span>
+
+        <div className="ml-auto flex items-center gap-2">
+          {/* Status pill */}
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${statusCfg.dot}`} />
+            {statusCfg.label}
+          </span>
+          {/* Urgency pill */}
+          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${urgencyCfg.bg} ${urgencyCfg.color}`}>
+            {urgencyCfg.label}
+          </span>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+
+        {/* ── Progress tracker ── */}
+        <div className="bg-white rounded-2xl border p-5">
+          <div className="flex items-center justify-between relative">
+            {/* connector line */}
+            <div className="absolute left-0 right-0 top-5 h-0.5 bg-gray-100 mx-14" />
+            {STEPS.map((step, i) => {
+              const done   = currentStep > step.n || (currentStep === step.n && isApproved && step.n === 3);
+              const active = currentStep === step.n && !isRejected;
+              const failed = isRejected && step.n === 2;
+              const Icon   = step.icon;
+              return (
+                <div key={step.n} className="flex flex-col items-center gap-2 relative z-10">
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                    failed  ? "bg-red-500 border-red-500" :
+                    done    ? "bg-emerald-500 border-emerald-500" :
+                    active  ? "bg-blue-600 border-blue-600" :
+                              "bg-white border-gray-200"
+                  }`}>
+                    {failed ? <XCircle className="h-5 w-5 text-white" /> :
+                     done   ? <CheckCircle2 className="h-5 w-5 text-white" /> :
+                              <Icon className={`h-5 w-5 ${active ? "text-white" : "text-gray-300"}`} />}
+                  </div>
+                  <span className={`text-xs font-medium ${
+                    failed ? "text-red-600" : done ? "text-emerald-700" : active ? "text-blue-700" : "text-gray-400"
+                  }`}>{step.label}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
-        <span className={`status-badge status-${request.status}`}>
-          {t(`purchaseRequests.status.${request.status}`)}
-        </span>
-      </div>
 
-      {/* Overview */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
+        {/* ── Action banner — context-aware ── */}
+        {userPendingApproval && isPending && (
+          <div className="bg-blue-600 text-white rounded-2xl p-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <DollarSign className="h-5 w-5 text-primary" />
+              <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <Shield className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Montant estimé</p>
-                <p className="text-xl font-bold">{formatCurrency(request.amountEstimate)} XOF</p>
+                <p className="font-semibold">Votre approbation est requise</p>
+                <p className="text-sm text-blue-100">Étape {userPendingApproval.stepOrder} · {request.title}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => setRejectDialog(true)}
+                className="px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-medium transition-colors">
+                Rejeter
+              </button>
+              <button onClick={() => setApproveDialog(true)}
+                className="px-4 py-2 rounded-xl bg-white text-blue-700 hover:bg-blue-50 text-sm font-semibold transition-colors">
+                ✓ Approuver
+              </button>
+            </div>
+          </div>
+        )}
 
-        <Card>
-          <CardContent className="pt-6">
+        {isDraft && (isOwner || isAdmin) && (
+          <div className="bg-gradient-to-r from-gray-800 to-gray-700 text-white rounded-2xl p-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                <FileText className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Date de création</p>
-                <p className="text-sm font-medium">{formatDate(request.createdAt)}</p>
+                <p className="font-semibold">Brouillon — prêt à soumettre ?</p>
+                <p className="text-sm text-gray-300">Vérifiez les articles puis soumettez pour approbation</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => setLocation(`/purchase-requests/${request.id}/edit`)}
+                className="px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-medium transition-colors flex items-center gap-1.5">
+                <Edit className="h-3.5 w-3.5" />Modifier
+              </button>
+              <button onClick={() => {
+                if (!request.description?.trim()) { setJustifDialog(true); return; }
+                submitMut.mutate({ id: request.id });
+              }} disabled={submitMut.isPending}
+                className="px-4 py-2 rounded-xl bg-white text-gray-900 hover:bg-gray-100 text-sm font-semibold transition-colors flex items-center gap-1.5">
+                <Send className="h-3.5 w-3.5" />
+                {submitMut.isPending ? "Envoi..." : "Soumettre"}
+              </button>
+            </div>
+          </div>
+        )}
 
-        <Card>
-          <CardContent className="pt-6">
+        {isApproved && (
+          <div className="bg-emerald-600 text-white rounded-2xl p-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <User className="h-5 w-5 text-purple-600" />
+              <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Demandeur</p>
-                <p className="text-sm font-medium">{(request as any).requester?.name ?? "-"}</p>
+                <p className="font-semibold">Demande approuvée !</p>
+                <p className="text-sm text-emerald-100">Vous pouvez maintenant créer un bon de commande</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            {isAdmin && (
+              <button onClick={() => setLocation(`/purchase-orders/new?requestId=${request.id}`)}
+                className="px-4 py-2 rounded-xl bg-white text-emerald-700 hover:bg-emerald-50 text-sm font-semibold transition-colors flex items-center gap-1.5 shrink-0">
+                <ShoppingCart className="h-3.5 w-3.5" />Créer un BC
+              </button>
+            )}
+          </div>
+        )}
 
-        <Card>
-          <CardContent className="pt-6">
+        {isRejected && (isOwner || isAdmin) && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${
-                request.urgencyLevel === 'critical' ? 'bg-red-100' :
-                request.urgencyLevel === 'high' ? 'bg-orange-100' :
-                request.urgencyLevel === 'medium' ? 'bg-yellow-100' :
-                'bg-gray-100'
-              }`}>
-                <FileText className={`h-5 w-5 ${
-                  request.urgencyLevel === 'critical' ? 'text-red-600' :
-                  request.urgencyLevel === 'high' ? 'text-orange-600' :
-                  request.urgencyLevel === 'medium' ? 'text-yellow-600' :
-                  'text-gray-600'
-                }`} />
+              <div className="h-10 w-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                <XCircle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Urgence</p>
-                <p className="text-sm font-medium">{t(`purchaseRequests.urgency.${request.urgencyLevel}`)}</p>
+                <p className="font-semibold text-red-800">Demande refusée</p>
+                <p className="text-sm text-red-600">Vous pouvez la corriger et resoumettre</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <button onClick={() => resubmitMut.mutate({ id: request.id })}
+              className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 text-sm font-semibold transition-colors flex items-center gap-1.5 shrink-0">
+              <RefreshCw className="h-3.5 w-3.5" />Corriger & resoumettre
+            </button>
+          </div>
+        )}
 
-      {/* Details */}
-      {request.description && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('common.description')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">{request.description}</p>
-          </CardContent>
-        </Card>
-      )}
+        {/* ── Main info card ── */}
+        <div className="bg-white rounded-2xl border overflow-hidden">
+          <div className="px-6 py-4 border-b bg-gray-50/50">
+            <h1 className="font-semibold text-lg text-gray-900">{request.title}</h1>
+            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" />{(request as any).requester?.name ?? "—"}</span>
+              <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{fmtDate(request.createdAt)}</span>
+              <span className="flex items-center gap-1"><FileText className="h-3.5 w-3.5" />{request.requestNumber}</span>
+              {request.departmentId && <span className="flex items-center gap-1"><Package className="h-3.5 w-3.5" />Dép. {request.departmentId}</span>}
+            </div>
+          </div>
 
-      {/* Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('purchaseRequests.items')}</CardTitle>
-          <CardDescription>Articles demandés dans cette demande</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {items && items.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('purchaseRequests.itemName')}</TableHead>
-                  <TableHead>{t('common.description')}</TableHead>
-                  <TableHead className="text-right">{t('purchaseRequests.quantity')}</TableHead>
-                  <TableHead className="text-right">{t('purchaseRequests.unitPrice')}</TableHead>
-                  <TableHead className="text-right">{t('purchaseRequests.lineTotal')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.itemName}</TableCell>
-                    <TableCell className="text-muted-foreground">{item.description || '-'}</TableCell>
-                    <TableCell className="text-right">{item.quantity} {item.unit || 'pcs'}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.unitPrice)} XOF</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(Number(item.quantity) * Number(item.unitPrice))} XOF
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow>
-                  <TableCell colSpan={4} className="text-right font-bold">
-                    {t('common.total')}
-                  </TableCell>
-                  <TableCell className="text-right font-bold text-lg">
-                    {formatCurrency(request.amountEstimate)} XOF
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              Aucun article trouvé
+          {request.description && (
+            <div className="px-6 py-4 border-b">
+              <p className="text-sm text-muted-foreground leading-relaxed">{request.description}</p>
             </div>
           )}
-        </CardContent>
-      </Card>
 
-      {/* Approval Chain — always show for non-draft */}
-      {request.status !== "draft" && (
-        approvals && approvals.length > 0
-          ? <ApprovalChainVisualization approvals={approvals} />
-          : <div className="bg-white rounded-2xl border overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3 border-b bg-gray-50/60">
-                <Shield className="h-4 w-4 text-blue-600" />
-                <span className="font-semibold text-sm">Approbateurs</span>
-              </div>
-              {diagnosis && !diagnosis.matched ? (
-                <div className="px-5 py-4 bg-amber-50 border-b border-amber-200">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+          {/* Items table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-gray-50/50">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Article</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Qté</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Prix unit.</th>
+                  <th className="text-right px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total ligne</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, i) => (
+                  <tr key={item.id} className={`border-b last:border-0 ${i % 2 === 0 ? "" : "bg-gray-50/30"}`}>
+                    <td className="px-6 py-3.5">
+                      <p className="font-medium text-gray-900">{item.itemName}</p>
+                      {item.description && <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>}
+                    </td>
+                    <td className="px-6 py-3.5 text-right text-muted-foreground">{item.quantity} {item.unit || "pcs"}</td>
+                    <td className="px-6 py-3.5 text-right text-muted-foreground">{fmt(item.unitPrice)} XOF</td>
+                    <td className="px-6 py-3.5 text-right font-semibold">{fmt(Number(item.quantity) * Number(item.unitPrice))} XOF</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gray-50/70">
+                  <td colSpan={3} className="px-6 py-4 text-right font-semibold text-gray-700">Total estimé</td>
+                  <td className="px-6 py-4 text-right font-bold text-xl text-gray-900">{fmt(total)} <span className="text-sm font-normal text-muted-foreground">XOF</span></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        {/* ── Approval chain ── */}
+        {request.status !== "draft" && (
+          approvals && approvals.length > 0
+            ? <ApprovalChainVisualization approvals={approvals} />
+            : <div className="bg-white rounded-2xl border overflow-hidden">
+                <div className="flex items-center gap-2 px-6 py-3 border-b">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-semibold text-sm">Approbateurs</span>
+                </div>
+                {diagnosis && !diagnosis.matched ? (
+                  <div className="p-6 flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-semibold text-amber-800">Aucune politique d'approbation ne correspond</p>
-                      <p className="text-xs text-amber-700 mt-0.5">{diagnosis.reason}</p>
-                      <a href="/settings?section=workflows" className="text-xs text-blue-600 underline mt-1 inline-block">
-                        → Configurer les politiques d'approbation
-                      </a>
+                      <p className="font-medium text-sm text-amber-800">Aucune politique d'approbation ne correspond</p>
+                      <p className="text-sm text-muted-foreground mt-1">{diagnosis.reason}</p>
+                      <button onClick={() => setLocation("/settings")}
+                        className="text-xs text-blue-600 hover:underline mt-2 inline-block">
+                        → Configurer les workflows d'approbation
+                      </button>
                     </div>
                   </div>
-                </div>
-              ) : diagnosis?.matched ? (
-                <div className="px-5 py-4 bg-blue-50 border-b border-blue-200">
-                  <p className="text-xs text-blue-700">
-                    Politique "<strong>{diagnosis.policy?.name}</strong>" — {diagnosis.steps?.length} étape(s),
-                    {diagnosis.approvers?.reduce((s: number, a: any) => s + a.resolvedIds.length, 0)} approbateur(s) résolu(s)
-                  </p>
-                </div>
-              ) : null}
-              <div className="px-5 py-8 text-center text-muted-foreground text-sm">
-                <Clock className="h-6 w-6 mx-auto mb-2 opacity-30" />
-                Aucune étape d'approbation pour cette demande
+                ) : (
+                  <div className="px-6 py-8 text-center text-muted-foreground text-sm">
+                    <Clock className="h-6 w-6 mx-auto mb-2 opacity-20" />
+                    Aucune étape d'approbation pour cette demande
+                  </div>
+                )}
               </div>
-            </div>
-      )}
+        )}
 
-      {/* History */}
-      <div className="rounded-xl border bg-card">
-        <div className="flex items-center gap-2 px-5 py-4 border-b">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <h3 className="font-semibold text-sm">Historique</h3>
-          {history && history.length > 0 && (
-            <span className="ml-auto text-xs text-muted-foreground">{history.length} action{history.length > 1 ? "s" : ""}</span>
-          )}
+        {/* ── History ── */}
+        <div className="bg-white rounded-2xl border overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-3 border-b">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="font-semibold text-sm">Historique</span>
+            </div>
+            {history && history.length > 0 && (
+              <span className="text-xs text-muted-foreground">{history.length} action{history.length > 1 ? "s" : ""}</span>
+            )}
+          </div>
+          <div className="px-4 py-3">
+            <EntityHistory entries={history || []} isLoading={historyLoading} />
+          </div>
         </div>
-        <div className="px-4 py-3">
-          <EntityHistory entries={history || []} isLoading={historyLoading} />
-        </div>
+
+        {/* ── Admin actions (secondary) ── */}
+        {isAdmin && (isDraft || isPending) && (
+          <div className="flex items-center justify-between px-5 py-3 bg-amber-50 border border-amber-200 rounded-xl">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-amber-600" />
+              <span className="text-sm text-amber-800 font-medium">Actions administrateur</span>
+            </div>
+            <div className="flex gap-2">
+              {!isDraft && (
+                <button onClick={() => { const r = prompt("Motif d'annulation :"); if (r !== null) cancelMut.mutate({ id: request.id, reason: r || "Annulé" }); }}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-amber-300 text-amber-800 hover:bg-amber-100 transition-colors">
+                  Annuler
+                </button>
+              )}
+              <button onClick={() => setBypassDialog(true)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors flex items-center gap-1">
+                <ShieldCheck className="h-3.5 w-3.5" />Contournement workflow
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-      {/* ── Action Bar — visible to all based on status + role ── */}
-      {(() => {
-        const isAdmin = user?.role === 'admin' || user?.role === 'procurement_manager';
-        const isDraft = request.status === 'draft';
-        const isPending = request.status === 'pending_approval';
-        const isApproved = request.status === 'approved';
-        const canActOnDoc = isAdmin || request.requesterId === user?.id;
 
-        return (
-          <Card className="sticky bottom-4 shadow-md border-2">
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                {/* Left: context label */}
-                <div className="text-sm text-muted-foreground">
-                  {isDraft && "Brouillon — choisissez une action"}
-                  {isPending && "En attente d'approbation"}
-                  {isApproved && "Approuvée — prête pour commande"}
-                  {request.status === 'rejected' && "Demande refusée"}
-                  {request.status === 'cancelled' && "Demande annulée"}
-                  {request.status === 'converted_to_po' && "Convertie en bon de commande"}
-                </div>
-
-                {/* Right: actions */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Edit — always on draft */}
-                  {isDraft && canActOnDoc && (
-                    <Button variant="outline" onClick={() => setLocation(`/purchase-requests/${request.id}/edit`)}>
-                      <Edit className="mr-2 h-4 w-4" />{t('common.edit')}
-                    </Button>
-                  )}
-
-                  {/* Submit for approval */}
-                  {isDraft && canActOnDoc && (
-                    <Button variant="outline" onClick={handleSubmit} disabled={submitMutation.isPending}>
-                      <Send className="mr-2 h-4 w-4" />
-                      {submitMutation.isPending ? "Envoi..." : "Soumettre"}
-                    </Button>
-                  )}
-
-                  {/* Admin: bypass approval workflow */}
-                  {isAdmin && (isDraft || isPending) && (
-                    <Button
-                      onClick={() => setBypassDialogOpen(true)}
-                      className="bg-amber-500 hover:bg-amber-600 text-white"
-                      title="Contourner le workflow d'approbation (réservé aux admins)"
-                    >
-                      <ShieldCheck className="mr-2 h-4 w-4" />
-                      Contournement workflow
-                    </Button>
-                  )}
-
-                  {/* Admin: create PO from draft OR approved */}
-                  {isAdmin && (isDraft || isApproved) && (
-                    <Button
-                      onClick={() => setLocation(`/purchase-orders/new?requestId=${request.id}`)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    >
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      Créer un bon de commande
-                    </Button>
-                  )}
-
-                  {/* Approver: approve/reject on pending */}
-                  {userPendingApproval && isPending && (
-                    <>
-                      <Button
-                        variant="outline"
-                        className="border-red-200 text-red-600 hover:bg-red-50"
-                        onClick={() => setRejectDialogOpen(true)}
-                      >
-                        <XCircle className="mr-2 h-4 w-4" />Rejeter
-                      </Button>
-                      <Button
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => setApproveDialogOpen(true)}
-                      >
-                        <CheckCircle2 className="mr-2 h-4 w-4" />Approuver
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
-
-      {/* Approve/Reject Buttons for Approvers */}
-      {userPendingApproval && request.status === 'pending_approval' && (
-        <Card className="border-green-200 bg-green-50/50">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-green-900">Approbation requise</p>
-                <p className="text-sm text-green-700">Cette demande attend votre approbation (Étape {userPendingApproval.stepOrder})</p>
-              </div>
-              <div className="flex gap-3">
-                <Button 
-                  onClick={() => setRejectDialogOpen(true)}
-                  variant="outline"
-                  className="border-red-200 text-red-600 hover:bg-red-50"
-                >
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Rejeter
-                </Button>
-                <Button 
-                  onClick={() => setApproveDialogOpen(true)}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Approuver
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Approve Dialog */}
-      <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Approuver cette demande?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Vous allez approuver cette demande d'achat. Cette action sera enregistrée dans l'historique.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleApprove}
-              disabled={approveMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {approveMutation.isPending ? "Approbation en cours..." : "Approuver"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Reject Dialog */}
-      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+      {/* ── Dialogs ── */}
+      <Dialog open={approveDialog} onOpenChange={setApproveDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rejeter cette demande</DialogTitle>
-            <DialogDescription>
-              Veuillez fournir une raison pour le rejet de cette demande d'achat.
-            </DialogDescription>
+            <DialogTitle>Confirmer l'approbation</DialogTitle>
+            <DialogDescription>Vous approuvez la demande "{request.title}" pour {fmt(total)} XOF.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Raison du rejet (optionnel)</label>
-              <Textarea
-                placeholder="Expliquez pourquoi vous rejetez cette demande..."
-                value={rejectComment}
-                onChange={(e) => setRejectComment(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setRejectDialogOpen(false);
-                setRejectComment("");
-              }}
-            >
-              Annuler
-            </Button>
-            <Button 
-              onClick={handleReject}
-              disabled={rejectMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {rejectMutation.isPending ? "Rejet en cours..." : "Rejeter"}
-            </Button>
+            <Button variant="outline" onClick={() => setApproveDialog(false)}>Annuler</Button>
+            <button onClick={() => approveMut.mutate({ approvalId: userPendingApproval!.id })}
+              disabled={approveMut.isPending}
+              className="px-4 py-2 rounded-lg btn-primary text-white text-sm font-medium disabled:opacity-50">
+              {approveMut.isPending ? "..." : "✓ Approuver"}
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Contournement workflow Dialog */}
-      <Dialog open={bypassDialogOpen} onOpenChange={setBypassDialogOpen}>
+      <Dialog open={rejectDialog} onOpenChange={setRejectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approuver directement en tant qu'administrateur</DialogTitle>
-            <DialogDescription>
-              Cette action approuvera la demande immédiatement en contournant toutes les étapes d'approbation restantes.
-              Cette action sera enregistrée dans l'historique.
-            </DialogDescription>
+            <DialogTitle>Motif du refus</DialogTitle>
+            <DialogDescription>Expliquez pourquoi cette demande est refusée.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Commentaire (optionnel)</label>
-              <Textarea
-                placeholder="Raison de l'approbation directe..."
-                value={bypassComment}
-                onChange={(e) => setBypassComment(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
+          <Textarea value={rejectComment} onChange={e => setRejectComment(e.target.value)} placeholder="Motif du refus (obligatoire)..." rows={3} />
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setBypassDialogOpen(false);
-                setBypassComment("");
-              }}
-            >
-              Annuler
-            </Button>
-            <Button 
-              onClick={handleBypassApproval}
-              disabled={bypassMutation.isPending}
-              className="bg-amber-600 hover:bg-amber-700"
-            >
-              {bypassMutation.isPending ? "Approbation en cours..." : "Contournement du workflow"}
-            </Button>
+            <Button variant="outline" onClick={() => setRejectDialog(false)}>Annuler</Button>
+            <button onClick={() => { if (!rejectComment.trim()) { toast.error("Le motif est obligatoire"); return; } rejectMut.mutate({ approvalId: userPendingApproval!.id, comment: rejectComment }); }}
+              disabled={rejectMut.isPending}
+              className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium disabled:opacity-50">
+              Rejeter
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Justification required dialog */}
-      <Dialog open={justifDialogOpen} onOpenChange={setJustifDialogOpen}>
-        <DialogContent className="max-w-md">
+      <Dialog open={bypassDialog} onOpenChange={setBypassDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Contournement du workflow</DialogTitle>
+            <DialogDescription>Force l'approbation sans passer par les étapes configurées. Cette action est journalisée.</DialogDescription>
+          </DialogHeader>
+          <Textarea value={bypassComment} onChange={e => setBypassComment(e.target.value)} placeholder="Justification du contournement..." rows={3} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBypassDialog(false)}>Annuler</Button>
+            <button onClick={() => bypassMut?.mutate?.({ id: request.id, comment: bypassComment })}
+              disabled={bypassMut?.isPending}
+              className="px-4 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium disabled:opacity-50">
+              Forcer l'approbation
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={justifDialog} onOpenChange={setJustifDialog}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Justification requise</DialogTitle>
-            <DialogDescription>
-              La politique de votre organisation exige une justification avant de soumettre une demande d'achat.
-            </DialogDescription>
+            <DialogDescription>Expliquez brièvement pourquoi cet achat est nécessaire.</DialogDescription>
           </DialogHeader>
-          <div className="py-2">
-            <Textarea
-              value={justifText}
-              onChange={e => setJustifText(e.target.value)}
-              placeholder="Expliquez pourquoi cet achat est nécessaire, pour quel projet, et l'impact si non satisfait..."
-              rows={4}
-              className="resize-none"
-            />
-            <p className="text-xs text-muted-foreground mt-1">{justifText.length}/10 caractères minimum</p>
-          </div>
+          <Textarea value={justifText} onChange={e => setJustifText(e.target.value)} placeholder="Justification..." rows={3} />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setJustifDialogOpen(false)}>Annuler</Button>
-            <button
-              onClick={handleJustifSubmit}
-              disabled={justifText.trim().length < 10 || updateMutation.isPending || submitMutation.isPending}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold btn-primary text-white disabled:opacity-50">
-              {(updateMutation.isPending || submitMutation.isPending) ? "Envoi..." : "Soumettre la demande"}
+            <Button variant="outline" onClick={() => setJustifDialog(false)}>Annuler</Button>
+            <button onClick={() => { updateMut.mutate({ id: request.id, description: justifText }, { onSuccess: () => { setJustifDialog(false); submitMut.mutate({ id: request.id }); } }); }}
+              className="px-4 py-2 rounded-lg btn-primary text-white text-sm font-medium">
+              Sauvegarder et soumettre
             </button>
           </DialogFooter>
         </DialogContent>
