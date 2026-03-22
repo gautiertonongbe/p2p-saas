@@ -341,7 +341,7 @@ export default function PurchaseRequestDetail() {
         </Card>
       )}
 
-      {/* Items */
+      {/* Items */}
       <Card>
         <CardHeader>
           <CardTitle>{t('purchaseRequests.items')}</CardTitle>
