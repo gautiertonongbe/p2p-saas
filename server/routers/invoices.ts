@@ -925,4 +925,34 @@ Détails: ${input.details}` : ""),
         return { ...p, invoice, vendor: vendor ? { id: vendor.id, legalName: vendor.legalName } : null };
       }));
     }),
+  // Void invoice — admin only, immutable once voided
+  voidInvoice: protectedProcedure
+    .input(z.object({ id: z.number(), reason: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin" && ctx.user.role !== "procurement_manager") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les admins peuvent annuler une facture" });
+      }
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { invoices } = await import("../../drizzle/schema");
+      const { eq, and } = await import("drizzle-orm");
+      const [invoice] = await dbInstance.select().from(invoices)
+        .where(and(eq(invoices.id, input.id), eq(invoices.organizationId, ctx.user.organizationId))).limit(1);
+      if (!invoice) throw new TRPCError({ code: "NOT_FOUND" });
+      if (invoice.status === "paid") throw new TRPCError({ code: "BAD_REQUEST", message: "Impossible d'annuler une facture déjà payée" });
+      if (invoice.status === "cancelled") throw new TRPCError({ code: "BAD_REQUEST", message: "Facture déjà annulée" });
+      await dbInstance.update(invoices)
+        .set({ status: "cancelled" as any })
+        .where(and(eq(invoices.id, input.id), eq(invoices.organizationId, ctx.user.organizationId)));
+      await createAuditLog({
+        organizationId: ctx.user.organizationId,
+        entityType: "invoice",
+        entityId: input.id,
+        action: "voided",
+        actorId: ctx.user.id,
+        newValue: { status: "cancelled", reason: input.reason },
+      });
+      return { success: true };
+    }),
+
 });

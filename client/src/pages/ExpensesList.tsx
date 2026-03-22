@@ -186,7 +186,7 @@ export default function ExpensesList() {
                           <ActionMenu actions={[
                             { icon: <Eye className="h-4 w-4" />, label: "Voir le detail", onClick: () => setLocation(`/expenses/${report.id}`) },
                             { icon: <CheckCircle className="h-4 w-4" />, label: "Approuver", hidden: !canManage || approveMut.isPending, variant: "success", onClick: () => approveMut.mutate({ id: report.id }) },
-                            { icon: <XCircle className="h-4 w-4" />, label: "Rejeter", hidden: !canManage, variant: "danger", onClick: (e) => { e.stopPropagation(); } },
+                            { icon: <XCircle className="h-4 w-4" />, label: "Rejeter", hidden: !canManage || report.status !== "submitted", variant: "danger", onClick: (e) => { e.stopPropagation(); if(confirm("Rejeter cette note de frais ?")) rejectMut?.mutate?.({ id: report.id }); } },
                           ]} />
                         </div>
                       )}

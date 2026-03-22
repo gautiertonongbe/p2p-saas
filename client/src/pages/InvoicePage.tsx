@@ -182,6 +182,11 @@ export default function InvoicePage() {
     onSuccess: () => { toast.success("Facture refusée"); setRejectDialog(false); invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
+  const voidMut = trpc.invoices.voidInvoice.useMutation({
+    onSuccess: () => { toast.success("Facture annulée"); invalidate(); setLocation("/invoices"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const markPaidMut = trpc.invoices.markAsPaid.useMutation({
     onSuccess: () => { toast.success("Facture marquée comme payée"); invalidate(); },
     onError: (e: any) => toast.error(e.message),
@@ -589,11 +594,21 @@ export default function InvoicePage() {
                 </div>
               </div>
             )}
-            {status === "pending" && isAdmin && (
-              <div className="flex justify-end gap-2">
-                <button className="text-xs px-3 py-1.5 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-1">
-                  <ShieldCheck className="h-3.5 w-3.5" />Contournement workflow
-                </button>
+            {!isNew && isAdmin && !["paid", "cancelled"].includes(status) && (
+              <div className="flex items-center justify-between px-1">
+                <div className="flex gap-2">
+                  {status === "pending" && (
+                    <button className="text-xs px-3 py-1.5 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5" />Contournement workflow
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { const r = prompt("Motif d'annulation (obligatoire) :"); if (r?.trim()) voidMut.mutate({ id: parseInt(id!), reason: r }); }}
+                    disabled={voidMut.isPending}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1">
+                    <XCircle className="h-3.5 w-3.5" />Annuler la facture
+                  </button>
+                </div>
               </div>
             )}
           </>

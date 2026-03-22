@@ -1,3 +1,4 @@
+import { SortToggle } from "@/components/SortToggle";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +31,7 @@ export default function ApprovalsList() {
   const { t } = useTranslation();
   const utils = trpc.useUtils();
 
+  const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
   const [rejectComments, setRejectComments] = useState<Record<number, string>>({});
   const [delegateDialogOpen, setDelegateDialogOpen] = useState(false);
   const [delegatingApprovalId, setDelegatingApprovalId] = useState<number | null>(null);
