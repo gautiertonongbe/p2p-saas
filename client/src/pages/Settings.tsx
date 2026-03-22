@@ -29,7 +29,8 @@ import {
 import {
   Building2, Users, GitBranch, DollarSign, Bell, Shield, Settings as Gear,
   ChevronRight, Sliders, Workflow, Globe, Hash, Package, CheckCircle2,
-  Plus, Edit, Trash2, Loader2, Save, RotateCcw, AlertTriangle, Info, TrendingUp,, Archive} from "lucide-react";
+  Plus, Edit, Trash2, Loader2, Save, RotateCcw, AlertTriangle, Info, TrendingUp,
+} from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const SECTION_ICONS: Record<string, React.FC<any>> = {
@@ -60,7 +61,6 @@ const SECTION_DEFS = [
   { id: "numbering",    group: "Système", desc: "Séquences de numérotation" },
   { id: "localization", group: "Système", desc: "Langue et format" },
   { id: "security",     group: "Système", desc: "Audit et sécurité" },
-  { id: "archiving",    group: "Système", desc: "Archivage et rétention des données" },
 ];
 
 const groups = [...new Set(SECTION_DEFS.map(s => s.group))];
@@ -79,10 +79,9 @@ const SECTION_LABELS: Record<string, string> = {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function Settings() {
-  const { t } = useTranslation();
   const { user } = useAuth();
+  const [section, setSection] = useState("organization");
   const isAdmin = user?.role === "admin";
-  const [section, setSection] = useState(isAdmin ? "organization" : "profile");
   const { colorPreset } = useTheme();
   const activeColor = COLOR_PRESETS.find(p => p.id === colorPreset)?.primary || "221 83% 53%";
 
@@ -100,18 +99,18 @@ export default function Settings() {
               <Gear className="h-4 w-4" style={{ color: `hsl(${activeColor})` }} />
             </div>
             <div>
-              <h1 className="text-sm font-semibold">{isAdmin ? "Paramètres" : "Mon compte"}</h1>
-              <p className="text-xs text-muted-foreground">{isAdmin ? "Configuration" : "Profil et préférences"}</p>
+              <h1 className="text-sm font-semibold">Paramètres</h1>
+              <p className="text-xs text-muted-foreground">Configuration</p>
             </div>
           </div>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-2">
-          {groups.filter(g => isAdmin || g === "Mon Compte").map(group => (
+          {groups.map(group => (
             <div key={group} className="mb-1">
               <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest px-4 py-2">{group}</p>
-              {SECTION_DEFS.filter(s => s.group === group).filter(s => isAdmin || ['profile', 'notifications', 'security'].includes(s.id)).map(s => {
+              {SECTION_DEFS.filter(s => s.group === group).map(s => {
                 const Icon = SECTION_ICONS[s.id] ?? Gear;
                 const active = section === s.id;
                 return (
@@ -138,7 +137,15 @@ export default function Settings() {
           ))}
         </nav>
 
-
+        {/* Footer */}
+        {!isAdmin && (
+          <div className="p-3 border-t bg-white">
+            <div className="flex items-center gap-2 p-2.5 bg-amber-50 rounded-lg border border-amber-200">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+              <p className="text-xs text-amber-700 font-medium">Accès admin requis</p>
+            </div>
+          </div>
+        )}
       </aside>
 
       {/* Content */}
@@ -161,7 +168,6 @@ export default function Settings() {
         {section === "numbering"     && <NumberingSection isAdmin={isAdmin} />}
         {section === "localization"  && <LocalizationSection isAdmin={isAdmin} />}
         {section === "security"      && <SecuritySection />}
-        {section === "archiving"    && <ArchivingSection />}
       </main>
     </div>
   );
@@ -328,11 +334,11 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
               <div className="grid grid-cols-6 gap-2">
                 {COLOR_PRESETS.map(preset => (
                   <button key={preset.id} type="button" disabled={!isAdmin}
-                    onClick={() => setForm(f => ({...f, primaryColor: preset.hex || '#2563EB'}))}
+                    onClick={() => setForm(f => ({...f, primaryColor: `hsl(${preset.primary})`}))}
                     className="flex flex-col items-center gap-1.5 group disabled:opacity-50 disabled:cursor-not-allowed">
-                    <div className={`h-9 w-9 rounded-full transition-all ${form.primaryColor === (preset.hex || `hsl(${preset.primary})`) ? "ring-2 ring-offset-2 ring-gray-400 scale-110" : "hover:scale-105"}`}
+                    <div className={`h-9 w-9 rounded-full transition-all ${form.primaryColor === `hsl(${preset.primary})` ? "ring-2 ring-offset-2 ring-gray-400 scale-110" : "hover:scale-105"}`}
                       style={{ backgroundColor: `hsl(${preset.primary})` }}>
-                      {form.primaryColor === (preset.hex || `hsl(${preset.primary})`) && (
+                      {form.primaryColor === `hsl(${preset.primary})` && (
                         <div className="h-full w-full flex items-center justify-center">
                           <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </div>
@@ -342,7 +348,7 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-3">Couleur actuelle: <strong>{COLOR_PRESETS.find(p => (p.hex === form.primaryColor) || (`hsl(${p.primary})` === form.primaryColor))?.label || form.primaryColor}</strong></p>
+              <p className="text-xs text-muted-foreground mt-3">Couleur actuelle: <strong>{COLOR_PRESETS.find(p => `hsl(${p.primary})` === form.primaryColor)?.label || form.primaryColor}</strong></p>
             </div>
           </CardContent>
         </Card>
@@ -619,7 +625,6 @@ function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
     onSuccess: () => { toast.success("Département créé"); utils.settings.listDepartments.invalidate(); setNewOpen(false); setCode(""); setName(""); setManagerId(""); },
     onError: (e: any) => toast.error(e.message),
   });
-  const [deptIsActive, setDeptIsActive] = useState(true);
   const updateMut = trpc.settings.updateDepartment.useMutation({
     onSuccess: () => { toast.success("Département mis à jour"); utils.settings.listDepartments.invalidate(); setEditDept(null); },
     onError: (e: any) => toast.error(e.message),
@@ -662,7 +667,7 @@ function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
                       </TableCell>
                       {isAdmin && (
                         <TableCell className="text-right">
-                          <Button size="sm" variant="ghost" onClick={() => { setEditDept(d); setCode(d.code); setName(d.name); setManagerId(d.managerId?.toString() || ""); setDeptIsActive(d.isActive !== false); }}>
+                          <Button size="sm" variant="ghost" onClick={() => { setEditDept(d); setCode(d.code); setName(d.name); setManagerId(d.managerId?.toString() || ""); }}>
                             <Edit className="h-4 w-4" />
                           </Button>
                         </TableCell>
@@ -697,26 +702,11 @@ function DepartmentsSection({ isAdmin }: { isAdmin: boolean }) {
                 </Select>
               </div>
             </div>
-            {editDept && (
-              <div className="flex items-center justify-between px-1 py-2 border-t mt-2">
-                <div>
-                  <p className="text-sm font-medium">Statut du département</p>
-                  <p className="text-xs text-muted-foreground">Les départements inactifs ne peuvent plus être sélectionnés</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium ${deptIsActive ? "text-emerald-700" : "text-gray-500"}`}>{deptIsActive ? "Actif" : "Inactif"}</span>
-                  <button onClick={() => setDeptIsActive(!deptIsActive)}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${deptIsActive ? "bg-emerald-500" : "bg-gray-300"}`}>
-                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${deptIsActive ? "translate-x-4.5" : "translate-x-0.5"}`} />
-                  </button>
-                </div>
-              </div>
-            )}
             <DialogFooter>
               <Button variant="outline" onClick={() => { setNewOpen(false); setEditDept(null); }}>Annuler</Button>
               <button disabled={!code || !name || createMut.isPending || updateMut.isPending} className="btn-primary flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
                 onClick={() => editDept
-                  ? updateMut.mutate({ id: editDept.id, code, name, managerId: managerId ? parseInt(managerId) : undefined, isActive: deptIsActive })
+                  ? updateMut.mutate({ id: editDept.id, code, name, managerId: managerId ? parseInt(managerId) : undefined })
                   : createMut.mutate({ code, name, managerId: managerId ? parseInt(managerId) : undefined })}>
                 {(createMut.isPending || updateMut.isPending) ? "Enregistrement..." : "Enregistrer"}
               </button>
@@ -860,10 +850,6 @@ function ApprovalsSection({ isAdmin }: { isAdmin: boolean }) {
     onSuccess: () => { toast.success("Politique supprimée"); utils.settings.getApprovalPolicies.invalidate(); if (expanded && expanded === policies.find((p: any) => p.id === expanded)?.id) setExpanded(null); },
     onError: (e: any) => toast.error(e.message),
   });
-  const togglePolicyMut = trpc.settings.updateApprovalPolicy.useMutation({
-    onSuccess: () => { toast.success("Statut de la politique mis à jour"); utils.settings.getApprovalPolicies.invalidate(); },
-    onError: (e: any) => toast.error(e.message),
-  });
 
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
 
@@ -907,11 +893,10 @@ function ApprovalsSection({ isAdmin }: { isAdmin: boolean }) {
                     <div className="flex items-center gap-2">
                       <Badge variant={p.isActive ? "default" : "outline"}>{p.isActive ? "Active" : "Inactive"}</Badge>
                       {isAdmin && (
-                        <button
-                          onClick={e => { e.stopPropagation(); togglePolicyMut.mutate({ id: p.id, isActive: !p.isActive }); }}
-                          className={`text-xs px-2.5 py-1 rounded-md border font-medium transition-colors ${p.isActive ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"}`}>
-                          {p.isActive ? "Désactiver" : "Activer"}
-                        </button>
+                        <Button size="sm" variant="ghost" className="text-destructive h-8 w-8 p-0"
+                          onClick={e => { e.stopPropagation(); if (confirm("Supprimer cette politique et toutes ses étapes ?")) deleteMut.mutate({ id: p.id }); }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
                       <ChevronRight className={cn("h-4 w-4 text-muted-foreground transition-transform", expanded === p.id ? "rotate-90" : "")} />
                     </div>
@@ -1170,7 +1155,7 @@ function ToleranceSection({ isAdmin }: { isAdmin: boolean }) {
                 <div className="flex items-center justify-between">
                   <div><p className="font-medium text-sm">{label}</p><p className="text-xs text-muted-foreground">{desc}</p></div>
                   <div className="flex items-center gap-2">
-                    <Input type="text" inputMode="decimal" value={cfg[key] === 0 ? "" : String(cfg[key])} onChange={e => { const v = parseFloat(e.target.value.replace(",",".")); setCfg(c => ({...c, [key]: isNaN(v) ? 0 : v})); }} onFocus={e => { if (cfg[key] === 0) setCfg(c => ({...c, [key]: 0})); e.target.select(); }} onBlur={e => { if (e.target.value === "") setCfg(c => ({...c, [key]: 0})); }} placeholder="0" disabled={!isAdmin} className="w-20 text-center" />
+                    <Input type="number" value={cfg[key]} onChange={e => setCfg(c => ({...c, [key]: parseFloat(e.target.value) || 0}))} onFocus={e => e.target.select()} disabled={!isAdmin} className="w-20 text-center" min={0} max={100} step={0.5} />
                     <span className="text-sm text-muted-foreground">%</span>
                   </div>
                 </div>
@@ -1186,7 +1171,7 @@ function ToleranceSection({ isAdmin }: { isAdmin: boolean }) {
           <CardHeader><CardTitle>Auto-approbation facture</CardTitle><CardDescription>Approuver automatiquement les factures sous ce montant si le rapprochement réussit</CardDescription></CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              <Input type="text" inputMode="decimal" value={cfg.autoApproveBelow === 0 ? "" : String(cfg.autoApproveBelow)} onChange={e => { const v = parseFloat(e.target.value.replace(/\s/g,"").replace(",",".")); setCfg(c => ({...c, autoApproveBelow: isNaN(v) ? 0 : v})); }} onBlur={e => { if (e.target.value === "") setCfg(c => ({...c, autoApproveBelow: 0})); }} placeholder="0 = désactivé" disabled={!isAdmin} className="w-48" />
+              <Input type="number" value={cfg.autoApproveBelow} onChange={e => setCfg(c => ({...c, autoApproveBelow: parseFloat(e.target.value) || 0}))} onFocus={e => e.target.select()} disabled={!isAdmin} className="w-48" placeholder="0 = désactivé" />
               <span className="text-sm text-muted-foreground">XOF (0 = désactivé)</span>
             </div>
           </CardContent>
@@ -1353,32 +1338,6 @@ function ProfileSection() {
 }
 
 function NotificationsSection({ isAdmin }: { isAdmin: boolean }) {
-  if (!isAdmin) {
-    return (
-      <div className="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Mes notifications</CardTitle>
-            <CardDescription>Préférences de notification pour votre compte</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { label: "Ma demande est approuvée ou rejetée", enabled: true },
-              { label: "Une action est requise de ma part", enabled: true },
-              { label: "Mon bon de commande est émis", enabled: true },
-              { label: "Ma facture est traitée", enabled: true },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
-                <span className="text-sm">{item.label}</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">Activé</span>
-              </div>
-            ))}
-            <p className="text-xs text-muted-foreground pt-2">Les préférences de notification personnalisées seront disponibles prochainement.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
   const { data: org } = trpc.settings.getOrganization.useQuery();
   const utils = trpc.useUtils();
   const defaultEvents = { newPurchaseRequest: true, approvalRequired: true, approvalApproved: true, approvalRejected: true, approvalOverdue: true, budgetAlert: true, invoiceReceived: true, invoiceOverdue: true, poIssued: false, contractExpiring: true, lowStock: true, rfqResponse: true };
