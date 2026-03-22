@@ -23,6 +23,8 @@ export default function InvoiceForm() {
   const searchString = useSearch();
   const urlPoId = searchString ? new URLSearchParams(searchString).get("poId") : null;
   const copyFromId = searchString ? new URLSearchParams(searchString).get("copyFrom") : null;
+  const editId = searchString ? new URLSearchParams(searchString).get("editId") : null;
+  const isEdit = !!editId;
 
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [vendorId, setVendorId] = useState("");
@@ -52,6 +54,34 @@ export default function InvoiceForm() {
     { id: parseInt(copyFromId!) },
     { enabled: !!copyFromId }
   );
+
+  // Fetch invoice to edit
+  const { data: invoiceToEdit } = trpc.invoices.getById.useQuery(
+    { id: parseInt(editId!) },
+    { enabled: !!editId }
+  );
+
+  // Prefill from editId
+  useEffect(() => {
+    if (invoiceToEdit && !prefilled && isEdit) {
+      const inv = invoiceToEdit as any;
+      setInvoiceNumber(inv.invoiceNumber || "");
+      setVendorId(inv.vendorId ? String(inv.vendorId) : "");
+      setPoId(inv.poId ? String(inv.poId) : "");
+      setInvoiceDate(inv.invoiceDate ? new Date(inv.invoiceDate).toISOString().split("T")[0] : "");
+      setDueDate(inv.dueDate ? new Date(inv.dueDate).toISOString().split("T")[0] : "");
+      setTaxAmount(inv.taxAmount ? String(Number(inv.taxAmount)) : "");
+      setNotes(inv.notes || "");
+      if (inv.lineItems?.length) {
+        setLines(inv.lineItems.map((l: any) => ({
+          description: l.description || "",
+          quantity: String(l.quantity || 1),
+          unitPrice: String(l.unitPrice || 0),
+        })));
+      }
+      setPrefilled(true);
+    }
+  }, [invoiceToEdit, prefilled, isEdit]);
 
   useEffect(() => {
     if (linkedPO && !prefilled) {
@@ -131,6 +161,14 @@ export default function InvoiceForm() {
     reader.readAsDataURL(file);
   };
 
+  const updateMutation = trpc.invoices.update?.useMutation?.({
+    onSuccess: () => {
+      toast.success("Facture mise à jour");
+      setLocation(`/invoices/${editId}`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const createMutation = trpc.invoices.create.useMutation({
     onSuccess: (data: any) => {
       toast.success("Facture créée avec succès");
@@ -186,7 +224,8 @@ export default function InvoiceForm() {
               Pré-rempli depuis BC {(linkedPO as any).poNumber}
             </p>
           )}
-          {!linkedPO && !copyFromId && <p className="text-sm text-muted-foreground">Saisir une facture fournisseur</p>}
+          {!linkedPO && !copyFromId && !isEdit && <p className="text-sm text-muted-foreground">Saisir une facture fournisseur</p>}
+          {isEdit && <p className="text-sm text-blue-600 font-medium">Modification de la facture</p>}
           {copyFromId && <p className="text-sm text-blue-600">Copie d'une facture existante</p>}
         </div>
         <div className="ml-auto">
