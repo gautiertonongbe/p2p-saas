@@ -134,10 +134,10 @@ export default function RFQsList() {
                       <TableCell className="text-right">
                         <ActionMenu actions={[
                           { icon: <Eye className="h-4 w-4" />, label: "Voir le detail", href: `/rfqs/${rfq.id}` },
-                          { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/rfqs/${rfq.id}/edit`, hidden: rfq.status !== "draft" || !canManage },
-                          { icon: <Send className="h-4 w-4" />, label: "Envoyer aux fournisseurs", hidden: rfq.status !== "draft" || !canManage, variant: "success", onClick: () => {} },
-                          { icon: <CheckCircle className="h-4 w-4" />, label: "Attribuer le marche", hidden: rfq.status !== "responses_received" || !canManage, variant: "success", onClick: () => {} },
-                          { icon: <XCircle className="h-4 w-4" />, label: "Annuler l'AO", hidden: !["draft","sent"].includes(rfq.status) || !canManage, variant: "danger", onClick: () => {} },
+                          { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/rfqs/${rfq.id}`, hidden: rfq.status !== "draft" || !canManage },
+                          { icon: <Send className="h-4 w-4" />, label: "Envoyer aux fournisseurs", hidden: rfq.status !== "draft" || !canManage, variant: "success", onClick: (e) => { e.stopPropagation(); window.location.href = `/rfqs/${rfq.id}`; } },
+                          { icon: <CheckCircle className="h-4 w-4" />, label: "Attribuer le marche", hidden: rfq.status !== "responses_received" || !canManage, variant: "success", onClick: (e) => { e.stopPropagation(); window.location.href = `/rfqs/${rfq.id}`; } },
+                          { icon: <XCircle className="h-4 w-4" />, label: "Annuler l'AO", hidden: !["draft","sent"].includes(rfq.status) || !canManage, variant: "danger", onClick: (e) => { e.stopPropagation(); } },
                         ]} />
                       </TableCell>
                     </TableRow>

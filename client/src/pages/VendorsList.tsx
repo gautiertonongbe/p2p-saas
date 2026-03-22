@@ -170,10 +170,10 @@ export default function VendorsList() {
                     <TableCell className="text-right">
                       <ActionMenu actions={[
                         { icon: <Eye className="h-4 w-4" />, label: "Voir le profil", href: `/vendors/${vendor.id}` },
-                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/vendors/${vendor.id}/edit`, hidden: !canManage },
+                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/vendors/${vendor.id}`, hidden: !canManage },
                         { icon: <ShieldCheck className="h-4 w-4" />, label: "Evaluer le risque", href: `/vendors/${vendor.id}`, hidden: !canManage, variant: "warning" },
                         { icon: <UserCheck className="h-4 w-4" />, label: "Qualifier le fournisseur", href: `/vendor-onboarding?vendorId=${vendor.id}`, hidden: !canManage, variant: "success" },
-                        { icon: <XCircle className="h-4 w-4" />, label: vendor.status === "inactive" ? "Reactivate" : "Desactiver", hidden: !canManage, variant: "danger", onClick: () => {} },
+                        { icon: <XCircle className="h-4 w-4" />, label: vendor.status === "inactive" ? "Réactiver" : "Désactiver", hidden: !canManage, variant: "danger", onClick: (e) => { e.stopPropagation(); window.location.href = `/vendors/${vendor.id}`; } },
                       ]} />
                     </TableCell>
                   </TableRow>

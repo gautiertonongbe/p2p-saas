@@ -194,9 +194,9 @@ export default function PaymentsList() {
                       </TableCell>
                       <TableCell className="text-right">
                         <ActionMenu actions={[
-                          { icon: <Eye className="h-4 w-4" />, label: "Voir le paiement", onClick: () => {} },
+                          { icon: <Eye className="h-4 w-4" />, label: "Voir le paiement", onClick: (e) => { e.stopPropagation(); } },
                           { icon: <FileText className="h-4 w-4" />, label: "Voir la facture associee", href: p.invoiceId ? `/invoices/${p.invoiceId}` : undefined, hidden: !p.invoiceId, variant: "default" },
-                          { icon: <Download className="h-4 w-4" />, label: "Telecharger le recu", onClick: () => {}, hidden: !canManage },
+                          { icon: <Download className="h-4 w-4" />, label: "Telecharger le recu", onClick: (e) => { e.stopPropagation(); }, hidden: !canManage },
                         ]} />
                       </TableCell>
                     </TableRow>
