@@ -12,7 +12,7 @@ export type Permission =
 export function usePermissions() {
   const { user } = useAuth();
   const { data: groupPerms = [] } = trpc.groups.myPermissions.useQuery(undefined, {
-    staleTime: 60000,
+    staleTime: 30000, // 30s — permissions must stay fresh
   });
 
   const role = user?.role;

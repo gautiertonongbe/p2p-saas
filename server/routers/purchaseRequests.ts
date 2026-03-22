@@ -248,6 +248,46 @@ export const purchaseRequestsRouter = router({
       return { success: true, status: newStatus };
     }),
 
+
+  // Resubmit a rejected request — resets to draft, preserves audit history
+  resubmit: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      comment: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const request = await db.getPurchaseRequestById(input.id, ctx.user.organizationId);
+      if (!request) throw new TRPCError({ code: "NOT_FOUND" });
+      if (request.requesterId !== ctx.user.id && ctx.user.role !== "admin")
+        throw new TRPCError({ code: "FORBIDDEN" });
+      if (request.status !== "rejected")
+        throw new TRPCError({ code: "BAD_REQUEST",
+          message: "Seules les demandes rejetées peuvent être resoumises" });
+
+      // Reset to draft so user can edit before resubmitting
+      await db.updatePurchaseRequest(input.id, ctx.user.organizationId, { status: "draft" });
+
+      // Clear pending approvals from previous cycle
+      const dbInstance = await db.getDb();
+      if (dbInstance) {
+        await dbInstance.execute(
+          `UPDATE approvals SET decision = 'voided', comment = 'Annulé — resoumission par le demandeur'
+           WHERE requestId = ${input.id} AND decision = 'pending'`
+        );
+      }
+
+      // Audit log — rejection reason remains in history, this is a NEW entry
+      await createAuditLog({
+        organizationId: ctx.user.organizationId,
+        entityType: "purchaseRequest",
+        entityId: input.id,
+        action: "resubmitted",
+        actorId: ctx.user.id,
+        newValue: { status: "draft", comment: input.comment, note: "Remis en brouillon pour correction avant resoumission" },
+      });
+
+      return { success: true, message: "Demande remise en brouillon — modifiez et soumettez à nouveau" };
+    }),
   cancel: protectedProcedure
     .input(z.object({ id: z.number(), reason: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, FileText, Calendar, User, DollarSign, ShieldCheck, ShoppingCart, Edit, Send, Clock, Copy} from "lucide-react";
+import { ArrowLeft, FileText, Calendar, User, DollarSign, ShieldCheck, ShoppingCart, Edit, Send, Clock, Copy, RefreshCw} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -76,6 +76,14 @@ export default function PurchaseRequestDetail() {
     onSuccess: () => submitMutation.mutate({ id: request!.id }),
     onError: (e: any) => toast.error(e.message),
   });
+  const resubmitMutation = trpc.purchaseRequests.resubmit.useMutation({
+    onSuccess: () => {
+      toast.success("Demande remise en brouillon — modifiez et soumettez à nouveau");
+      utils.purchaseRequests.getById.invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const submitMutation = trpc.purchaseRequests.submit.useMutation({
     onSuccess: (data) => {
       toast.success(

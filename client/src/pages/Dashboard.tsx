@@ -110,6 +110,13 @@ export default function Dashboard() {
   const { data: myRequests = [] } = trpc.purchaseRequests.getMyRequests.useQuery();
   const { data: pendingApprovals = [] } = trpc.approvals.myPendingApprovals.useQuery();
   const { data: budgetAlerts = [] } = trpc.budgets.getOverspendingAlerts.useQuery();
+  const { data: approvedDAsWithoutBC = [] } = trpc.purchaseRequests.list.useQuery({
+    status: "approved",
+  }, { select: (data) => data.filter(r => {
+    const age = (Date.now() - new Date(r.updatedAt || r.createdAt).getTime()) / (1000*60*60*24);
+    return age > 7; // Approved > 7 days ago — likely needs a BC
+  })});
+
   const { data: expiringContracts = [] } = trpc.vendors.getExpiringContracts.useQuery({ daysAhead: 30 });
   const { data: inventoryAlerts = [] } = trpc.inventory.getLowStockAlerts.useQuery();
   const { data: allInvoices = [] } = trpc.invoices.list.useQuery(isAdmin ? {} : undefined);

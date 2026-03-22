@@ -1,3 +1,39 @@
+
+// ── Centralized State Machine ────────────────────────────────────────────────
+// Allowed transitions. Enforced individually in each mutation.
+// This is the single source of truth — never add transitions outside this map.
+export const PURCHASE_REQUEST_TRANSITIONS: Record<string, string[]> = {
+  "draft":            ["submitted", "cancelled"],
+  "submitted":        ["pending_approval", "approved", "cancelled"],
+  "pending_approval": ["approved", "rejected", "cancelled"],
+  "approved":         ["cancelled"],  // can cancel but not edit
+  "rejected":         ["draft"],      // via resubmit only
+  "cancelled":        [],             // terminal state
+};
+
+export const INVOICE_TRANSITIONS: Record<string, string[]> = {
+  "pending":          ["approved", "rejected", "disputed"],
+  "pending_approval": ["approved", "rejected", "disputed"],
+  "approved":         ["paid", "disputed"],
+  "disputed":         ["pending_approval", "rejected"],
+  "paid":             [],             // terminal state
+  "rejected":         ["pending_approval"],  // via revision
+  "cancelled":        [],             // terminal state
+};
+
+export function assertValidTransition(
+  entity: string, from: string, to: string,
+  machine: Record<string, string[]>
+) {
+  const allowed = machine[from] ?? [];
+  if (!allowed.includes(to)) {
+    throw new Error(
+      `Transition invalide [${entity}]: ${from} → ${to}. ` +
+      `Transitions autorisées depuis '${from}': [${allowed.join(", ") || "aucune"}]`
+    );
+  }
+}
+
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import * as db from "../db";
@@ -142,7 +178,8 @@ export const approvalsRouter = router({
       const currentApproval = approval[0];
       
       if (currentApproval.decision !== "pending") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Approval already processed" });
+        throw new TRPCError({ code: "BAD_REQUEST",
+          message: `Action déjà effectuée — cette approbation a déjà été traitée (décision: ${currentApproval.decision}). Rafraîchissez la page.` });
       }
 
       // Segregation of duties: read from org settings (admins always exempt)
@@ -281,7 +318,8 @@ export const approvalsRouter = router({
       const currentApproval = approval[0];
       
       if (currentApproval.decision !== "pending") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Approval already processed" });
+        throw new TRPCError({ code: "BAD_REQUEST",
+          message: `Action déjà effectuée — cette approbation a déjà été traitée (décision: ${currentApproval.decision}). Rafraîchissez la page.` });
       }
 
       // Update approval
@@ -351,7 +389,8 @@ export const approvalsRouter = router({
       const currentApproval = approval[0];
       
       if (currentApproval.decision !== "pending") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Approval already processed" });
+        throw new TRPCError({ code: "BAD_REQUEST",
+          message: `Action déjà effectuée — cette approbation a déjà été traitée (décision: ${currentApproval.decision}). Rafraîchissez la page.` });
       }
 
       // Verify delegate user exists and is in same org

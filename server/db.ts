@@ -378,6 +378,14 @@ export async function updateApproval(id: number, data: any) {
 // AUDIT LOGS
 // ============================================================================
 
+// ── Audit Log Integrity Guard ─────────────────────────────────────────────────
+// Audit logs are IMMUTABLE and APPEND-ONLY by design.
+// Never expose a delete or update function for auditLogs.
+// Any attempt to call deleteAuditLog will throw at runtime.
+export function deleteAuditLog(): never {
+  throw new Error("Audit logs are immutable. Deletion is not permitted.");
+}
+
 export async function createAuditLog(data: {
   organizationId: number;
   entityType: string;
