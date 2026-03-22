@@ -236,7 +236,7 @@ export default function PurchaseOrderDetail() {
                 </Button>
               )}
               {["approved","confirmed","partially_received"].includes(p.status) && (
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setReceiptDialogOpen(true)}>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => { setSelectedItemReceipts({}); setReceiptNotes(""); setReceiptDialogOpen(true); }}>
                   <Package className="mr-2 h-4 w-4" />Enregistrer réception
                 </Button>
               )}
@@ -260,26 +260,41 @@ export default function PurchaseOrderDetail() {
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Enregistrer une réception</DialogTitle>
-            <DialogDescription>Saisir les quantités reçues</DialogDescription>
+            <DialogDescription>Saisir les quantités reçues pour chaque article</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {poItems.map((item: any) => (
-              <div key={item.id} className="p-4 border rounded-lg space-y-3">
-                <p className="font-medium">{item.itemName}</p>
-                <p className="text-sm text-muted-foreground">Commandé: {item.quantity} {item.unit || "pcs"}</p>
+              <div key={item.id} className="p-4 border rounded-lg space-y-3 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold">{item.itemName}</p>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                    Commandé: {item.quantity} {item.unit || "pcs"}
+                  </span>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Quantité reçue</Label>
-                    <Input type="number" min="0" max={Number(item.quantity)} value={selectedItemReceipts[item.id]?.quantity || 0} onChange={(e) => updateItemReceipt(item.id, "quantity", parseFloat(e.target.value) || 0)} />
+                    <Input
+                      type="number"
+                      min="0"
+                      max={Number(item.quantity)}
+                      placeholder="0"
+                      value={selectedItemReceipts[item.id]?.quantity ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value === "" ? 0 : parseFloat(e.target.value) || 0;
+                        updateItemReceipt(item.id, "quantity", val);
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">Max: {item.quantity} {item.unit || "pcs"}</p>
                   </div>
                   <div className="space-y-2">
                     <Label>Condition</Label>
                     <Select value={selectedItemReceipts[item.id]?.condition || "good"} onValueChange={(v) => updateItemReceipt(item.id, "condition", v)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="good">Bon état</SelectItem>
-                        <SelectItem value="damaged">Endommagé</SelectItem>
-                        <SelectItem value="partial">Partiel</SelectItem>
+                        <SelectItem value="good">✅ Bon état</SelectItem>
+                        <SelectItem value="damaged">⚠️ Endommagé</SelectItem>
+                        <SelectItem value="partial">📦 Partiel</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -287,14 +302,18 @@ export default function PurchaseOrderDetail() {
               </div>
             ))}
             <div className="space-y-2">
-              <Label>Notes</Label>
-              <Textarea value={receiptNotes} onChange={(e) => setReceiptNotes(e.target.value)} rows={3} placeholder="Observations..." />
+              <Label>Notes de réception</Label>
+              <Textarea value={receiptNotes} onChange={(e) => setReceiptNotes(e.target.value)} rows={3} placeholder="Observations, écarts, remarques..." />
             </div>
             <div className="flex gap-3 justify-end">
-              <Button variant="outline" onClick={() => setReceiptDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleRecordReceipt} disabled={recordReceiptMutation.isPending}>
-                <CheckCircle className="mr-2 h-4 w-4" />Confirmer
-              </Button>
+              <Button variant="outline" onClick={() => { setReceiptDialogOpen(false); setSelectedItemReceipts({}); }}>Annuler</Button>
+              <button
+                onClick={handleRecordReceipt}
+                disabled={recordReceiptMutation.isPending}
+                className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold btn-primary text-white disabled:opacity-50">
+                <CheckCircle className="h-4 w-4" />
+                {recordReceiptMutation.isPending ? "Enregistrement..." : "Confirmer la réception"}
+              </button>
             </div>
           </div>
         </DialogContent>
