@@ -80,6 +80,17 @@ export function TaxSelector({ baseAmount, value, onChange, readOnly }: TaxSelect
     setOpen(false);
   };
 
+  // Auto-apply org default tax (or TVA 18%) on first mount
+  useEffect(() => {
+    if (value.length === 0 && baseAmount > 0) {
+      const defaultTax = catalogue.find(t => orgTaxRates.find((r: any) => r.isDefault && r.code === t.code))
+        || catalogue.find(t => t.code === "TVA_18");
+      if (defaultTax) {
+        onChange([{ ...defaultTax, amount: calcAmount(baseAmount, defaultTax.rate) }]);
+      }
+    }
+  }, [baseAmount > 0]);  // only once when amount becomes known
+
   // Recalculate amounts when baseAmount changes
   useEffect(() => {
     if (value.length > 0) {

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ApprovalChainVisualization } from "@/components/ApprovalChainVisualization";
 import { EntityHistory } from "@/components/EntityHistory";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Shield, ThumbsUp, ThumbsDown, ArrowLeft, CreditCard, Smartphone, Building2, Banknote, CheckCircle2, AlertCircle, Clock, Send, XCircle, ShieldCheck, FileText, AlertTriangle, Download, Copy} from "lucide-react";
+import { Shield, ThumbsUp, ThumbsDown, ArrowLeft, CreditCard, Smartphone, Building2, Banknote, CheckCircle2, AlertCircle, Clock, Send, XCircle, ShieldCheck, FileText, AlertTriangle, Download, Copy, Edit2, ChevronRight, Package, User, Calendar, DollarSign} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -247,8 +247,8 @@ function ResolveDisputePanel({ invoiceId, disputeReason, onSuccess }: { invoiceI
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
             <Button
-              className={resolution === "approve" ? "bg-green-600 hover:bg-green-700" : resolution === "reject" ? "bg-red-600 hover:bg-red-700" : ""}
-              disabled={notes.length < 5 || mut.isPending}
+              className={`${resolution === "approve" ? "bg-green-600 hover:bg-green-700" : resolution === "reject" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"} text-white disabled:opacity-40 disabled:cursor-not-allowed`}
+              disabled={notes.length < 3 || mut.isPending}
               onClick={() => mut.mutate({ invoiceId, resolution, notes })}>
               {mut.isPending ? "Enregistrement..." : "Confirmer"}
             </Button>
@@ -457,7 +457,7 @@ function MarkAsPaidSection({ invoiceId, onSuccess }: { invoiceId: number; onSucc
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button
+            <Button className="btn-primary text-white"
               disabled={!paymentMethod || !valueDate || mutation.isPending}
               onClick={() => mutation.mutate({
                 invoiceId,
@@ -529,6 +529,9 @@ export default function InvoiceDetail() {
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [bypassDialogOpen, setBypassDialogOpen] = useState(false);
+  const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
+  const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
+  const [markPaidDialogOpen, setMarkPaidDialogOpen] = useState(false);
   const [approveComment, setApproveComment] = useState("");
   const [rejectReason, setRejectReason] = useState("");
   const [bypassComment, setBypassComment] = useState("");
@@ -617,101 +620,84 @@ export default function InvoiceDetail() {
     return <Badge variant={config.variant} className={config.cls}>{config.label}</Badge>;
   };
 
+  const isAdmin = user?.role === 'admin' || user?.role === 'procurement_manager';
+  const isApproverRole = user?.role === 'approver';
+  const isTerminalStatus = invoice ? ['paid','cancelled','rejected'].includes(invoice.status) : false;
+  const canEdit = invoice ? (['pending', 'revised'].includes(invoice.status) && isAdmin) : false;
+
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setLocation("/invoices")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">{invoice.invoiceNumber}</h1>
-            <p className="text-muted-foreground mt-1">
-              Facture · {invoice.vendor?.legalName ?? `Fournisseur #${invoice.vendorId}`}
-            </p>
+    <div className="min-h-screen bg-gray-50/40">
+      {/* Sticky top bar */}
+      <div className="sticky top-0 z-30 bg-white border-b px-6 py-3 flex items-center gap-4">
+        <button onClick={() => setLocation("/invoices")}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" /><span>Factures</span>
+        </button>
+        <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+        <span className="text-sm font-medium truncate max-w-48">{invoice.invoiceNumber}</span>
+        <div className="ml-auto flex items-center gap-2">
+          {getStatusBadge(invoice.status)}
+          {canEdit && (
+            <button onClick={() => setLocation(`/invoices/new?editId=${invoice.id}`)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm hover:bg-muted transition-colors font-medium">
+              <Edit2 className="h-3.5 w-3.5" />Modifier
+            </button>
+          )}
+          <button onClick={() => setLocation(`/invoices/new?copyFrom=${invoice.id}`)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm hover:bg-muted transition-colors">
+            <Copy className="h-3.5 w-3.5" />Copier
+          </button>
+          <button onClick={() => exportPDFMutation.mutate({ id: invoice.id })} disabled={exportPDFMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm hover:bg-muted transition-colors">
+            <Download className="h-3.5 w-3.5" />{exportPDFMutation.isPending ? "..." : "PDF"}
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+
+      {/* Main info card */}
+      <div className="bg-white rounded-2xl border overflow-hidden">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-x border-b">
+          <div className="px-5 py-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Montant HT</p>
+            <p className="text-xl font-bold mt-1">{formatCurrency(invoice.amount)} XOF</p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">TVA</p>
+            <p className="text-xl font-bold mt-1">{formatCurrency(invoice.taxAmount || 0)} XOF</p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Date facture</p>
+            <p className="text-base font-semibold mt-1">{formatDate(invoice.invoiceDate)}</p>
+          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Date d'échéance</p>
+            <p className="text-base font-semibold mt-1">{formatDate(invoice.dueDate) || "—"}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => setLocation(`/invoices/new?copyFrom=${invoice.id}`)}>
-            <Copy className="mr-2 h-4 w-4" />Copier
-          </Button>
-          <Button variant="outline" onClick={() => exportPDFMutation.mutate({ id: invoice.id })} disabled={exportPDFMutation.isPending}>
-            <Download className="mr-2 h-4 w-4" />
-            {exportPDFMutation.isPending ? "Génération..." : "Télécharger PDF"}
-          </Button>
-          {getStatusBadge(invoice.status)}
-        </div>
-      </div>
-
-      {/* Key Details */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div>
-              <p className="text-sm text-muted-foreground">Montant</p>
-              <p className="text-lg font-bold mt-1">{formatCurrency(invoice.amount)} XOF</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div>
-              <p className="text-sm text-muted-foreground">Montant TVA</p>
-              <p className="text-lg font-bold mt-1">{formatCurrency(invoice.taxAmount || 0)} XOF</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div>
-              <p className="text-sm text-muted-foreground">Date de facture</p>
-              <p className="text-lg font-medium mt-1">
-                {formatDate(invoice.invoiceDate)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div>
-              <p className="text-sm text-muted-foreground">Date d'échéance</p>
-              <p className="text-lg font-medium mt-1">
-                {formatDate(invoice.dueDate)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      </div>{/* end main info card */}
 
       {/* Vendor Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Informations du fournisseur</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Nom du fournisseur</p>
-              <p className="font-medium mt-1">
-                {invoice.vendor?.legalName ?? `Fournisseur #${invoice.vendorId}`}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Numéro de facture</p>
-              <p className="font-medium mt-1">{invoice.invoiceNumber}</p>
-            </div>
-            {invoice.purchaseOrder && (
-              <div>
-                <p className="text-sm text-muted-foreground">Bon de commande associé</p>
-                <p className="font-medium mt-1">{invoice.purchaseOrder.poNumber}</p>
-              </div>
-            )}
+      <div className="bg-white rounded-2xl border p-5">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Informations fournisseur</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Fournisseur</p>
+            <p className="font-semibold mt-0.5">{invoice.vendor?.legalName ?? `Fournisseur #${invoice.vendorId}`}</p>
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <p className="text-xs text-muted-foreground">Numéro de facture</p>
+            <p className="font-semibold mt-0.5">{invoice.invoiceNumber}</p>
+          </div>
+          {invoice.purchaseOrder && (
+            <div>
+              <p className="text-xs text-muted-foreground">Bon de commande</p>
+              <p className="font-semibold mt-0.5">{invoice.purchaseOrder.poNumber}</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Three-Way Match Panel */}
       {invoice.poId && (
@@ -724,64 +710,91 @@ export default function InvoiceDetail() {
       )}
 
       
-      {/* ── Invoice Action Bar ── */}
-      {(() => {
-        const isAdmin = user?.role === 'admin' || user?.role === 'procurement_manager';
-        const isApproverRole = user?.role === 'approver';
-        const isTerminal = ['paid','cancelled','rejected'].includes(invoice.status);
-        const STATUS_LABEL: Record<string,string> = {
-          pending:"En attente d'approbation", approved:"Approuvée — en attente de paiement",
-          paid:"Payée", rejected:"Refusée", disputed:"Contestée",
-          revised:"Révision demandée", cancelled:"Annulée",
-        };
-        return (
-          <Card className="sticky bottom-4 shadow-md border-2">
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <p className="text-sm text-muted-foreground">{STATUS_LABEL[invoice.status] || invoice.status}</p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {invoice.status === 'pending' && (isAdmin || isApproverRole) && (
-                    <>
-                      <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50"
-                        onClick={() => setRejectDialogOpen(true)} disabled={rejectMutation?.isPending}>
-                        <ThumbsDown className="mr-2 h-4 w-4" />Rejeter
-                      </Button>
-                      <Button variant="outline" className="border-green-200 text-green-700 hover:bg-green-50"
-                        onClick={() => setApproveDialogOpen(true)} disabled={approveMutation?.isPending}>
-                        <ThumbsUp className="mr-2 h-4 w-4" />Approuver
-                      </Button>
-                    </>
-                  )}
-                  {invoice.status === 'pending' && isAdmin && (
-                    <Button className="bg-amber-500 hover:bg-amber-600 text-white"
-                      onClick={() => setBypassDialogOpen(true)} disabled={bypassMutation?.isPending}>
-                      <ShieldCheck className="mr-2 h-4 w-4" />Approuver directement
-                    </Button>
-                  )}
-                  {invoice.status === 'approved' && isAdmin && (
-                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => markAsPaidMutation.mutate({ invoiceId: invoice.id, valueDate: new Date().toISOString().split("T")[0], paymentMethod: "bank_transfer" })}
-                      disabled={markAsPaidMutation?.isPending}>
-                      <Banknote className="mr-2 h-4 w-4" />Marquer comme payée
-                    </Button>
-                  )}
-                  {['pending','approved'].includes(invoice.status) && isAdmin && (
-                    <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50"
-                      onClick={() => setDisputeDialogOpen(true)}>
-                      <AlertTriangle className="mr-2 h-4 w-4" />Contester
-                    </Button>
-                  )}
-                  {invoice.status === 'pending' && isAdmin && (
-                    <Button variant="outline" onClick={() => setRevisionDialogOpen(true)}>
-                      <FileText className="mr-2 h-4 w-4" />Demander révision
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
+      {/* Context action banner */}
+      {invoice.status === 'pending' && (isAdmin || isApproverRole) && (
+        <div className="bg-blue-600 text-white rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <Shield className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold">Approbation requise</p>
+              <p className="text-sm text-blue-100">Cette facture attend votre validation</p>
+            </div>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button onClick={() => setRejectDialogOpen(true)}
+              className="px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-medium transition-colors">
+              Rejeter
+            </button>
+            <button onClick={() => setApproveDialogOpen(true)}
+              className="px-4 py-2 rounded-xl bg-white text-blue-700 hover:bg-blue-50 text-sm font-semibold transition-colors">
+              ✓ Approuver
+            </button>
+          </div>
+        </div>
+      )}
+      {invoice.status === 'approved' && isAdmin && (
+        <div className="bg-emerald-600 text-white rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <Banknote className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold">Facture approuvée — en attente de paiement</p>
+              <p className="text-sm text-emerald-100">Enregistrez le paiement une fois effectué</p>
+            </div>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button onClick={() => setDisputeDialogOpen(true)}
+              className="px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-sm font-medium transition-colors">
+              Contester
+            </button>
+            <button onClick={() => markAsPaidMutation.mutate({ invoiceId: invoice.id, valueDate: new Date().toISOString().split("T")[0], paymentMethod: "bank_transfer" })}
+              disabled={markAsPaidMutation?.isPending}
+              className="px-4 py-2 rounded-xl bg-white text-emerald-700 hover:bg-emerald-50 text-sm font-semibold transition-colors">
+              <Banknote className="h-4 w-4 inline mr-1.5" />Marquer comme payée
+            </button>
+          </div>
+        </div>
+      )}
+      {invoice.status === 'paid' && (
+        <div className="bg-gray-100 border border-gray-200 rounded-2xl p-5 flex items-center gap-4">
+          <CheckCircle2 className="h-8 w-8 text-emerald-500 shrink-0" />
+          <div>
+            <p className="font-semibold text-gray-800">Facture payée</p>
+            <p className="text-sm text-gray-500">Aucune action requise</p>
+          </div>
+        </div>
+      )}
+      {['disputed','revised'].includes(invoice.status) && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-8 w-8 text-amber-500 shrink-0" />
+            <div>
+              <p className="font-semibold text-amber-800">
+                {invoice.status === 'disputed' ? 'Facture contestée' : 'Révision demandée'}
+              </p>
+              <p className="text-sm text-amber-600">En attente de traitement</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Admin secondary actions */}
+      {invoice.status === 'pending' && isAdmin && (
+        <div className="flex items-center justify-end gap-2 px-1">
+          <button onClick={() => setRevisionDialogOpen(true)}
+            className="text-xs px-3 py-1.5 rounded-lg border text-muted-foreground hover:bg-muted transition-colors flex items-center gap-1">
+            <FileText className="h-3.5 w-3.5" />Demander révision
+          </button>
+          <button onClick={() => setBypassDialogOpen(true)}
+            className="text-xs px-3 py-1.5 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-1">
+            <ShieldCheck className="h-3.5 w-3.5" />Contournement workflow
+          </button>
+        </div>
+      )}
+
+      </div>{/* end max-w-4xl */}
 
       {/* Approve Dialog */}
       <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
@@ -820,7 +833,18 @@ export default function InvoiceDetail() {
       </AlertDialog>
 
       {/* Approval chain */}
-      {approvals && approvals.length > 0 && <ApprovalChainVisualization approvals={approvals} />}
+
+      {approvals && approvals.length > 0
+  ? <ApprovalChainVisualization approvals={approvals} />
+  : <div className="bg-white rounded-2xl border overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-3 border-b bg-gray-50/60">
+        <span className="font-semibold text-sm">Approbateurs</span>
+      </div>
+      <div className="px-5 py-6 text-center text-muted-foreground text-sm">
+        Aucune étape d'approbation pour cette facture
+      </div>
+    </div>
+}
 
       {/* Pending banner */}
       {invoice.status === "pending" && (
