@@ -9,7 +9,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, Users, Building2, Eye, Edit2, ChevronRight, XCircle, ShieldCheck, UserCheck} from "lucide-react";
 import { SortToggle } from "@/components/SortToggle";
-// keep: import { ViewManager, ViewState } from "@/components/ViewManager";
+import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
   Table,
   TableBody,

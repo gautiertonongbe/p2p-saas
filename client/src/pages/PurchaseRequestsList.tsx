@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import { Plus, Search, FileText, Eye, ChevronRight, Copy, Send, CheckCircle, Edit2, ShoppingCart, XCircle} from "lucide-react";
 import { toast } from "sonner";
 import { SortToggle } from "@/components/SortToggle";
-// keep: import { ViewManager, ViewState } from "@/components/ViewManager";
+import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
   Table,
   TableBody,
