@@ -51,6 +51,15 @@ export default function ExpensesList() {
 
   const pendingApproval = (sortedItems as any[]).filter(r => r.status === "submitted");
 
+  const sortedItems = useMemo(() => {
+    const arr = Array.isArray(reports) ? reports : [];
+    return [...arr].sort((a: any, b: any) => {
+      const aDate = new Date(a.createdAt || a.createdAt || 0).getTime();
+      const bDate = new Date(b.createdAt || b.createdAt || 0).getTime();
+      return sortDir === "desc" ? bDate - aDate : aDate - bDate;
+    });
+  }, [reports, sortDir]);
+
   return (
     <div className="space-y-5 pb-8">
       <PageHeader icon={<Receipt className="h-5 w-5" />} title={t("expenses.title")} description={t("expenses.description")} />

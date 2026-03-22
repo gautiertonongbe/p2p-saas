@@ -67,6 +67,15 @@ export default function ContractsList() {
     { id: "expired", label: "Expirés" },
   ];
 
+  const sortedItems = useMemo(() => {
+    const arr = Array.isArray(filtered) ? filtered : [];
+    return [...arr].sort((a: any, b: any) => {
+      const aDate = new Date(a.createdAt || a.createdAt || 0).getTime();
+      const bDate = new Date(b.createdAt || b.createdAt || 0).getTime();
+      return sortDir === "desc" ? bDate - aDate : aDate - bDate;
+    });
+  }, [filtered, sortDir]);
+
   return (
     <div className="space-y-6">
       <PageHeader

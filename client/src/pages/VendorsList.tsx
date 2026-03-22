@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { ActionMenu } from "@/components/ActionMenu";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -7,10 +8,8 @@ import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, Users, Building2, Eye, Edit2, ChevronRight, XCircle, ShieldCheck, UserCheck} from "lucide-react";
-import { useState, useMemo } from "react";
 import { SortToggle } from "@/components/SortToggle";
-// keep: import { useState } from "react";
-import { ViewManager, ViewState } from "@/components/ViewManager";
+// keep: import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
   Table,
   TableBody,

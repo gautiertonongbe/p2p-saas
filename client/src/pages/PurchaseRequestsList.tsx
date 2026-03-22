@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ActionMenu } from "@/components/ActionMenu";
@@ -8,10 +9,8 @@ import { Link, useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, FileText, Eye, ChevronRight, Copy, Send, CheckCircle, Edit2, ShoppingCart, XCircle} from "lucide-react";
 import { toast } from "sonner";
-import { useState, useMemo } from "react";
 import { SortToggle } from "@/components/SortToggle";
-// keep: import { useState } from "react";
-import { ViewManager, ViewState } from "@/components/ViewManager";
+// keep: import { ViewManager, ViewState } from "@/components/ViewManager";
 import {
   Table,
   TableBody,

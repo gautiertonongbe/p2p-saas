@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ActionMenu } from "@/components/ActionMenu";
@@ -8,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useLocation } from "wouter";
 import { Plus, Search, FileText, Users, Clock, CheckCircle2 , ClipboardList, Eye, Edit2, ChevronRight, Send, XCircle} from "lucide-react";
-import { useState, useMemo } from "react";
 import { SortToggle } from "@/components/SortToggle";
 // keep: import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
@@ -46,6 +46,15 @@ export default function RFQsList() {
     sent: rfqs?.filter(r => r.status === "sent").length ?? 0,
     awarded: rfqs?.filter(r => r.status === "awarded").length ?? 0,
   };
+
+  const sortedItems = useMemo(() => {
+    const arr = Array.isArray(filtered) ? filtered : [];
+    return [...arr].sort((a: any, b: any) => {
+      const aDate = new Date(a.createdAt || a.createdAt || 0).getTime();
+      const bDate = new Date(b.createdAt || b.createdAt || 0).getTime();
+      return sortDir === "desc" ? bDate - aDate : aDate - bDate;
+    });
+  }, [filtered, sortDir]);
 
   return (
     <div className="space-y-6">
