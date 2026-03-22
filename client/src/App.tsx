@@ -16,8 +16,8 @@ import DashboardLayout from "./components/DashboardLayout";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import PurchaseRequestsList from "./pages/PurchaseRequestsList";
-import PurchaseRequestForm from "./pages/PurchaseRequestForm";
-import PurchaseRequestDetail from "./pages/PurchaseRequestDetail";
+// PurchaseRequestForm replaced by PurchaseRequestPage
+import PurchaseRequestPage from "./pages/PurchaseRequestPage";
 import VendorsList from "./pages/VendorsList";
 import VendorForm from "./pages/VendorForm";
 import VendorDetail from "./pages/VendorDetail";
@@ -54,9 +54,9 @@ function Router() {
       <Route path="/login"><Home /></Route>
       <Route path="/"><DashboardLayout><Dashboard /></DashboardLayout></Route>
       <Route path="/purchase-requests"><DashboardLayout><PurchaseRequestsList /></DashboardLayout></Route>
-      <Route path="/purchase-requests/new"><DashboardLayout><PurchaseRequestForm /></DashboardLayout></Route>
-      <Route path="/purchase-requests/:id/edit"><DashboardLayout><PurchaseRequestForm /></DashboardLayout></Route>
-      <Route path="/purchase-requests/:id"><DashboardLayout><PurchaseRequestDetail /></DashboardLayout></Route>
+      <Route path="/purchase-requests/new"><DashboardLayout><PurchaseRequestPage /></DashboardLayout></Route>
+      
+      <Route path="/purchase-requests/:id"><DashboardLayout><PurchaseRequestPage /></DashboardLayout></Route>
       <Route path="/approvals"><DashboardLayout><ApprovalsList /></DashboardLayout></Route>
       <Route path="/approvals/:id"><DashboardLayout><ApprovalsList /></DashboardLayout></Route>
       <Route path="/purchase-orders"><DashboardLayout><PurchaseOrdersList /></DashboardLayout></Route>

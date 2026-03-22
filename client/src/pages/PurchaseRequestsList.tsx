@@ -211,7 +211,7 @@ export default function PurchaseRequestsList() {
                     <TableCell className="text-right">
                       <ActionMenu actions={[
                         { icon: <Eye className="h-4 w-4" />, label: "Voir le détail", href: `/purchase-requests/${request.id}` },
-                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/purchase-requests/${request.id}/edit`, hidden: request.status !== "draft" || !canManage },
+                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/purchase-requests/${request.id}`, hidden: request.status !== "draft" || !canManage },
                         { icon: <Send className="h-4 w-4" />, label: "Soumettre pour approbation", hidden: request.status !== "draft", variant: "success", onClick: (e) => { e.stopPropagation(); submitMut.mutate({ id: request.id }); } },
                         { icon: <ShoppingCart className="h-4 w-4" />, label: "Créer un bon de commande", href: `/purchase-orders/new?requestId=${request.id}`, hidden: request.status !== "approved", variant: "success" },
                         { icon: <Copy className="h-4 w-4" />, label: "Dupliquer", href: `/purchase-requests/new?copyFrom=${request.id}`, hidden: !canManage },
