@@ -412,7 +412,7 @@ export default function InvoicesList() {
                     <TableCell className="text-right">
                       <ActionMenu actions={[
                         { icon: <Eye className="h-4 w-4" />, label: "Voir le détail", href: `/invoices/${invoice.id}` },
-                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/invoices/new?editId=${invoice.id}`, hidden: !["pending","revised"].includes(invoice.status) || !canManage },
+                        { icon: <Edit2 className="h-4 w-4" />, label: "Modifier", href: `/invoices/${invoice.id}`, hidden: !["pending","revised"].includes(invoice.status) || !canManage },
                         { icon: <CheckCircle2 className="h-4 w-4" />, label: "Approuver la facture", hidden: invoice.status !== "pending_approval" || !canManage, variant: "success", onClick: e => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; } },
                         { icon: <CreditCard className="h-4 w-4" />, label: "Enregistrer le paiement", hidden: invoice.status !== "approved" || !canManage, variant: "success", onClick: e => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; } },
                         { icon: <AlertTriangle className="h-4 w-4" />, label: "Contester la facture", hidden: !["pending_approval","approved"].includes(invoice.status) || !canManage, variant: "warning", onClick: e => { e.stopPropagation(); window.location.href = `/invoices/${invoice.id}`; } },

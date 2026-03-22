@@ -24,7 +24,7 @@ import VendorForm from "./pages/VendorForm";
 import VendorDetail from "./pages/VendorDetail";
 import ApprovalsList from "./pages/ApprovalsList";
 import InvoicesList from "./pages/InvoicesList";
-import InvoiceForm from "./pages/InvoiceForm";
+// InvoiceForm replaced by InvoicePage
 import SignaturePage from "./pages/SignaturePage";
 import ExpensesList from "./pages/ExpensesList";
 import ExpenseForm from "./pages/ExpenseForm";
@@ -40,7 +40,7 @@ import Settings from "./pages/Settings";
 import BudgetsList from "./pages/BudgetsList";
 import BudgetForm from "./pages/BudgetForm";
 import BudgetDetail from "./pages/BudgetDetail";
-import InvoiceDetail from "./pages/InvoiceDetail";
+import InvoicePage from "./pages/InvoicePage";
 import RFQsList from "./pages/RFQsList";
 import RFQForm from "./pages/RFQForm";
 import RFQDetail from "./pages/RFQDetail";
@@ -68,7 +68,7 @@ function Router() {
       <Route path="/vendors/new"><DashboardLayout><VendorForm /></DashboardLayout></Route>
       <Route path="/vendors/:id"><DashboardLayout><VendorDetail /></DashboardLayout></Route>
       <Route path="/invoices"><DashboardLayout><InvoicesList /></DashboardLayout></Route>
-      <Route path="/invoices/new"><DashboardLayout><InvoiceForm /></DashboardLayout></Route>
+      <Route path="/invoices/new"><DashboardLayout><InvoicePage /></DashboardLayout></Route>
       <Route path="/sign"><SignaturePage /></Route>
       <Route path="/expenses"><DashboardLayout><ExpensesList /></DashboardLayout></Route>
       <Route path="/expenses/new"><DashboardLayout><ExpenseForm /></DashboardLayout></Route>
@@ -76,7 +76,7 @@ function Router() {
       <Route path="/community"><DashboardLayout><Community /></DashboardLayout></Route>
       <Route path="/groups"><DashboardLayout><GroupsPage /></DashboardLayout></Route>
       <Route path="/supplier-portal"><SupplierPortal /></Route>
-      <Route path="/invoices/:id"><DashboardLayout><InvoiceDetail /></DashboardLayout></Route>
+      <Route path="/invoices/:id"><DashboardLayout><InvoicePage /></DashboardLayout></Route>
       <Route path="/payments"><DashboardLayout><PaymentsList /></DashboardLayout></Route>
       <Route path="/payments/:id"><DashboardLayout><PaymentDetail /></DashboardLayout></Route>
       <Route path="/budgets"><DashboardLayout><BudgetsList /></DashboardLayout></Route>
