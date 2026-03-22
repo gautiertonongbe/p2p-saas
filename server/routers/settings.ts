@@ -19,7 +19,7 @@ const updateOrganizationSchema = z.object({
   website: z.string().max(255).optional(),
   taxId: z.string().max(100).optional(),
   logoUrl: z.string().optional(),
-  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  primaryColor: z.string().optional(), // accepts #hex or hsl(...) format
   // Full settings blob
   settings: z.object({
     toleranceRules: z.object({

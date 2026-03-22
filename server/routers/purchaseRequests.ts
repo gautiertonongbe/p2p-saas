@@ -55,7 +55,9 @@ export const purchaseRequestsRouter = router({
     }).optional())
     .query(async ({ ctx, input }) => {
       const requests = await db.getPurchaseRequests(ctx.user.organizationId, input);
-      return requests;
+      // Exclude archived documents from default list
+      const filtered = requests.filter((r: any) => !r.isArchived);
+      return filtered;
     }),
 
   getById: protectedProcedure
@@ -164,11 +166,17 @@ export const purchaseRequestsRouter = router({
     }),
 
   submit: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({
+      id: z.number(),
+      idempotencyKey: z.string().optional(), // client-generated UUID per click
+    }))
     .mutation(async ({ ctx, input }) => {
       const request = await db.getPurchaseRequestById(input.id, ctx.user.organizationId);
       if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Purchase request not found" });
-      if (request.status !== "draft") throw new TRPCError({ code: "BAD_REQUEST", message: "Only draft requests can be submitted" });
+      if (request.status !== "draft") throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Cette demande a déjà été soumise ou n'est plus modifiable (statut actuel: " + request.status + ")",
+      });
       if (request.requesterId !== ctx.user.id && ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized" });
 
       // Read org workflow settings

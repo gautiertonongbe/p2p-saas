@@ -3,18 +3,18 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 type Theme = "light" | "dark";
 
 export const COLOR_PRESETS = [
-  { id: "blue",    label: "Bleu",       primary: "221 83% 53%" },
-  { id: "violet",  label: "Violet",     primary: "262 80% 58%" },
-  { id: "emerald", label: "Émeraude",   primary: "158 64% 40%" },
-  { id: "rose",    label: "Rose",       primary: "346 77% 53%" },
-  { id: "orange",  label: "Orange",     primary: "24 95% 50%"  },
-  { id: "teal",    label: "Sarcelle",   primary: "187 76% 40%" },
-  { id: "indigo",  label: "Indigo",     primary: "239 84% 60%" },
-  { id: "amber",   label: "Ambre",      primary: "43 96% 48%"  },
-  { id: "slate",   label: "Ardoise",    primary: "215 25% 35%" },
-  { id: "pink",    label: "Rose vif",   primary: "330 81% 55%" },
-  { id: "cyan",    label: "Cyan",       primary: "192 91% 42%" },
-  { id: "lime",    label: "Lime",       primary: "85 78% 38%"  },
+  { id: "blue",    label: "Bleu",       primary: "221 83% 53%", hex: "#2563EB" },
+  { id: "violet",  label: "Violet",     primary: "262 80% 58%", hex: "#7C3AED" },
+  { id: "emerald", label: "Émeraude",   primary: "158 64% 40%", hex: "#059669" },
+  { id: "rose",    label: "Rose",       primary: "346 77% 53%", hex: "#E11D48" },
+  { id: "orange",  label: "Orange",     primary: "24 95% 50%",  hex: "#F97316" },
+  { id: "teal",    label: "Sarcelle",   primary: "187 76% 40%", hex: "#0891B2" },
+  { id: "indigo",  label: "Indigo",     primary: "239 84% 60%", hex: "#4F46E5" },
+  { id: "amber",   label: "Ambre",      primary: "43 96% 48%",  hex: "#D97706" },
+  { id: "slate",   label: "Ardoise",    primary: "215 25% 35%", hex: "#475569" },
+  { id: "pink",    label: "Rose vif",   primary: "330 81% 55%", hex: "#EC4899" },
+  { id: "cyan",    label: "Cyan",       primary: "192 91% 42%", hex: "#0284C7" },
+  { id: "lime",    label: "Lime",       primary: "85 78% 38%",  hex: "#65A30D" },
 ];
 
 function applyColorPreset(presetId: string) {

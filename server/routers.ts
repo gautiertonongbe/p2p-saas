@@ -26,6 +26,7 @@ import { contractsRouter } from "./routers/contracts";
 import { savingsRouter } from "./routers/savings";
 import { vendorOnboardingRouter } from "./routers/vendorOnboarding";
 import { vendorRiskRouter } from "./routers/vendorRisk";
+import { archivingRouter } from "./routers/archiving";
 import { priceBenchmarkRouter } from "./routers/priceBenchmark";
 
 export const appRouter = router({
@@ -67,6 +68,7 @@ export const appRouter = router({
   savings: savingsRouter,
   vendorOnboarding: vendorOnboardingRouter,
   vendorRisk: vendorRiskRouter,
+  archiving: archivingRouter,
   priceBenchmark: priceBenchmarkRouter,
 });
 

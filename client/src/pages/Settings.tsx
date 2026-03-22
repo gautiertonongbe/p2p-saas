@@ -29,8 +29,7 @@ import {
 import {
   Building2, Users, GitBranch, DollarSign, Bell, Shield, Settings as Gear,
   ChevronRight, Sliders, Workflow, Globe, Hash, Package, CheckCircle2,
-  Plus, Edit, Trash2, Loader2, Save, RotateCcw, AlertTriangle, Info, TrendingUp,
-} from "lucide-react";
+  Plus, Edit, Trash2, Loader2, Save, RotateCcw, AlertTriangle, Info, TrendingUp,, Archive} from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const SECTION_ICONS: Record<string, React.FC<any>> = {
@@ -61,6 +60,7 @@ const SECTION_DEFS = [
   { id: "numbering",    group: "Système", desc: "Séquences de numérotation" },
   { id: "localization", group: "Système", desc: "Langue et format" },
   { id: "security",     group: "Système", desc: "Audit et sécurité" },
+  { id: "archiving",    group: "Système", desc: "Archivage et rétention des données" },
 ];
 
 const groups = [...new Set(SECTION_DEFS.map(s => s.group))];
@@ -161,6 +161,7 @@ export default function Settings() {
         {section === "numbering"     && <NumberingSection isAdmin={isAdmin} />}
         {section === "localization"  && <LocalizationSection isAdmin={isAdmin} />}
         {section === "security"      && <SecuritySection />}
+        {section === "archiving"    && <ArchivingSection />}
       </main>
     </div>
   );
@@ -327,11 +328,11 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
               <div className="grid grid-cols-6 gap-2">
                 {COLOR_PRESETS.map(preset => (
                   <button key={preset.id} type="button" disabled={!isAdmin}
-                    onClick={() => setForm(f => ({...f, primaryColor: `hsl(${preset.primary})`}))}
+                    onClick={() => setForm(f => ({...f, primaryColor: preset.hex || '#2563EB'}))}
                     className="flex flex-col items-center gap-1.5 group disabled:opacity-50 disabled:cursor-not-allowed">
-                    <div className={`h-9 w-9 rounded-full transition-all ${form.primaryColor === `hsl(${preset.primary})` ? "ring-2 ring-offset-2 ring-gray-400 scale-110" : "hover:scale-105"}`}
+                    <div className={`h-9 w-9 rounded-full transition-all ${form.primaryColor === (preset.hex || `hsl(${preset.primary})`) ? "ring-2 ring-offset-2 ring-gray-400 scale-110" : "hover:scale-105"}`}
                       style={{ backgroundColor: `hsl(${preset.primary})` }}>
-                      {form.primaryColor === `hsl(${preset.primary})` && (
+                      {form.primaryColor === (preset.hex || `hsl(${preset.primary})`) && (
                         <div className="h-full w-full flex items-center justify-center">
                           <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </div>
@@ -341,7 +342,7 @@ function OrgSection({ isAdmin }: { isAdmin: boolean }) {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-3">Couleur actuelle: <strong>{COLOR_PRESETS.find(p => `hsl(${p.primary})` === form.primaryColor)?.label || form.primaryColor}</strong></p>
+              <p className="text-xs text-muted-foreground mt-3">Couleur actuelle: <strong>{COLOR_PRESETS.find(p => (p.hex === form.primaryColor) || (`hsl(${p.primary})` === form.primaryColor))?.label || form.primaryColor}</strong></p>
             </div>
           </CardContent>
         </Card>
