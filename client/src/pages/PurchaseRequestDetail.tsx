@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, FileText, Calendar, User, DollarSign, ShieldCheck, ShoppingCart, Edit, Send, Clock, Copy, RefreshCw, Shield, AlertTriangle} from "lucide-react";
+import { ArrowLeft, FileText, Calendar, User, DollarSign, ShieldCheck, ShoppingCart, Edit, Send, Clock, Copy, RefreshCw} from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,12 +61,7 @@ export default function PurchaseRequestDetail() {
 
   const { data: approvals } = trpc.approvals.getByRequest.useQuery(
     { requestId: parseInt(id!) },
-    { enabled: !!id }
-  );
-
-  const { data: diagnosis } = trpc.approvals.diagnoseApprovals.useQuery(
-    { requestId: parseInt(id!) },
-    { enabled: !!id && !!request && request.status !== "draft" && (!approvals || approvals.length === 0) }
+    { enabled: !!id && request?.status !== "draft" }
   );
 
   const { data: history, isLoading: historyLoading } = trpc.settings.getEntityHistory.useQuery(
@@ -346,7 +341,7 @@ export default function PurchaseRequestDetail() {
         </Card>
       )}
 
-      {/* Items */}
+      {/* Items */
       <Card>
         <CardHeader>
           <CardTitle>{t('purchaseRequests.items')}</CardTitle>
@@ -394,41 +389,9 @@ export default function PurchaseRequestDetail() {
         </CardContent>
       </Card>
 
-      {/* Approval Chain — always show for non-draft */}
-      {request.status !== "draft" && (
-        approvals && approvals.length > 0
-          ? <ApprovalChainVisualization approvals={approvals} />
-          : <div className="bg-white rounded-2xl border overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3 border-b bg-gray-50/60">
-                <Shield className="h-4 w-4 text-blue-600" />
-                <span className="font-semibold text-sm">Approbateurs</span>
-              </div>
-              {diagnosis && !diagnosis.matched ? (
-                <div className="px-5 py-4 bg-amber-50 border-b border-amber-200">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold text-amber-800">Aucune politique d'approbation ne correspond</p>
-                      <p className="text-xs text-amber-700 mt-0.5">{diagnosis.reason}</p>
-                      <a href="/settings?section=workflows" className="text-xs text-blue-600 underline mt-1 inline-block">
-                        → Configurer les politiques d'approbation
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ) : diagnosis?.matched ? (
-                <div className="px-5 py-4 bg-blue-50 border-b border-blue-200">
-                  <p className="text-xs text-blue-700">
-                    Politique "<strong>{diagnosis.policy?.name}</strong>" — {diagnosis.steps?.length} étape(s),
-                    {diagnosis.approvers?.reduce((s: number, a: any) => s + a.resolvedIds.length, 0)} approbateur(s) résolu(s)
-                  </p>
-                </div>
-              ) : null}
-              <div className="px-5 py-8 text-center text-muted-foreground text-sm">
-                <Clock className="h-6 w-6 mx-auto mb-2 opacity-30" />
-                Aucune étape d'approbation pour cette demande
-              </div>
-            </div>
+      {/* Approval Chain */}
+      {approvals && approvals.length > 0 && (
+        <ApprovalChainVisualization approvals={approvals} />
       )}
 
       {/* History */}
@@ -483,15 +446,14 @@ export default function PurchaseRequestDetail() {
                     </Button>
                   )}
 
-                  {/* Admin: bypass approval workflow */}
+                  {/* Admin: approve directly from draft OR pending */}
                   {isAdmin && (isDraft || isPending) && (
                     <Button
                       onClick={() => setBypassDialogOpen(true)}
                       className="bg-amber-500 hover:bg-amber-600 text-white"
-                      title="Contourner le workflow d'approbation (réservé aux admins)"
                     >
                       <ShieldCheck className="mr-2 h-4 w-4" />
-                      Contournement workflow
+                      Approuver directement
                     </Button>
                   )}
 
@@ -625,7 +587,7 @@ export default function PurchaseRequestDetail() {
         </DialogContent>
       </Dialog>
 
-      {/* Contournement workflow Dialog */}
+      {/* Bypass Approval Dialog */}
       <Dialog open={bypassDialogOpen} onOpenChange={setBypassDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -661,7 +623,7 @@ export default function PurchaseRequestDetail() {
               disabled={bypassMutation.isPending}
               className="bg-amber-600 hover:bg-amber-700"
             >
-              {bypassMutation.isPending ? "Approbation en cours..." : "Contournement du workflow"}
+              {bypassMutation.isPending ? "Approbation en cours..." : "Approuver directement"}
             </Button>
           </DialogFooter>
         </DialogContent>
