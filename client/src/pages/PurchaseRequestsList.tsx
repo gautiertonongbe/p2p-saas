@@ -201,7 +201,7 @@ export default function PurchaseRequestsList() {
                         {request.title}
                       </div>
                     </TableCell>
-                    <TableCell>-</TableCell>
+                    <TableCell>{(request as any).requesterName || <span className="text-muted-foreground text-xs">—</span>}</TableCell>
                     <TableCell>{formatCurrency(request.amountEstimate)} XOF</TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
@@ -214,9 +214,19 @@ export default function PurchaseRequestsList() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className={`status-badge status-${request.status}`}>
-                        {t(`purchaseRequests.status.${request.status}`)}
-                      </span>
+                      {(() => {
+                        const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+                          draft:           { label: "Brouillon",      color: "bg-gray-100 text-gray-700" },
+                          submitted:       { label: "Soumis",         color: "bg-blue-100 text-blue-700" },
+                          pending_approval:{ label: "En approbation", color: "bg-amber-100 text-amber-700" },
+                          approved:        { label: "Approuvé",       color: "bg-emerald-100 text-emerald-700" },
+                          rejected:        { label: "Refusé",         color: "bg-red-100 text-red-700" },
+                          cancelled:       { label: "Annulé",         color: "bg-gray-100 text-gray-500" },
+                          converted_to_po: { label: "Converti BC",    color: "bg-purple-100 text-purple-700" },
+                        };
+                        const s = STATUS_LABELS[request.status] || { label: request.status, color: "bg-gray-100 text-gray-600" };
+                        return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${s.color}`}>{s.label}</span>;
+                      })()}
                     </TableCell>
                     <TableCell>{formatDate(request.createdAt)}</TableCell>
                     <TableCell className="text-right">

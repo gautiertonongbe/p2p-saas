@@ -180,7 +180,8 @@
       "approved": "Approuvé",
       "rejected": "Refusé",
       "cancelled": "Annulé",
-      "converted_to_po": "Converti en BC"
+      "converted_to_po": "Converti en BC",
+      "submitted": "Soumis"
     },
     "items": "Articles",
     "itemName": "Nom de l'article",
