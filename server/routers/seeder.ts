@@ -228,27 +228,52 @@ export const seederRouter = router({
         try {
           // 1. DA brouillon
           await dbI.execute(
-            `INSERT INTO purchaseRequests (organizationId, requestNumber, requesterId, title, description, status, urgencyLevel, amountEstimate, currency, createdAt)
-             VALUES (${org}, 'DA-SEED-001', ${requester.id}, 'Achat ordinateurs portables - Equipe commerciale', 'Renouvellement parc informatique de 5 commerciaux', 'draft', 'medium', 2500000, 'XOF', '${daysAgo(3)}')`
+            `INSERT INTO purchaseRequests (organizationId, requestNumber, requesterId, title, status, urgencyLevel, amountEstimate, currency, createdAt)
+             VALUES (${org}, 'DA-SEED-001', ${requester.id}, 'Achat ordinateurs portables', 'draft', 'medium', 2500000, 'XOF', '${daysAgo(3)}')`
           );
 
           // 2. DA soumise
           await dbI.execute(
-            `INSERT INTO purchaseRequests (organizationId, requestNumber, requesterId, title, description, status, urgencyLevel, amountEstimate, currency, createdAt)
-             VALUES (${org}, 'DA-SEED-002', ${requester.id}, 'Fournitures de bureau Q2 2026', 'Papier, stylos, classeurs pour toute l\'equipe', 'submitted', 'low', 450000, 'XOF', '${daysAgo(5)}')`
+            `INSERT INTO purchaseRequests (organizationId, requestNumber, requesterId, title, status, urgencyLevel, amountEstimate, currency, createdAt)
+             VALUES (${org}, 'DA-SEED-002', ${requester.id}, 'Fournitures de bureau Q2 2026', 'submitted', 'low', 450000, 'XOF', '${daysAgo(5)}')`
           );
 
           // 3. DA approuvée
           const pr3 = await dbI.execute(
-            `INSERT INTO purchaseRequests (organizationId, requestNumber, requesterId, title, description, status, urgencyLevel, amountEstimate, currency, createdAt)
-             VALUES (${org}, 'DA-SEED-003', ${requester.id}, 'Maintenance climatiseurs - Siege social', 'Contrat annuel maintenance preventive et corrective', 'approved', 'high', 1800000, 'XOF', '${daysAgo(10)}')`
+            `INSERT INTO purchaseRequests (organizationId, requestNumber, requesterId, title, status, urgencyLevel, amountEstimate, currency, createdAt)
+             VALUES (${org}, 'DA-SEED-003', ${requester.id}, 'Maintenance climatiseurs', 'approved', 'high', 1800000, 'XOF', '${daysAgo(10)}')`
           ) as any;
           const pr3Id = Number(pr3[0].insertId);
           await dbI.execute(
-            `INSERT INTO purchaseRequestItems (requestId, itemName, description, quantity, unitPrice, totalPrice, unit)
-             VALUES (${pr3Id}, 'Maintenance climatiseurs', 'Contrat annuel', 1, 1800000, 1800000, 'forfait')`
+            `INSERT INTO purchaseRequestItems (requestId, itemName, quantity, unitPrice, totalPrice, unit)
+             VALUES (${pr3Id}, 'Maintenance climatiseurs', 1, 1800000, 1800000, 'forfait')`
           );
           log.push("✅ 3 DAs créées (brouillon, soumise, approuvée)");
+          // Create approval records for DA-SEED-002 (submitted) so approver has work
+          try {
+            const pr2Res = await dbI.execute(
+              `SELECT id FROM purchaseRequests WHERE requestNumber='DA-SEED-002' AND organizationId=${org} LIMIT 1`
+            ) as any;
+            const pr2Id = pr2Res[0]?.[0]?.id;
+            if (pr2Id) {
+              // Get approver user ID
+              const approverRes = await dbI.execute(
+                `SELECT id FROM users WHERE organizationId=${org} AND role='approver' LIMIT 1`
+              ) as any;
+              const approverId = approverRes[0]?.[0]?.id;
+              if (approverId) {
+                await dbI.execute(
+                  `INSERT INTO approvals (requestId, stepOrder, approverId, decision, createdAt)
+                   VALUES (${pr2Id}, 1, ${approverId}, 'pending', '${daysAgo(4)}')`
+                );
+                await dbI.execute(
+                  `UPDATE purchaseRequests SET status='pending_approval' WHERE id=${pr2Id} AND organizationId=${org}`
+                );
+                log.push("✅ Approbation créée pour DA-SEED-002 (approbateur assigné)");
+              }
+            }
+          } catch (e2) { /* non-blocking */ }
+
 
           // 4. BC approuvé (négocié à 1 650 000 vs 1 800 000 estimé)
           const ts = Date.now().toString().slice(-8);
@@ -312,11 +337,11 @@ export const seederRouter = router({
         try {
           const ts = Date.now().toString().slice(-6);
           const rfq = await dbI.execute(
-            `INSERT INTO rfqs (organizationId, rfqNumber, title, description, status, deadline, estimatedValue, currency, createdBy, createdAt)
-             VALUES (${org}, 'AO-SEED-${ts}', 'Fourniture serveurs datacenter', 'Appel offres pour 3 serveurs rack', 'responses_received', '${daysAgo(2)}', 8000000, 'XOF', ${manager.id}, '${daysAgo(20)}')`
+            `INSERT INTO rfqs (organizationId, rfqNumber, title, status, deadline, estimatedValue, currency, createdBy, createdAt)
+             VALUES (${org}, 'AO-SEED-${ts}', 'Fourniture serveurs datacenter', 'responses_received', '${daysAgo(2)}', 8000000, 'XOF', ${manager.id}, '${daysAgo(20)}')`
           ) as any;
           const rfqId = Number(rfq[0].insertId);
-          await dbI.execute(`INSERT INTO rfqItems (rfqId, itemName, description, quantity, unit, estimatedUnitPrice) VALUES (${rfqId}, 'Serveur rack Dell R750', '64GB RAM, 2TB SSD', 3, 'pcs', 2500000)`);
+          await dbI.execute(`INSERT INTO rfqItems (rfqId, itemName, quantity, unit, estimatedUnitPrice) VALUES (${rfqId}, 'Serveur rack Dell R750', 3, 'pcs', 2500000)`);
           await dbI.execute(`INSERT INTO rfqVendors (rfqId, vendorId, status, invitedAt) VALUES (${rfqId}, ${v1}, 'responded', '${daysAgo(18)}')`);
           await dbI.execute(`INSERT INTO rfqVendors (rfqId, vendorId, status, invitedAt) VALUES (${rfqId}, ${v2}, 'responded', '${daysAgo(18)}')`);
           await dbI.execute(`INSERT INTO rfqResponses (rfqId, vendorId, totalAmount, currency, notes, submittedAt, status) VALUES (${rfqId}, ${v1}, 7200000, 'XOF', 'Offre incluant installation et formation', '${daysAgo(10)}', 'submitted')`);
@@ -347,8 +372,8 @@ export const seederRouter = router({
         try {
           const ts = Date.now().toString().slice(-6);
           await dbI.execute(
-            `INSERT INTO vendorContracts (organizationId, vendorId, title, contractNumber, startDate, endDate, value, currency, status, autoRenew, notes, createdAt)
-             VALUES (${org}, ${v1}, 'Contrat maintenance IT annuel', 'CTR-SEED-${ts}A', '${daysAgo(180)}', '${daysFromNow(185)}', 3600000, 'XOF', 'active', 1, 'Renouvellement auto sauf resiliation 60j avant', '${daysAgo(180)}')`
+            `INSERT INTO vendorContracts (organizationId, vendorId, title, contractNumber, startDate, endDate, value, currency, status, autoRenew, createdAt)
+             VALUES (${org}, ${v1}, 'Contrat maintenance IT annuel', 'CTR-SEED-${ts}A', '${daysAgo(180)}', '${daysFromNow(185)}', 3600000, 'XOF', 'active', 1, '${daysAgo(180)}')`
           );
           await dbI.execute(
             `INSERT INTO vendorContracts (organizationId, vendorId, title, contractNumber, startDate, endDate, value, currency, status, autoRenew, createdAt)
@@ -356,7 +381,7 @@ export const seederRouter = router({
           );
           await dbI.execute(
             `INSERT INTO vendorContracts (organizationId, vendorId, title, contractNumber, startDate, endDate, value, currency, status, autoRenew, createdAt)
-             VALUES (${org}, ${v1}, 'Contrat sécurité-gardiennage (expire bientôt)', 'CTR-SEED-${ts}C', '${daysAgo(335)}', '${daysFromNow(30)}', 2400000, 'XOF', 'active', 0, '${daysAgo(335)}')`
+             VALUES (${org}, ${v1}, 'Contrat securite-gardiennage (expire bientot)', 'CTR-SEED-${ts}C', '${daysAgo(335)}', '${daysFromNow(30)}', 2400000, 'XOF', 'active', 0, '${daysAgo(335)}')`
           );
           log.push("✅ 3 contrats créés (dont 1 expire dans 30 jours)");
         } catch (e) { log.push(`⚠️ Contrats: ${String(e).slice(0, 80)}`); }
