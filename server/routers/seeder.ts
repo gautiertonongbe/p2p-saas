@@ -139,91 +139,45 @@ export const seederRouter = router({
 
       // ── 5 DEMO WORKFLOWS ─────────────────────────────────────────────────
       try {
-        // Clear existing policies for clean demo
-        const existingP = await dbI.execute(
-          `SELECT id FROM approvalPolicies WHERE organizationId=${org}`
-        ) as any;
+        const existingP = await dbI.execute(`SELECT id FROM approvalPolicies WHERE organizationId=${org}`) as any;
         const existingIds = (existingP[0] as any[]).map((p: any) => p.id);
         if (existingIds.length > 0) {
           await dbI.execute(`DELETE FROM approvalSteps WHERE policyId IN (${existingIds.join(",")})`);
           await dbI.execute(`DELETE FROM approvalPolicies WHERE organizationId=${org}`);
         }
 
-        const createPolicy = async (name: string, description: string, priority: number, conditions: any) => {
-          const condStr = Object.keys(conditions).length === 0
-            ? "NULL"
-            : `'${JSON.stringify(conditions).replace(/'/g, "\'\'")}' `;
+        const insertPolicy = async (name: string, priority: number, cond: string) => {
           const r = await dbI.execute(
-            `INSERT INTO approvalPolicies (organizationId, name, description, isActive, priority, conditions)
-             VALUES (${org}, '${name.replace(/'/g,"\'")}', '${description.replace(/'/g,"\'")}', 1, ${priority}, ${condStr})`
+            `INSERT INTO approvalPolicies (organizationId, name, priority, conditions) VALUES (${org}, '${name}', ${priority}, ${cond})`
           ) as any;
           return Number(r[0].insertId);
         };
-        const addStep = async (policyId: number, stepOrder: number, approverType: string, approverId: number) => {
-          await dbI.execute(
-            `INSERT INTO approvalSteps (policyId, stepOrder, approverType, approverId, isParallel)
-             VALUES (${policyId}, ${stepOrder}, '${approverType}', ${approverId}, 0)`
-          );
+        const insertStep = async (pid: number, order: number, type: string, rid: number) => {
+          await dbI.execute(`INSERT INTO approvalSteps (policyId, stepOrder, approverType, approverId, isParallel) VALUES (${pid}, ${order}, '${type}', ${rid}, 0)`);
         };
 
-        // Workflow 1: Petits achats ≤ 500 000 XOF → Manager uniquement
-        const p1 = await createPolicy(
-          "Petits achats",
-          "Demandes jusqu\'à 500 000 XOF — approbation manager seul",
-          10,
-          { maxAmount: 500000 }
-        );
-        await addStep(p1, 1, "role", 2); // procurement_manager
+        const p1 = await insertPolicy("Petits achats <= 500K", 10, '{"maxAmount":500000}');
+        await insertStep(p1, 1, "role", 2);
 
-        // Workflow 2: Achats moyens 500 001 – 2 000 000 XOF → Approbateur puis Manager
-        const p2 = await createPolicy(
-          "Achats moyens",
-          "De 500 001 à 2 000 000 XOF — double validation",
-          8,
-          { minAmount: 500001, maxAmount: 2000000 }
-        );
-        await addStep(p2, 1, "role", 3); // approver first
-        await addStep(p2, 2, "role", 2); // then manager
+        const p2 = await insertPolicy("Achats moyens 500K-2M", 8, '{"minAmount":500001,"maxAmount":2000000}');
+        await insertStep(p2, 1, "role", 3);
+        await insertStep(p2, 2, "role", 2);
 
-        // Workflow 3: Grands achats > 2 000 000 XOF → 3 niveaux
-        const p3 = await createPolicy(
-          "Grands achats",
-          "Au-dessus de 2 000 000 XOF — triple validation obligatoire",
-          6,
-          { minAmount: 2000001 }
-        );
-        await addStep(p3, 1, "role", 3); // approver
-        await addStep(p3, 2, "role", 2); // manager
-        await addStep(p3, 3, "role", 1); // admin (DG)
+        const p3 = await insertPolicy("Grands achats > 2M", 6, '{"minAmount":2000001}');
+        await insertStep(p3, 1, "role", 3);
+        await insertStep(p3, 2, "role", 2);
+        await insertStep(p3, 3, "role", 1);
 
-        // Workflow 4: Urgences critiques → Admin direct (bypass approbateur)
-        const p4 = await createPolicy(
-          "Urgences critiques",
-          "Toute demande critique — escalade directe vers la direction",
-          9,
-          { urgencyLevels: ["critical"] }
-        );
-        await addStep(p4, 1, "role", 1); // admin directly
+        const p4 = await insertPolicy("Urgences critiques", 9, '{"urgencyLevels":["critical"]}');
+        await insertStep(p4, 1, "role", 1);
 
-        // Workflow 5: Catch-all → Approbateur seul
-        const p5 = await createPolicy(
-          "Politique par défaut",
-          "Toutes les autres demandes — approbateur désigné",
-          1,
-          {} // null conditions = catch-all
-        );
-        await addStep(p5, 1, "role", 3); // approver
+        const p5 = await insertPolicy("Politique par defaut", 1, 'NULL');
+        await insertStep(p5, 1, "role", 3);
 
-        log.push("✅ 5 workflows créés:");
-        log.push("   1. Petits achats (≤ 500K) → Manager");
-        log.push("   2. Achats moyens (500K–2M) → Approbateur → Manager");
-        log.push("   3. Grands achats (> 2M) → Approbateur → Manager → Admin");
-        log.push("   4. Urgences critiques → Admin direct");
-        log.push("   5. Politique par défaut → Approbateur");
+        log.push("✅ 5 workflows crees: Petits achats / Moyens / Grands / Urgences / Defaut");
       } catch (e) { log.push(`⚠️ Workflows: ${String(e).slice(0, 80)}`); }
 
-
-      // ── FULL P2P CYCLE ─────────────────────────────────────────────────────
+            // ── FULL P2P CYCLE ─────────────────────────────────────────────────────
       if (input.scenarios.includes("full_cycle")) {
         try {
           // 1. DA brouillon
