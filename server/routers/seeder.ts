@@ -69,6 +69,15 @@ export const seederRouter = router({
         }
         try { await dbI.execute(`DELETE FROM budgets WHERE organizationId=${org}`); } catch { /* ignore */ }
         try { await dbI.execute(`DELETE FROM expenseReports WHERE organizationId=${org}`); } catch { /* ignore */ }
+        // Clear approval policies and steps
+        try {
+          const pIds = await dbI.execute(`SELECT id FROM approvalPolicies WHERE organizationId=${org}`) as any;
+          const ids = (pIds[0] as any[]).map((p:any) => p.id);
+          if (ids.length > 0) {
+            await dbI.execute(`DELETE FROM approvalSteps WHERE policyId IN (${ids.join(",")})`);
+          }
+          await dbI.execute(`DELETE FROM approvalPolicies WHERE organizationId=${org}`);
+        } catch { /* ignore */ }
         log.push("✅ Données existantes supprimées");
       }
 
@@ -141,9 +150,12 @@ export const seederRouter = router({
         }
 
         const createPolicy = async (name: string, description: string, priority: number, conditions: any) => {
+          const condStr = Object.keys(conditions).length === 0
+            ? "NULL"
+            : `'${JSON.stringify(conditions).replace(/'/g, "\'\'")}' `;
           const r = await dbI.execute(
             `INSERT INTO approvalPolicies (organizationId, name, description, isActive, priority, conditions)
-             VALUES (${org}, '${name}', '${description}', 1, ${priority}, '${JSON.stringify(conditions)}')`
+             VALUES (${org}, '${name.replace(/'/g,"\'")}', '${description.replace(/'/g,"\'")}', 1, ${priority}, ${condStr})`
           ) as any;
           return Number(r[0].insertId);
         };
@@ -217,19 +229,19 @@ export const seederRouter = router({
           // 1. DA brouillon
           await dbI.execute(
             `INSERT INTO purchaseRequests (organizationId, requestNumber, requesterId, title, description, status, urgencyLevel, amountEstimate, currency, createdAt)
-             VALUES (${org}, 'DA-SEED-001', ${requester.id}, 'Achat ordinateurs portables — Équipe commerciale', 'Renouvellement parc informatique de 5 commerciaux', 'draft', 'medium', 2500000, 'XOF', '${daysAgo(3)}')`
+             VALUES (${org}, 'DA-SEED-001', ${requester.id}, 'Achat ordinateurs portables - Equipe commerciale', 'Renouvellement parc informatique de 5 commerciaux', 'draft', 'medium', 2500000, 'XOF', '${daysAgo(3)}')`
           );
 
           // 2. DA soumise
           await dbI.execute(
             `INSERT INTO purchaseRequests (organizationId, requestNumber, requesterId, title, description, status, urgencyLevel, amountEstimate, currency, createdAt)
-             VALUES (${org}, 'DA-SEED-002', ${requester.id}, 'Fournitures de bureau Q2 2026', 'Papier, stylos, classeurs pour toute l''équipe', 'submitted', 'low', 450000, 'XOF', '${daysAgo(5)}')`
+             VALUES (${org}, 'DA-SEED-002', ${requester.id}, 'Fournitures de bureau Q2 2026', 'Papier, stylos, classeurs pour toute l\'equipe', 'submitted', 'low', 450000, 'XOF', '${daysAgo(5)}')`
           );
 
           // 3. DA approuvée
           const pr3 = await dbI.execute(
             `INSERT INTO purchaseRequests (organizationId, requestNumber, requesterId, title, description, status, urgencyLevel, amountEstimate, currency, createdAt)
-             VALUES (${org}, 'DA-SEED-003', ${requester.id}, 'Maintenance climatiseurs — Siège social', 'Contrat annuel maintenance préventive et corrective', 'approved', 'high', 1800000, 'XOF', '${daysAgo(10)}')`
+             VALUES (${org}, 'DA-SEED-003', ${requester.id}, 'Maintenance climatiseurs - Siege social', 'Contrat annuel maintenance preventive et corrective', 'approved', 'high', 1800000, 'XOF', '${daysAgo(10)}')`
           ) as any;
           const pr3Id = Number(pr3[0].insertId);
           await dbI.execute(
@@ -254,7 +266,7 @@ export const seederRouter = router({
           try {
             await dbI.execute(
               `INSERT INTO savingsRecords (organizationId, title, vendorId, savingsType, budgetAmount, actualAmount, savingsAmount, savingsPercent, poId, notes, recordedBy, createdAt)
-               VALUES (${org}, 'Économie BC vs DA: Maintenance climatiseurs', ${v1}, 'price_negotiation', 1800000, 1650000, 150000, 8.33, ${po1Id}, 'Calculé automatiquement depuis la DA DA-SEED-003', ${manager.id}, '${daysAgo(7)}')`
+               VALUES (${org}, 'Économie BC vs DA: Maintenance climatiseurs', ${v1}, 'price_negotiation', 1800000, 1650000, 150000, 8.33, ${po1Id}, 'Calcule automatiquement depuis la DA DA-SEED-003', ${manager.id}, '${daysAgo(7)}')`
             );
           } catch { /* savings table may not have all cols */ }
 
@@ -301,7 +313,7 @@ export const seederRouter = router({
           const ts = Date.now().toString().slice(-6);
           const rfq = await dbI.execute(
             `INSERT INTO rfqs (organizationId, rfqNumber, title, description, status, deadline, estimatedValue, currency, createdBy, createdAt)
-             VALUES (${org}, 'AO-SEED-${ts}', 'Fourniture serveurs datacenter', 'Appel d''offres pour 3 serveurs rack', 'responses_received', '${daysAgo(2)}', 8000000, 'XOF', ${manager.id}, '${daysAgo(20)}')`
+             VALUES (${org}, 'AO-SEED-${ts}', 'Fourniture serveurs datacenter', 'Appel offres pour 3 serveurs rack', 'responses_received', '${daysAgo(2)}', 8000000, 'XOF', ${manager.id}, '${daysAgo(20)}')`
           ) as any;
           const rfqId = Number(rfq[0].insertId);
           await dbI.execute(`INSERT INTO rfqItems (rfqId, itemName, description, quantity, unit, estimatedUnitPrice) VALUES (${rfqId}, 'Serveur rack Dell R750', '64GB RAM, 2TB SSD', 3, 'pcs', 2500000)`);
@@ -320,11 +332,11 @@ export const seederRouter = router({
           const name = safe(requester.name || "Utilisateur Demo");
           await dbI.execute(
             `INSERT INTO expenseReports (organizationId, reportNumber, submitterId, title, status, totalAmount, periodStart, periodEnd)
-             VALUES (${org}, 'NDF-SEED-${ts}A', ${requester.id}, 'Déplacement Cotonou-Abidjan — Salon Tech Africa', 'submitted', 285000, '${daysAgo(14)}', '${daysAgo(10)}')`
+             VALUES (${org}, 'NDF-SEED-${ts}A', ${requester.id}, 'Deplacement Cotonou-Abidjan - Salon Tech Africa', 'submitted', 285000, '${daysAgo(14)}', '${daysAgo(10)}')`
           );
           await dbI.execute(
             `INSERT INTO expenseReports (organizationId, reportNumber, submitterId, title, status, totalAmount, periodStart, periodEnd)
-             VALUES (${org}, 'NDF-SEED-${ts}B', ${requester.id}, 'Repas clients — Négociation contrat annuel', 'approved', 85000, '${daysAgo(20)}', '${daysAgo(20)}')`
+             VALUES (${org}, 'NDF-SEED-${ts}B', ${requester.id}, 'Repas clients - Negociation contrat annuel', 'approved', 85000, '${daysAgo(20)}', '${daysAgo(20)}')`
           );
           log.push("✅ 2 notes de frais créées (soumise, approuvée)");
         } catch (e) { log.push(`⚠️ Notes de frais: ${String(e).slice(0, 80)}`); }
@@ -336,7 +348,7 @@ export const seederRouter = router({
           const ts = Date.now().toString().slice(-6);
           await dbI.execute(
             `INSERT INTO vendorContracts (organizationId, vendorId, title, contractNumber, startDate, endDate, value, currency, status, autoRenew, notes, createdAt)
-             VALUES (${org}, ${v1}, 'Contrat maintenance IT annuel', 'CTR-SEED-${ts}A', '${daysAgo(180)}', '${daysFromNow(185)}', 3600000, 'XOF', 'active', 1, 'Renouvellement auto sauf résiliation 60j avant', '${daysAgo(180)}')`
+             VALUES (${org}, ${v1}, 'Contrat maintenance IT annuel', 'CTR-SEED-${ts}A', '${daysAgo(180)}', '${daysFromNow(185)}', 3600000, 'XOF', 'active', 1, 'Renouvellement auto sauf resiliation 60j avant', '${daysAgo(180)}')`
           );
           await dbI.execute(
             `INSERT INTO vendorContracts (organizationId, vendorId, title, contractNumber, startDate, endDate, value, currency, status, autoRenew, createdAt)
