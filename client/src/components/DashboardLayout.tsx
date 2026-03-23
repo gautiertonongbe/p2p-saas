@@ -289,8 +289,9 @@ function DashboardLayoutContent({
                   // Admin-only pages (not even procurement manager)
                   if (["/workflow-builder", "/groups"].includes(item.path) && !isOnlyAdmin) return false;
 
-                  // Procurement + admin only
-                  if (["/vendor-onboarding", "/contracts", "/savings", "/renewal-calendar", "/payments", "/budgets", "/rfqs", "/supplier-portal"].includes(item.path) && !isProcurement) return false;
+                  // Procurement + admin only (approver gets read access to most)
+                  if (["/vendor-onboarding", "/supplier-portal"].includes(item.path) && !isProcurement) return false;
+                  if (["/savings", "/renewal-calendar", "/budgets"].includes(item.path) && !isProcurement) return false;
 
                   // Vendor risk — procurement + approver (read-only for approver)
                   if (item.path === "/vendor-risk" && !isProcurement && !isApprover) return false;

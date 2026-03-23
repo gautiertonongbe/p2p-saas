@@ -45,7 +45,8 @@ export default function PurchaseRequestsList() {
   });
   const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const isApprover = user?.role === "approver";
+  const [statusFilter, setStatusFilter] = useState<string>(isApprover ? "submitted" : "all");
   const [viewState, setViewState] = useState<ViewState>({
     filters: [], displayType: "table",
   });
