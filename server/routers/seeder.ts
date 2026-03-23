@@ -146,9 +146,9 @@ export const seederRouter = router({
           await dbI.execute(`DELETE FROM approvalPolicies WHERE organizationId=${org}`);
         }
 
-        const insertPolicy = async (name: string, priority: number, cond: string) => {
+        const insertPolicy = async (name: string, _priority: number, cond: string) => {
           const r = await dbI.execute(
-            `INSERT INTO approvalPolicies (organizationId, name, priority, conditions) VALUES (${org}, '${name}', ${priority}, ${cond})`
+            `INSERT INTO approvalPolicies (organizationId, name, isActive, conditions) VALUES (${org}, '${name}', 1, ${cond})`
           ) as any;
           return Number(r[0].insertId);
         };
