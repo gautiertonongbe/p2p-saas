@@ -135,8 +135,8 @@ export default function ApprovalsList() {
           <div className="flex items-center gap-2 cursor-pointer hover:text-primary">
             <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
             <div>
-              <div className="font-medium">{approval.request?.title || "—"}</div>
-              <div className="text-xs text-muted-foreground">{approval.request?.requestNumber}</div>
+              <div className="font-medium">{approval.request?.title || `Demande #${approval.requestId}`}</div>
+              <div className="text-xs text-muted-foreground">{approval.request?.requestNumber || `ID: ${approval.requestId}`}</div>
             </div>
           </div>
         </Link>
@@ -204,7 +204,8 @@ export default function ApprovalsList() {
           {/* Approve */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="sm" disabled={approveMutation.isPending}>
+              <Button size="sm" disabled={approveMutation.isPending}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white border-0">
                 <CheckCircle className="mr-1 h-3 w-3" />
                 {t("approvals.approve")}
               </Button>

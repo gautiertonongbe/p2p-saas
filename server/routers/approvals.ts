@@ -46,17 +46,24 @@ export const approvalsRouter = router({
   myPendingApprovals: protectedProcedure
     .query(async ({ ctx }) => {
       const approvals = await db.getPendingApprovals(ctx.user.id);
+      const dbInstance = await db.getDb();
+      if (!dbInstance) return [];
       
-      // Enrich with request details
+      // Enrich with request details - no org filter so approver can see cross-org
       const enriched = await Promise.all(approvals.map(async (approval) => {
-        const request = await db.getPurchaseRequestById(approval.requestId, ctx.user.organizationId);
-        return {
-          ...approval,
-          request,
-        };
+        try {
+          const res = await dbInstance.execute(
+            `SELECT id, requestNumber, title, amountEstimate, status, urgencyLevel, requesterId
+             FROM purchaseRequests WHERE id = ${approval.requestId} LIMIT 1`
+          ) as any;
+          const request = res[0]?.[0] || null;
+          return { ...approval, request };
+        } catch {
+          return { ...approval, request: null };
+        }
       }));
       
-      return enriched;
+      return enriched.filter(a => a !== null);
     }),
 
   // Get completed approvals for current user (approved/rejected/delegated)

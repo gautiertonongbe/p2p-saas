@@ -62,7 +62,7 @@ export const seederRouter = router({
       if (input.clearExisting) {
         const tables = ["savingsRecords","payments","invoices","receiptItems","receipts",
           "purchaseOrderItems","purchaseOrders","purchaseRequestItems","approvals",
-          "purchaseRequests","rfqResponseItems","rfqResponses","rfqVendors","rfqItems","rfqs",
+          "approvals","purchaseRequests","rfqResponseItems","rfqResponses","rfqVendors","rfqItems","rfqs",
           "vendorContracts","vendors"];
         for (const t of tables) {
           try { await dbI.execute(`DELETE FROM ${t} WHERE organizationId=${org}`); } catch { /* ignore */ }
