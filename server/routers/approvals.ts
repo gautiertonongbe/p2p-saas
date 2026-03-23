@@ -45,25 +45,36 @@ export const approvalsRouter = router({
   // Get pending approvals for current user
   myPendingApprovals: protectedProcedure
     .query(async ({ ctx }) => {
-      const approvals = await db.getPendingApprovals(ctx.user.id);
       const dbInstance = await db.getDb();
       if (!dbInstance) return [];
       
-      // Enrich with request details - no org filter so approver can see cross-org
-      const enriched = await Promise.all(approvals.map(async (approval) => {
-        try {
-          const res = await dbInstance.execute(
-            `SELECT id, requestNumber, title, amountEstimate, status, urgencyLevel, requesterId
-             FROM purchaseRequests WHERE id = ${approval.requestId} LIMIT 1`
-          ) as any;
-          const request = res[0]?.[0] || null;
-          return { ...approval, request };
-        } catch {
-          return { ...approval, request: null };
+      // Single JOIN query - only returns approvals with valid requests
+      const res = await dbInstance.execute(
+        `SELECT a.id, a.requestId, a.stepOrder, a.approverId, a.decision, a.dueAt, a.createdAt,
+                pr.requestNumber, pr.title, pr.amountEstimate, pr.status as requestStatus, pr.urgencyLevel
+         FROM approvals a
+         INNER JOIN purchaseRequests pr ON a.requestId = pr.id
+         WHERE a.approverId = ${ctx.user.id} AND a.decision = 'pending'
+         ORDER BY a.createdAt DESC`
+      ) as any;
+      
+      return (res[0] as any[]).map((row: any) => ({
+        id: row.id,
+        requestId: row.requestId,
+        stepOrder: row.stepOrder,
+        approverId: row.approverId,
+        decision: row.decision,
+        dueAt: row.dueAt,
+        createdAt: row.createdAt,
+        request: {
+          id: row.requestId,
+          requestNumber: row.requestNumber,
+          title: row.title,
+          amountEstimate: row.amountEstimate,
+          status: row.requestStatus,
+          urgencyLevel: row.urgencyLevel,
         }
       }));
-      
-      return enriched.filter(a => a !== null);
     }),
 
   // Get completed approvals for current user (approved/rejected/delegated)

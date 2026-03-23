@@ -186,8 +186,8 @@ export default function ApprovalsList() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Approuver la demande</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Confirmez-vous l'approbation de «{approval.request?.title}» pour{" "}
-                  <strong>{formatCurrency(approval.request?.amountEstimate || 0)} XOF</strong> ?
+                  Confirmez-vous l'approbation de «{approval.request?.title || `Demande #${approval.requestId}`}» 
+                  {approval.request?.amountEstimate ? <> pour <strong>{formatCurrency(approval.request.amountEstimate)} XOF</strong></> : null} ?
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -195,6 +195,7 @@ export default function ApprovalsList() {
                 <AlertDialogAction
                   onClick={() => handleApprove(approval.id)}
                   disabled={approveMutation.isPending}
+                  style={{ backgroundColor: "#16a34a", color: "#ffffff" }}
                 >
                   {approveMutation.isPending ? "Approbation..." : "Confirmer l'approbation"}
                 </AlertDialogAction>
