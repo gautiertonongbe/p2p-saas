@@ -147,8 +147,10 @@ export default function PurchaseRequestForm() {
     if (!title.trim()) { toast.error("Veuillez saisir un titre"); return; }
     if (!justification.trim()) {
       setJustificationError(true);
-      document.getElementById("justification-field")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      toast.error("La justification est obligatoire");
+      setTimeout(() => {
+        document.getElementById("justification-field")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+      toast.error("⬆️ Justification manquante — voir champ en rouge ci-dessus");
       return;
     }
     if (isEdit && editId) {
@@ -162,8 +164,10 @@ export default function PurchaseRequestForm() {
     if (!title.trim()) { toast.error("Veuillez saisir un titre"); return; }
     if (!justification.trim()) {
       setJustificationError(true);
-      document.getElementById("justification-field")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      toast.error("La justification est obligatoire");
+      setTimeout(() => {
+        document.getElementById("justification-field")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+      toast.error("⬆️ Justification manquante — voir champ en rouge ci-dessus");
       return;
     }
     if (items.every(it => !it.itemName.trim())) { toast.error("Ajoutez au moins un article"); return; }
@@ -318,19 +322,19 @@ export default function PurchaseRequestForm() {
           </div>
 
           {items.map((item, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 items-center p-3 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors">
+            <div key={i} className="grid grid-cols-12 gap-2 items-center p-3 rounded-xl border bg-white hover:bg-gray-50 transition-colors">
               {/* Article name */}
               <div className="col-span-12 sm:col-span-4">
                 <Input value={item.itemName} onChange={e => updateItem(i, "itemName", e.target.value)}
-                  placeholder="Nom de l'article..." className="border-0 bg-transparent p-0 h-8 text-sm font-medium placeholder:text-muted-foreground focus-visible:ring-0" />
+                  placeholder="Nom de l'article..." className="border-0 bg-transparent p-0 h-8 text-sm font-medium text-gray-900 placeholder:text-muted-foreground focus-visible:ring-0" />
                 <Input value={item.description} onChange={e => updateItem(i, "description", e.target.value)}
-                  placeholder="Description (optionnel)" className="border-0 bg-transparent p-0 h-7 text-xs text-muted-foreground placeholder:text-muted-foreground/60 focus-visible:ring-0 mt-0.5" />
+                  placeholder="Description (optionnel)" className="border-0 bg-transparent p-0 h-7 text-xs text-gray-600 placeholder:text-muted-foreground/60 focus-visible:ring-0 mt-0.5" />
               </div>
 
               {/* Unit */}
               <div className="col-span-4 sm:col-span-2">
                 <Select value={item.unit || "pcs"} onValueChange={v => updateItem(i, "unit", v)}>
-                  <SelectTrigger className="h-8 text-sm border-0 bg-white/80">
+                  <SelectTrigger className="h-8 text-sm border-0 bg-white text-gray-900">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -345,7 +349,7 @@ export default function PurchaseRequestForm() {
                   onFocus={e => e.target.select()}
                   onChange={e => updateItem(i, "quantity", e.target.value)}
                   onBlur={e => { if (!e.target.value.trim() || parseFloat(e.target.value) <= 0) updateItem(i, "quantity", "1"); }}
-                  className="h-8 text-sm text-center bg-white/80" />
+                  className="h-8 text-sm text-center bg-white text-gray-900" />
               </div>
 
               {/* Unit price */}
@@ -357,7 +361,7 @@ export default function PurchaseRequestForm() {
                   onChange={e => updateItem(i, "unitPrice", e.target.value)}
                   onFocus={e => { if (item.unitPrice === "0" || item.unitPrice === "") updateItem(i, "unitPrice", ""); }}
                   placeholder="0"
-                  className="h-8 text-sm text-right bg-white/80"
+                  className="h-8 text-sm text-right bg-white text-gray-900"
                 />
               </div>
 
