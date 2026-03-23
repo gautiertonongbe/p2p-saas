@@ -126,6 +126,91 @@ export const seederRouter = router({
         } catch (e) { log.push(`⚠️ Budgets: ${String(e).slice(0, 60)}`); }
       }
 
+
+
+      // ── 5 DEMO WORKFLOWS ─────────────────────────────────────────────────
+      try {
+        // Clear existing policies for clean demo
+        const existingP = await dbI.execute(
+          `SELECT id FROM approvalPolicies WHERE organizationId=${org}`
+        ) as any;
+        const existingIds = (existingP[0] as any[]).map((p: any) => p.id);
+        if (existingIds.length > 0) {
+          await dbI.execute(`DELETE FROM approvalSteps WHERE policyId IN (${existingIds.join(",")})`);
+          await dbI.execute(`DELETE FROM approvalPolicies WHERE organizationId=${org}`);
+        }
+
+        const createPolicy = async (name: string, description: string, priority: number, conditions: any) => {
+          const r = await dbI.execute(
+            `INSERT INTO approvalPolicies (organizationId, name, description, isActive, priority, conditions)
+             VALUES (${org}, '${name}', '${description}', 1, ${priority}, '${JSON.stringify(conditions)}')`
+          ) as any;
+          return Number(r[0].insertId);
+        };
+        const addStep = async (policyId: number, stepOrder: number, approverType: string, approverId: number) => {
+          await dbI.execute(
+            `INSERT INTO approvalSteps (policyId, stepOrder, approverType, approverId, isParallel)
+             VALUES (${policyId}, ${stepOrder}, '${approverType}', ${approverId}, 0)`
+          );
+        };
+
+        // Workflow 1: Petits achats ≤ 500 000 XOF → Manager uniquement
+        const p1 = await createPolicy(
+          "Petits achats",
+          "Demandes jusqu\'à 500 000 XOF — approbation manager seul",
+          10,
+          { maxAmount: 500000 }
+        );
+        await addStep(p1, 1, "role", 2); // procurement_manager
+
+        // Workflow 2: Achats moyens 500 001 – 2 000 000 XOF → Approbateur puis Manager
+        const p2 = await createPolicy(
+          "Achats moyens",
+          "De 500 001 à 2 000 000 XOF — double validation",
+          8,
+          { minAmount: 500001, maxAmount: 2000000 }
+        );
+        await addStep(p2, 1, "role", 3); // approver first
+        await addStep(p2, 2, "role", 2); // then manager
+
+        // Workflow 3: Grands achats > 2 000 000 XOF → 3 niveaux
+        const p3 = await createPolicy(
+          "Grands achats",
+          "Au-dessus de 2 000 000 XOF — triple validation obligatoire",
+          6,
+          { minAmount: 2000001 }
+        );
+        await addStep(p3, 1, "role", 3); // approver
+        await addStep(p3, 2, "role", 2); // manager
+        await addStep(p3, 3, "role", 1); // admin (DG)
+
+        // Workflow 4: Urgences critiques → Admin direct (bypass approbateur)
+        const p4 = await createPolicy(
+          "Urgences critiques",
+          "Toute demande critique — escalade directe vers la direction",
+          9,
+          { urgencyLevels: ["critical"] }
+        );
+        await addStep(p4, 1, "role", 1); // admin directly
+
+        // Workflow 5: Catch-all → Approbateur seul
+        const p5 = await createPolicy(
+          "Politique par défaut",
+          "Toutes les autres demandes — approbateur désigné",
+          1,
+          {} // null conditions = catch-all
+        );
+        await addStep(p5, 1, "role", 3); // approver
+
+        log.push("✅ 5 workflows créés:");
+        log.push("   1. Petits achats (≤ 500K) → Manager");
+        log.push("   2. Achats moyens (500K–2M) → Approbateur → Manager");
+        log.push("   3. Grands achats (> 2M) → Approbateur → Manager → Admin");
+        log.push("   4. Urgences critiques → Admin direct");
+        log.push("   5. Politique par défaut → Approbateur");
+      } catch (e) { log.push(`⚠️ Workflows: ${String(e).slice(0, 80)}`); }
+
+
       // ── FULL P2P CYCLE ─────────────────────────────────────────────────────
       if (input.scenarios.includes("full_cycle")) {
         try {
