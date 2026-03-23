@@ -42,6 +42,7 @@ export default function PurchaseRequestForm() {
   const [urgencyLevel, setUrgencyLevel] = useState<"low"|"medium"|"high"|"critical">("medium");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [justification, setJustification] = useState("");
+  const [justificationError, setJustificationError] = useState(false);
   const [departmentId, setDepartmentId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [costCenterId, setCostCenterId] = useState("");
@@ -144,7 +145,12 @@ export default function PurchaseRequestForm() {
 
   const handleSaveDraft = async () => {
     if (!title.trim()) { toast.error("Veuillez saisir un titre"); return; }
-    if (!justification.trim()) { toast.error("La justification est obligatoire"); return; }
+    if (!justification.trim()) {
+      setJustificationError(true);
+      document.getElementById("justification-field")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      toast.error("La justification est obligatoire");
+      return;
+    }
     if (isEdit && editId) {
       updateMutation.mutate({ id: editId, ...buildPayload() } as any);
     } else {
@@ -154,7 +160,12 @@ export default function PurchaseRequestForm() {
 
   const handleSubmit = async () => {
     if (!title.trim()) { toast.error("Veuillez saisir un titre"); return; }
-    if (!justification.trim()) { toast.error("La justification est obligatoire — expliquez pourquoi cet achat est nécessaire"); return; }
+    if (!justification.trim()) {
+      setJustificationError(true);
+      document.getElementById("justification-field")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      toast.error("La justification est obligatoire");
+      return;
+    }
     if (items.every(it => !it.itemName.trim())) { toast.error("Ajoutez au moins un article"); return; }
     const data = await createMutation.mutateAsync(buildPayload()).catch(() => null);
     if (data?.id) submitMutation.mutate({ id: data.id });
@@ -217,10 +228,21 @@ export default function PurchaseRequestForm() {
           </div>
 
           <div className="space-y-1.5">
+            <div id="justification-field">
             <Label>Justification <span className="text-red-500">*</span></Label>
-            <Textarea value={justification} onChange={e => setJustification(e.target.value)}
-              placeholder="Expliquez pourquoi cette demande est nécessaire..." rows={3}
-              className={!justification.trim() && "border-red-200 focus-visible:ring-red-300"} />
+            <Textarea
+              value={justification}
+              onChange={e => { setJustification(e.target.value); if (e.target.value.trim()) setJustificationError(false); }}
+              placeholder="Expliquez pourquoi cette demande est nécessaire..."
+              rows={3}
+              className={justificationError ? "border-red-400 ring-2 ring-red-200 bg-red-50/30" : ""}
+            />
+            {justificationError && (
+              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+                ⚠️ Ce champ est obligatoire avant de pouvoir soumettre
+              </p>
+            )}
+            </div>
           </div>
 
           {/* Billing fields - always visible and required */}
