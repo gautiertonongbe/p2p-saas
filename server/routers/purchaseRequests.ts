@@ -186,10 +186,7 @@ export const purchaseRequestsRouter = router({
       const wf = orgCfg.workflowSettings;
       const bp = orgCfg.budgetPolicies;
 
-      // Enforce: justification required
-      if (wf.requireJustification && !request.justification?.trim() && !request.description?.trim()) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Une justification est obligatoire. Veuillez ajouter une justification à votre demande." });
-      }
+      // Justification is enforced client-side on the form
 
       // Enforce: budget check
       if (bp.enforceBudgetCheck && request.departmentId) {
