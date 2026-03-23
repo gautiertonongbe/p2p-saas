@@ -344,8 +344,8 @@ export const seederRouter = router({
           await dbI.execute(`INSERT INTO rfqItems (rfqId, itemName, quantity, unit, estimatedUnitPrice) VALUES (${rfqId}, 'Serveur rack Dell R750', 3, 'pcs', 2500000)`);
           await dbI.execute(`INSERT INTO rfqVendors (rfqId, vendorId, status, invitedAt) VALUES (${rfqId}, ${v1}, 'responded', '${daysAgo(18)}')`);
           await dbI.execute(`INSERT INTO rfqVendors (rfqId, vendorId, status, invitedAt) VALUES (${rfqId}, ${v2}, 'responded', '${daysAgo(18)}')`);
-          await dbI.execute(`INSERT INTO rfqResponses (rfqId, vendorId, totalAmount, currency, notes, submittedAt, status) VALUES (${rfqId}, ${v1}, 7200000, 'XOF', 'Offre incluant installation et formation', '${daysAgo(10)}', 'submitted')`);
-          await dbI.execute(`INSERT INTO rfqResponses (rfqId, vendorId, totalAmount, currency, notes, submittedAt, status) VALUES (${rfqId}, ${v2}, 8500000, 'XOF', 'Offre standard avec garantie 3 ans', '${daysAgo(9)}', 'submitted')`);
+          await dbI.execute(`INSERT INTO rfqResponses (rfqId, vendorId, totalAmount, currency, notes) VALUES (${rfqId}, ${v1}, 7200000, 'XOF', 'Offre incluant installation et formation')`);
+          await dbI.execute(`INSERT INTO rfqResponses (rfqId, vendorId, totalAmount, currency, notes) VALUES (${rfqId}, ${v2}, 8500000, 'XOF', 'Offre standard avec garantie 3 ans')`);
           log.push("✅ AO créé (2 réponses reçues, économie 1 300 000 XOF vs offre la plus haute)");
         } catch (e) { log.push(`⚠️ RFQ: ${String(e).slice(0, 80)}`); }
       }
