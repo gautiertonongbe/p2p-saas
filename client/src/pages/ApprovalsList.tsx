@@ -32,7 +32,8 @@ export default function ApprovalsList() {
   const utils = trpc.useUtils();
 
   const [sortDir, setSortDir] = useState<"asc"|"desc">("desc");
-  const [rejectComments, setRejectComments] = useState<Record<number, string>>({});
+  const [rejectComment, setRejectComment] = useState("");
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [delegateDialogOpen, setDelegateDialogOpen] = useState(false);
   const [delegatingApprovalId, setDelegatingApprovalId] = useState<number | null>(null);
   const [delegateToUserId, setDelegateToUserId] = useState<string>("");
@@ -81,13 +82,13 @@ export default function ApprovalsList() {
   };
 
   const handleReject = (approvalId: number) => {
-    const comment = rejectComments[approvalId] || "";
-    if (!comment.trim()) {
+    if (!rejectComment.trim()) {
       toast.error("Veuillez fournir une raison pour le rejet");
       return;
     }
-    rejectMutation.mutate({ approvalId, comment });
-    setRejectComments(prev => ({ ...prev, [approvalId]: "" }));
+    rejectMutation.mutate({ approvalId, comment: rejectComment });
+    setRejectComment("");
+    setRejectingId(null);
   };
 
   const openDelegateDialog = (approvalId: number) => {
@@ -165,41 +166,12 @@ export default function ApprovalsList() {
           </Button>
 
           {/* Reject */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/5">
-                <XCircle className="mr-1 h-3 w-3" />
-                {t("approvals.reject")}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Rejeter la demande</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Êtes-vous sûr de vouloir rejeter cette demande ? Une raison est requise.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="space-y-2">
-<label className="text-sm font-medium">Raison du rejet *</label>
-                <Textarea
-                  value={rejectComments[approval.id] || ""}
-                  onChange={(e) => setRejectComments(prev => ({ ...prev, [approval.id]: e.target.value }))}
-                  placeholder="Expliquez la raison du rejet..."
-                  rows={3}
-                />
-              </div>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleReject(approval.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  disabled={rejectMutation.isPending}
-                >
-                  {rejectMutation.isPending ? "Rejet en cours..." : "Confirmer le rejet"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button size="sm" variant="outline"
+            className="text-destructive border-destructive/30 hover:bg-destructive/5"
+            onClick={() => { setRejectingId(approval.id); setRejectComment(""); }}>
+            <XCircle className="mr-1 h-3 w-3" />
+            {t("approvals.reject")}
+          </Button>
 
           {/* Approve */}
           <AlertDialog>
@@ -370,6 +342,35 @@ export default function ApprovalsList() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Reject Dialog — single instance outside map to prevent re-render issues */}
+      <Dialog open={rejectingId !== null} onOpenChange={(open) => { if (!open) { setRejectingId(null); setRejectComment(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rejeter la demande</DialogTitle>
+            <DialogDescription>Une raison est obligatoire pour rejeter cette demande.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <label className="text-sm font-medium">Raison du rejet *</label>
+            <Textarea
+              value={rejectComment}
+              onChange={e => setRejectComment(e.target.value)}
+              placeholder="Expliquez la raison du rejet..."
+              rows={4}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRejectingId(null); setRejectComment(""); }}>Annuler</Button>
+            <Button
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={() => rejectingId && handleReject(rejectingId)}
+              disabled={rejectMutation.isPending || !rejectComment.trim()}>
+              {rejectMutation.isPending ? "Rejet en cours..." : "Confirmer le rejet"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delegate Dialog */}
       <Dialog open={delegateDialogOpen} onOpenChange={setDelegateDialogOpen}>
