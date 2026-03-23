@@ -139,42 +139,50 @@ export const seederRouter = router({
 
       // ── 5 DEMO WORKFLOWS ─────────────────────────────────────────────────
       try {
-        const existingP = await dbI.execute(`SELECT id FROM approvalPolicies WHERE organizationId=${org}`) as any;
-        const existingIds = (existingP[0] as any[]).map((p: any) => p.id);
-        if (existingIds.length > 0) {
-          await dbI.execute(`DELETE FROM approvalSteps WHERE policyId IN (${existingIds.join(",")})`);
-          await dbI.execute(`DELETE FROM approvalPolicies WHERE organizationId=${org}`);
+        const { approvalPolicies, approvalSteps } = await import("../../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+
+        // Clear existing
+        const existingPolicies = await dbI.select({ id: approvalPolicies.id })
+          .from(approvalPolicies)
+          .where(eq(approvalPolicies.organizationId, org));
+        for (const p of existingPolicies) {
+          await dbI.delete(approvalSteps).where(eq(approvalSteps.policyId, p.id));
         }
+        await dbI.delete(approvalPolicies).where(eq(approvalPolicies.organizationId, org));
 
-        const insertPolicy = async (name: string, _priority: number, cond: string) => {
-          const r = await dbI.execute(
-            `INSERT INTO approvalPolicies (organizationId, name, isActive, conditions) VALUES (${org}, '${name}', 1, ${cond})`
-          ) as any;
-          return Number(r[0].insertId);
+        const mkPolicy = async (name: string, conditions: any) => {
+          const r = await dbI.insert(approvalPolicies).values({
+            organizationId: org,
+            name,
+            conditions,
+            isActive: true,
+          });
+          return Number((r as any).insertId || (r as any)[0]?.insertId);
         };
-        const insertStep = async (pid: number, order: number, type: string, rid: number) => {
-          await dbI.execute(`INSERT INTO approvalSteps (policyId, stepOrder, approverType, approverId, isParallel) VALUES (${pid}, ${order}, '${type}', ${rid}, 0)`);
+        const mkStep = async (policyId: number, stepOrder: number, approverType: "role" | "user" | "manager", approverId: number) => {
+          await dbI.insert(approvalSteps).values({ policyId, stepOrder, approverType, approverId, isParallel: false });
         };
 
-        const p1 = await insertPolicy("Petits achats <= 500K", 10, '{"maxAmount":500000}');
-        await insertStep(p1, 1, "role", 2);
+        const p1 = await mkPolicy("Petits achats (<=500K)", { maxAmount: 500000 });
+        await mkStep(p1, 1, "role", 2);
 
-        const p2 = await insertPolicy("Achats moyens 500K-2M", 8, '{"minAmount":500001,"maxAmount":2000000}');
-        await insertStep(p2, 1, "role", 3);
-        await insertStep(p2, 2, "role", 2);
+        const p2 = await mkPolicy("Achats moyens (500K-2M)", { minAmount: 500001, maxAmount: 2000000 });
+        await mkStep(p2, 1, "role", 3);
+        await mkStep(p2, 2, "role", 2);
 
-        const p3 = await insertPolicy("Grands achats > 2M", 6, '{"minAmount":2000001}');
-        await insertStep(p3, 1, "role", 3);
-        await insertStep(p3, 2, "role", 2);
-        await insertStep(p3, 3, "role", 1);
+        const p3 = await mkPolicy("Grands achats (>2M)", { minAmount: 2000001 });
+        await mkStep(p3, 1, "role", 3);
+        await mkStep(p3, 2, "role", 2);
+        await mkStep(p3, 3, "role", 1);
 
-        const p4 = await insertPolicy("Urgences critiques", 9, '{"urgencyLevels":["critical"]}');
-        await insertStep(p4, 1, "role", 1);
+        const p4 = await mkPolicy("Urgences critiques", { urgencyLevels: ["critical"] });
+        await mkStep(p4, 1, "role", 1);
 
-        const p5 = await insertPolicy("Politique par defaut", 1, 'NULL');
-        await insertStep(p5, 1, "role", 3);
+        const p5 = await mkPolicy("Politique par defaut", {});
+        await mkStep(p5, 1, "role", 3);
 
-        log.push("✅ 5 workflows crees: Petits achats / Moyens / Grands / Urgences / Defaut");
+        log.push("✅ 5 workflows crees: Petits / Moyens / Grands / Urgences / Defaut");
       } catch (e) { log.push(`⚠️ Workflows: ${String(e).slice(0, 80)}`); }
 
             // ── FULL P2P CYCLE ─────────────────────────────────────────────────────
