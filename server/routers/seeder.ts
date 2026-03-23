@@ -81,6 +81,38 @@ export const seederRouter = router({
         log.push("✅ Données existantes supprimées");
       }
 
+
+      // ── RESET DEMO USER PASSWORDS ─────────────────────────────────────────
+      try {
+        const bcrypt = await import("bcryptjs");
+        const adminHash    = await bcrypt.hash("Admin1234!", 12);
+        const managerHash  = await bcrypt.hash("Manager1234!", 12);
+        
+        const demoUsers = [
+          { email: "admin@demo.com",     password: adminHash,   role: "admin",                name: "Gautier" },
+          { email: "manager@demo.com",   password: managerHash, role: "procurement_manager",  name: "Manager Demo" },
+          { email: "approver@demo.com",  password: managerHash, role: "approver",             name: "Approbateur Demo" },
+          { email: "requester@demo.com", password: managerHash, role: "requester",            name: "Demandeur Demo" },
+        ];
+
+        for (const u of demoUsers) {
+          const existing = await dbI.execute(
+            `SELECT id FROM users WHERE email='${u.email}' AND organizationId=${org} LIMIT 1`
+          ) as any;
+          if (existing[0]?.[0]?.id) {
+            await dbI.execute(
+              `UPDATE users SET password='${u.password}', status='active', role='${u.role}' WHERE email='${u.email}' AND organizationId=${org}`
+            );
+          } else {
+            await dbI.execute(
+              `INSERT INTO users (organizationId, name, email, role, status, password, loginMethod, openId)
+               VALUES (${org}, '${u.name}', '${u.email}', '${u.role}', 'active', '${u.password}', 'email', '${u.role}-demo')`
+            );
+          }
+        }
+        log.push("✅ Mots de passe demo réinitialisés (Admin1234! / Manager1234!)");
+      } catch (e) { log.push(`⚠️ Users: ${String(e).slice(0, 60)}`); }
+
       let vendorIds: number[] = [];
 
       // ── VENDORS ────────────────────────────────────────────────────────────
