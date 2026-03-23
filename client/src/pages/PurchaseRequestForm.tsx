@@ -105,11 +105,18 @@ export default function PurchaseRequestForm() {
   });
 
   const createMutation = trpc.purchaseRequests.create.useMutation({
-    onSuccess: (data) => { utils.purchaseRequests.list.invalidate(); setLocation(`/purchase-requests/${(data as any).id || ""}`); },
+    onSuccess: (data) => {
+      // Only navigate if NOT in submit flow (submit flow handles navigation itself)
+      utils.purchaseRequests.list.invalidate();
+    },
     onError: (e) => toast.error(e.message),
   });
   const submitMutation = trpc.purchaseRequests.submit.useMutation({
-    onSuccess: () => { toast.success("Demande soumise pour approbation !"); utils.purchaseRequests.list.invalidate(); setLocation("/purchase-requests"); },
+    onSuccess: () => {
+      toast.success("Demande soumise pour approbation !");
+      utils.purchaseRequests.list.invalidate();
+      setLocation("/purchase-requests");
+    },
     onError: (e) => toast.error(e.message),
   });
 
@@ -145,18 +152,14 @@ export default function PurchaseRequestForm() {
 
   const handleSaveDraft = async () => {
     if (!title.trim()) { toast.error("Veuillez saisir un titre"); return; }
-    if (!justification.trim()) {
-      setJustificationError(true);
-      setTimeout(() => {
-        document.getElementById("justification-field")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 100);
-      toast.error("⬆️ Justification manquante — voir champ en rouge ci-dessus");
-      return;
-    }
     if (isEdit && editId) {
       updateMutation.mutate({ id: editId, ...buildPayload() } as any);
     } else {
-      createMutation.mutate(buildPayload());
+      const data = await createMutation.mutateAsync(buildPayload()).catch(() => null);
+      if (data?.id) {
+        toast.success("Brouillon enregistré");
+        setLocation(`/purchase-requests/${(data as any).id}`);
+      }
     }
   };
 
@@ -167,12 +170,19 @@ export default function PurchaseRequestForm() {
       setTimeout(() => {
         document.getElementById("justification-field")?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
-      toast.error("⬆️ Justification manquante — voir champ en rouge ci-dessus");
+      toast.error("⬆️ Justification manquante — voir le champ en rouge");
       return;
     }
     if (items.every(it => !it.itemName.trim())) { toast.error("Ajoutez au moins un article"); return; }
-    const data = await createMutation.mutateAsync(buildPayload()).catch(() => null);
-    if (data?.id) submitMutation.mutate({ id: data.id });
+    try {
+      const data = await createMutation.mutateAsync(buildPayload());
+      if (data?.id) {
+        await submitMutation.mutateAsync({ id: (data as any).id });
+        // navigation handled by submitMutation.onSuccess
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors de la soumission");
+    }
   };
 
   const isPending = createMutation.isPending || submitMutation.isPending || updateMutation.isPending;
@@ -322,13 +332,25 @@ export default function PurchaseRequestForm() {
           </div>
 
           {items.map((item, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 items-center p-3 rounded-xl border bg-white hover:bg-gray-50 transition-colors">
+            <div key={i} className="grid grid-cols-12 gap-2 items-start p-3 rounded-xl border border-gray-200 bg-white hover:border-gray-300 transition-colors">
               {/* Article name */}
-              <div className="col-span-12 sm:col-span-4">
-                <Input value={item.itemName} onChange={e => updateItem(i, "itemName", e.target.value)}
-                  placeholder="Nom de l'article..." className="border-0 bg-transparent p-0 h-8 text-sm font-medium text-gray-900 placeholder:text-muted-foreground focus-visible:ring-0" />
-                <Input value={item.description} onChange={e => updateItem(i, "description", e.target.value)}
-                  placeholder="Description (optionnel)" className="border-0 bg-transparent p-0 h-7 text-xs text-gray-600 placeholder:text-muted-foreground/60 focus-visible:ring-0 mt-0.5" />
+              <div className="col-span-12 sm:col-span-4 space-y-1">
+                <input
+                  type="text"
+                  value={item.itemName}
+                  onChange={e => updateItem(i, "itemName", e.target.value)}
+                  placeholder="Nom de l'article..."
+                  style={{ color: "#111827", backgroundColor: "#ffffff" }}
+                  className="w-full h-8 text-sm font-semibold border border-gray-200 rounded px-2 focus:outline-none focus:border-blue-400"
+                />
+                <input
+                  type="text"
+                  value={item.description}
+                  onChange={e => updateItem(i, "description", e.target.value)}
+                  placeholder="Description (optionnel)"
+                  style={{ color: "#374151", backgroundColor: "#ffffff" }}
+                  className="w-full h-7 text-xs border border-gray-100 rounded px-2 focus:outline-none focus:border-blue-400"
+                />
               </div>
 
               {/* Unit */}
@@ -345,23 +367,29 @@ export default function PurchaseRequestForm() {
 
               {/* Quantity */}
               <div className="col-span-4 sm:col-span-2">
-                <Input type="text" inputMode="decimal" value={item.quantity}
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={item.quantity}
                   onFocus={e => e.target.select()}
                   onChange={e => updateItem(i, "quantity", e.target.value)}
                   onBlur={e => { if (!e.target.value.trim() || parseFloat(e.target.value) <= 0) updateItem(i, "quantity", "1"); }}
-                  className="h-8 text-sm text-center bg-white text-gray-900" />
+                  style={{ color: "#111827", backgroundColor: "#ffffff" }}
+                  className="w-full h-8 text-sm text-center border border-gray-200 rounded px-2 focus:outline-none focus:border-blue-400"
+                />
               </div>
 
               {/* Unit price */}
               <div className="col-span-4 sm:col-span-2">
-                <Input
+                <input
                   type="text"
                   inputMode="decimal"
                   value={item.unitPrice}
                   onChange={e => updateItem(i, "unitPrice", e.target.value)}
                   onFocus={e => { if (item.unitPrice === "0" || item.unitPrice === "") updateItem(i, "unitPrice", ""); }}
                   placeholder="0"
-                  className="h-8 text-sm text-right bg-white text-gray-900"
+                  style={{ color: "#111827", backgroundColor: "#ffffff" }}
+                  className="w-full h-8 text-sm text-right border border-gray-200 rounded px-2 focus:outline-none focus:border-blue-400"
                 />
               </div>
 
