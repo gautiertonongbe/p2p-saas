@@ -1,3 +1,4 @@
+// PR Detail
 import { trpc } from "@/lib/trpc";
 import { useLocation, useParams } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -483,6 +484,5 @@ export default function PurchaseRequestDetail() {
         </DialogContent>
       </Dialog>
     </div>
-  </div>
   );
 }
